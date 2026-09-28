@@ -1,0 +1,14 @@
+# Copy to profile.properties and fill in your own API keys.
+# Ant reads this file before app.properties, so these values win.
+# Get your own free keys:
+#   TheMovieDB  https://www.themoviedb.org/settings/api
+#   Fanart.tv   https://fanart.tv/get-an-api-key/
+#   OMDb        https://www.omdbapi.com/apikey.aspx
+#   AcoustID    https://acoustid.org/new-application
+apikey.fanart.tv:
+apikey.thetvdb:
+apikey.themoviedb:
+apikey.omdb:
+apikey.acoustid:
+apikey.anidb:
+apikey.opensubtitles:

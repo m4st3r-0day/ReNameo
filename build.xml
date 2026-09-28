@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<project name="renameo" default="fatjar" xmlns:if="ant:if" xmlns:unless="ant:unless" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<!-- define source dirs -->
+	<property name="dir.source" location="${basedir}/source" />
+	<property name="dir.build" location="${basedir}/build" />
+	<property name="dir.dist" location="${basedir}/dist" />
+	<property name="dir.lib" location="${basedir}/lib" />
+
+	<!-- import property files -->
+	<property file="${basedir}/profile.properties" />
+	<property file="${basedir}/app.properties" />
+
+	<property name="release" value="${application.name}_${application.version}" />
+
+	<!-- define output paths -->
+	<property name="dir.cache" location="${basedir}/cache" />
+	<property name="dir.release" location="${basedir}/release/${release}" />
+	<property name="path.fatjar" location="${dir.dist}/${release}.jar" />
+
+
+	<!-- timestamp variables -->
+	<tstamp prefix="tstamp">
+		<format property="date" pattern="yyyy-MM-dd" />
+		<format property="year" pattern="yyyy" />
+	</tstamp>
+
+
+	<!-- copy and replace ant variables macro -->
+	<macrodef name="copy-replace">
+		<attribute name="todir" />
+		<element name="filesets" implicit="yes" />
+		<sequential>
+			<copy todir="@{todir}" encoding="utf-8" overwrite="yes" verbose="yes">
+				<filesets />
+				<filterset begintoken="@{" endtoken="}">
+					<propertyset>
+						<propertyref builtin="all" />
+					</propertyset>
+				</filterset>
+			</copy>
+		</sequential>
+	</macrodef>
+
+
+	<!-- sign with gpg macro -->
+
+
+	<!-- deploy release artifacts -->
+
+
+	<target name="resolve" description="Retrieve dependencies with Apache Ivy">
+		<delete dir="${dir.lib}/ivy" />
+		<ivy:retrieve pattern="${dir.lib}/ivy/[type]/[artifact].[ext]" />
+
+		<antcall target="resolve-import-native">
+			<param name="arch" value="mac-x86_64" />
+			<param name="arch.jna" value="darwin" />
+			<param name="arch.7zj" value="Mac-x86_64" />
+		</antcall>
+	</target>
+
+
+	<target name="resolve-import-native">
+		<unzip src="${dir.lib}/ivy/jar/jna.jar" dest="${dir.lib}/native/${arch}" overwrite="yes">
+			<patternset>
+				<include name="**/${arch.jna}/*.dll" />
+				<include name="**/${arch.jna}/*.so" />
+				<include name="**/${arch.jna}/*.jnilib" />
+			</patternset>
+			<chainedmapper>
+				<flattenmapper />
+				<compositemapper>
+					<globmapper from="*.jnilib" to="*.dylib" />
+					<identitymapper />
+				</compositemapper>
+			</chainedmapper>
+		</unzip>
+		<unzip src="${dir.lib}/ivy/jar/sevenzipjbinding-all-platforms.jar" dest="${dir.lib}/native/${arch}" overwrite="yes">
+			<patternset>
+				<include name="**/${arch.7zj}/*.dll" />
+				<include name="**/${arch.7zj}/*.so" />
+				<include name="**/${arch.7zj}/*.dylib" />
+			</patternset>
+			<chainedmapper>
+				<flattenmapper />
+				<compositemapper>
+					<globmapper from="lib*.dll" to="*.dll" />
+					<identitymapper />
+				</compositemapper>
+			</chainedmapper>
+		</unzip>
+	</target>
+
+
+	<target name="jar" depends="build">
+		<jar destfile="${dir.dist}/lib/renameo.jar" compress="no">
+			<fileset dir="${dir.build}" />
+			<manifest>
+				<attribute name="Build-Date" value="${tstamp.date}" />
+				<attribute name="Build-Revision" value="${revision}" />
+			</manifest>
+		</jar>
+	</target>
+
+
+	<target name="fatjar" depends="jar" description="Build executable jar">
+		<jar destfile="${path.fatjar}" filesetmanifest="merge" duplicate="fail" compress="no">
+			<!-- Manifest for fatjar so its executable-->
+			<manifest>
+				<attribute name="Main-Class" value="net.renameo.Main"/>
+			</manifest>
+
+			<!-- include main jar -->
+			<zipfileset src="${dir.dist}/lib/renameo.jar" />
+
+			<!-- include core libraries -->
+			<zipfileset src="${dir.dist}/lib/args4j.jar">
+				<include name="org/kohsuke/args4j/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/ehcache.jar">
+				<include name="META-INF/services/**" />
+				<include name="net/sf/ehcache/**" />
+				<include name="org/terracotta/**" />
+				<include name="ehcache-failsafe.xml" />
+				<include name="build-info.properties" />
+			</zipfileset>
+
+			<!-- include UI libraries -->
+			<zipfileset src="${dir.dist}/lib/miglayout-core.jar">
+				<include name="net/miginfocom/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/miglayout-swing.jar">
+				<include name="net/miginfocom/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/glazedlists_java16.jar">
+				<include name="ca/odell/glazedlists/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/controlsfx.jar">
+				<include name="org/controlsfx/dialog/**" />
+				<include name="impl/org/controlsfx/i18n/**" />
+				<include name="controlsfx.properties" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/rsyntaxtextarea.jar">
+				<include name="org/fife/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/lanterna.jar">
+				<include name="com/googlecode/lanterna/**" />
+				<include name="**/*.properties" />
+			</zipfileset>
+
+			<!-- include IO libraries -->
+			<zipfileset src="${dir.dist}/lib/xz.jar">
+				<include name="org/tukaani/xz/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/json-io.jar">
+				<include name="com/cedarsoftware/util/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/xmlrpc.jar">
+				<include name="redstone/xmlrpc/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/sevenzipjbinding.jar">
+				<include name="net/sf/sevenzipjbinding/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/commons-io.jar">
+				<include name="org/apache/commons/io/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/commons-vfs2.jar">
+				<include name="org/apache/commons/vfs2/**" />
+			</zipfileset>
+
+			<!-- include JAXB libraries (required for rename history and revert on Java 9+) -->
+			<zipfileset src="${dir.dist}/lib/jaxb-api.jar">
+				<include name="javax/xml/bind/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/jaxb-impl.jar">
+				<include name="com/sun/xml/**" />
+				<include name="javax/xml/bind/**" />
+				<include name="META-INF/services/javax.xml.bind.JAXBContext" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/activation.jar">
+				<include name="javax/activation/**" />
+			</zipfileset>
+
+			<zipfileset src="${dir.dist}/lib/junrar.jar">
+				<include name="com/github/junrar/**" />
+			</zipfileset>
+
+			<!-- include native libraries -->
+			<zipfileset src="${dir.dist}/lib/ObjCBridge.jar">
+				<include name="ca/weblite/**" />
+				<include name="com/sun/jna/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/jna.jar">
+				<include name="com/sun/jna/**" />
+
+				<!-- exclude native libraries except the macOS dispatch library (arm64 + x86_64), which JNA extracts at runtime -->
+				<exclude name="**/*.a" />
+				<exclude name="**/*.so" />
+				<exclude name="**/*.dll" />
+				<exclude name="**/*.dylib" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/jna-platform.jar">
+				<include name="com/sun/jna/platform/**" />
+			</zipfileset>
+
+			<!-- include extra libraries -->
+			<zipfileset src="${dir.dist}/lib/guava.jar">
+				<include name="com/google/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/streamex.jar">
+				<include name="one/util/streamex/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/icu4j.jar">
+				<include name="com/ibm/icu/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/simmetrics.jar">
+				<include name="uk/ac/shef/wit/simmetrics/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/language-detector.jar">
+				<include name="be/frma/langguess/**" />
+				<include name="com/cybozu/labs/langdetect/**" />
+				<include name="com/optimaize/langdetect/**" />
+				<include name="languages/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/metadata-extractor.jar">
+				<include name="com/drew/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/xmpcore.jar">
+				<include name="com/adobe/xmp/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/jacksum.jar">
+				<include name="jonelo/jacksum/adapt/**" />
+				<include name="jonelo/jacksum/algorithm/**" />
+				<include name="jonelo/sugar/util/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/commons-logging.jar">
+				<include name="org/apache/commons/logging/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/slf4j-api.jar">
+				<include name="org/slf4j/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/slf4j-jdk14.jar">
+				<include name="org/slf4j/**" />
+			</zipfileset>
+
+			<!-- include Groovy libraries -->
+			<zipfileset src="${dir.dist}/lib/groovy-all.jar">
+				<include name="groovy*/**" />
+				<include name="org/codehaus/groovy/**" />
+				<include name="META-INF/dgminfo" />
+				<include name="META-INF/services/**" />
+				<include name="META-INF/*.properties" />
+
+				<!-- renameo already includes it's own extension modules -->
+				<exclude name="META-INF/services/org.codehaus.groovy.runtime.ExtensionModule" />
+			</zipfileset>
+
+			<!-- Ivy for @Grapes automatic dependency management -->
+			<zipfileset src="${dir.dist}/lib/ivy.jar">
+				<include name="org/apache/ivy/**" />
+			</zipfileset>
+
+			<!-- libraries used in external scripts -->
+			<zipfileset src="${dir.dist}/lib/jsoup.jar">
+				<include name="org/jsoup/**" />
+			</zipfileset>
+
+			<!-- AntBuilder including dependencies for ant-javamail, ant-commons-net and ant-jsch -->
+			<zipfileset src="${dir.dist}/lib/ant.jar">
+				<include name="org/apache/tools/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/ant-launcher.jar">
+				<include name="org/apache/tools/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/ant-commons-net.jar">
+				<include name="org/apache/tools/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/ant-jsch.jar">
+				<include name="org/apache/tools/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/ant-javamail.jar">
+				<include name="org/apache/tools/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/commons-net.jar">
+				<include name="org/apache/commons/net/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/jsch.jar">
+				<include name="com/jcraft/jsch/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/mail.jar">
+				<include name="javax/mail/**" />
+				<include name="com/sun/mail/**" />
+				<include name="META-INF/*mail*" />
+			</zipfileset>
+		</jar>
+	</target>
+
+
+	<target name="build" depends="revision">
+		<!-- copy dependencies -->
+		<copy todir="${dir.dist}/lib" flatten="yes" verbose="yes">
+			<fileset dir="${dir.lib}/ivy/jar">
+				<include name="ehcache.jar" />
+				<include name="miglayout-core.jar" />
+				<include name="miglayout-swing.jar" />
+				<include name="glazedlists_java16.jar" />
+				<include name="controlsfx.jar" />
+				<include name="rsyntaxtextarea.jar" />
+				<include name="lanterna.jar" />
+				<include name="xz.jar" />
+				<include name="sevenzipjbinding.jar" />
+				<include name="commons-io.jar" />
+				<include name="commons-vfs2.jar" />
+				<include name="jaxb-api.jar" />
+				<include name="jaxb-impl.jar" />
+				<include name="activation.jar" />
+				<include name="junrar.jar" />
+				<include name="jna.jar" />
+				<include name="jna-platform.jar" />
+				<include name="streamex.jar" />
+				<include name="icu4j.jar" />
+				<include name="language-detector.jar" />
+				<include name="metadata-extractor.jar" />
+				<include name="xmpcore.jar" />
+				<include name="commons-logging.jar" />
+				<include name="slf4j-api.jar" />
+				<include name="slf4j-jdk14.jar" />
+				<include name="groovy-all.jar" />
+				<include name="ivy.jar" />
+				<include name="jsoup.jar" />
+				<include name="ant.jar" />
+				<include name="ant-launcher.jar" />
+				<include name="ant-commons-net.jar" />
+				<include name="ant-jsch.jar" />
+				<include name="ant-javamail.jar" />
+				<include name="commons-net.jar" />
+				<include name="jsch.jar" />
+				<include name="mail.jar" />
+			</fileset>
+			<fileset dir="${dir.lib}/ivy/bundle">
+				<include name="args4j.jar" />
+				<include name="json-io.jar" />
+				<include name="guava.jar" />
+			</fileset>
+			<fileset dir="${dir.lib}/jars">
+				<include name="xmlrpc.jar" />
+				<include name="ObjCBridge.jar" />
+				<include name="simmetrics.jar" />
+				<include name="jacksum.jar" />
+			</fileset>
+		</copy>
+
+		<!-- compile -->
+		<javac srcdir="${dir.source}" destdir="${dir.build}" release="${jvm.version}" encoding="utf-8" debug="yes" debuglevel="lines,vars,source" includeAntRuntime="no">
+			<classpath>
+				<fileset dir="${dir.dist}/lib" />
+			</classpath>
+		</javac>
+
+		<!-- copy property files -->
+		<copy-replace todir="${dir.build}">
+			<fileset dir="${dir.source}" includes="**/*.properties" />
+		</copy-replace>
+
+		<!-- copy resources -->
+		<copy todir="${dir.build}">
+			<fileset dir="${dir.source}">
+				<exclude name="**/*.java" />
+				<exclude name="**/*.properties" />
+			</fileset>
+		</copy>
+	</target>
+
+
+	<target name="clean" description="Delete build folders">
+		<delete dir="${dir.dist}" />
+		<delete dir="${dir.build}" />
+	</target>
+
+
+	<target name="revision" depends="init">
+		<!-- commit count of the current branch, 1 outside of a git checkout -->
+		<exec executable="git" outputproperty="git.revision" errorproperty="git.error" resultproperty="git.result" failonerror="false" failifexecutionfails="false">
+			<arg line="rev-list --count HEAD" />
+		</exec>
+		<condition property="revision" value="${git.revision}" else="1">
+			<equals arg1="${git.result}" arg2="0" />
+		</condition>
+		<echo>Revision: ${revision}</echo>
+	</target>
+
+
+	<target name="init">
+		<mkdir dir="${dir.build}" />
+		<mkdir dir="${dir.dist}" />
+		<mkdir dir="${dir.release}" />
+		<mkdir dir="${dir.cache}" />
+
+		<path id="lib.classpath">
+			<fileset dir="${dir.lib}" includes="**/*.jar" excludes="**/*-jdk14.jar" />
+		</path>
+	</target>
+
+
+</project>

@@ -1,0 +1,59 @@
+# bash/zsh completion for the renameo CLI
+#
+# Install:
+#   bash:  source tools/bash_completion.d/renameo
+#   zsh:   autoload -U +X bashcompinit && bashcompinit && source tools/bash_completion.d/renameo
+
+_renameo_complete()
+{
+	local cur prev commands options subopts
+	COMPREPLY=()
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	commands="-rename -get-subtitles -check -list -mediainfo -revert -extract -script -exec"
+	commands="$commands -help -version -clear-cache -clear-prefs"
+
+	options="--mode --db --order --action --conflict --filter --file-filter --format --naming --q --lang --output --encoding --log --log-file --log-lock --def"
+	options="$options -r -non-strict -unixfs -no-xattr"
+
+	case "${prev}" in
+		--db)
+			COMPREPLY=( $(compgen -W "TheTVDB AniDB TheMovieDB TheMovieDB_TV TVmaze OMDb AcoustID ID3 xattr" -- "${cur}") )
+			return 0
+			;;
+		--action)
+			COMPREPLY=( $(compgen -W "move copy keeplink symlink hardlink clone duplicate test" -- "${cur}") )
+			return 0
+			;;
+		--conflict)
+			COMPREPLY=( $(compgen -W "skip override auto index fail" -- "${cur}") )
+			return 0
+			;;
+		--order)
+			COMPREPLY=( $(compgen -W "Airdate DVD Absolute AbsoluteAirdate" -- "${cur}") )
+			return 0
+			;;
+		--lang)
+			COMPREPLY=( $(compgen -W "en it de fr es pt nl ru ja ko zh" -- "${cur}") )
+			return 0
+			;;
+		--naming)
+			COMPREPLY=( $(compgen -W "plex jellyfin" -- "${cur}") )
+			return 0
+			;;
+		--log)
+			COMPREPLY=( $(compgen -W "all fine info warning" -- "${cur}") )
+			return 0
+			;;
+		--mode)
+			COMPREPLY=( $(compgen -W "Rename Subtitles SFV list interactive" -- "${cur}") )
+			return 0
+			;;
+	esac
+
+	COMPREPLY=( $(compgen -W "${commands} ${options}" -- "${cur}") )
+	return 0
+}
+
+complete -F _renameo_complete renameo

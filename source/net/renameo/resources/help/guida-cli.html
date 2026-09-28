@@ -1,0 +1,106 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>ReNameo — Guida alla riga di comando</title><style>
+:root { color-scheme: dark; }
+body { margin: 0; background: #0D111C; color: #E8ECF4; font: 14px/1.6 -apple-system, "Helvetica Neue", "Segoe UI", sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 32px 28px 64px; }
+nav { display: flex; gap: 8px; margin-bottom: 24px; }
+nav .lang { margin-left: auto; }
+nav a { padding: 6px 14px; border-radius: 10px; background: #121827; border: 1px solid #232B3E; color: #E8ECF4; text-decoration: none; }
+nav a.active { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+h1 { font-size: 28px; margin: 0 0 16px; }
+h2 { font-size: 20px; margin: 36px 0 10px; padding-top: 12px; border-top: 1px solid #232B3E; }
+h3 { font-size: 16px; margin: 24px 0 8px; }
+p, li { color: #C9D0DE; }
+a { color: #60A5FA; }
+code { font: 12.5px/1.5 "SF Mono", Menlo, Consolas, monospace; background: #1A2133; border-radius: 6px; padding: 1px 6px; color: #E8ECF4; }
+pre { background: #0A0E17; border: 1px solid #232B3E; border-radius: 12px; padding: 14px 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232B3E; vertical-align: top; }
+th { color: #8B93A7; font-weight: 600; }
+strong { color: #E8ECF4; }
+</style></head><body><main><nav><a href="guida-gui.html">Interfaccia grafica</a><a href="guida-cli.html" class="active">Riga di comando</a><a class="lang" href="guide-cli.html">English</a></nav><h1>ReNameo — Guida alla riga di comando</h1>
+<p>Tutto quello che fa l'interfaccia grafica si può fare anche dal terminale, anche in modo automatico (script, cron, cartelle monitorate). Per la finestra vedi <a href="guida-gui.html">GUIDA_GUI.md</a>.</p>
+<h2>Come lanciarlo</h2>
+<p>L'app contiene già il comando. Il modo più comodo è collegarlo come <code>renameo</code>:</p>
+<pre><code>sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo
+renameo -version</code></pre>
+<p>In alternativa:</p>
+<pre><code>dist/ReNameo.app/Contents/MacOS/ReNameo -help     # app appena compilata
+./renameo.sh -help                                # dai sorgenti (serve JFX_DIR)
+java -jar dist/ReNameo_1.0.0.jar -help            # solo CLI</code></pre>
+<p>Senza argomenti si apre la finestra; con argomenti ReNameo lavora nel terminale ed esce. I percorsi relativi sono risolti rispetto alla cartella corrente.</p>
+<p>Il completamento con Tab per bash/zsh si trova in <code>tools/bash_completion.d/renameo</code>:</p>
+<pre><code>source tools/bash_completion.d/renameo                                          # bash
+autoload -U +X bashcompinit &amp;&amp; bashcompinit &amp;&amp; source tools/bash_completion.d/renameo   # zsh</code></pre>
+<h2>Regola d'oro: prima prova con <code>--action test</code></h2>
+<p><code>--action test</code> mostra cosa succederebbe senza toccare nessun file:</p>
+<pre><code>renameo -rename -r ~/Downloads/Film --action test -non-strict</code></pre>
+<pre><code>Ignore 2 files that are not video, audio or subtitles
+Rename movies using [TheMovieDB]
+[TEST] from [~/Downloads/Film/Dune (2021)/movie.mkv] to [~/Downloads/Film/Dune (2021)/Dune (2021).mkv]
+Processed 1 files</code></pre>
+<p>Quando il risultato è quello atteso, togli <code>--action test</code>.</p>
+<h2>Esempi pratici</h2>
+<h3>Rinominare film e serie sul posto</h3>
+<pre><code>renameo -rename -r ~/Downloads/Film -non-strict</code></pre>
+<p>Senza <code>--db</code> ReNameo riconosce da solo, file per file, se si tratta di un film, un episodio o musica. <code>-non-strict</code> permette di scegliere automaticamente il risultato migliore; senza, vengono accettati solo gli abbinamenti certi.</p>
+<h3>Organizzare una libreria Plex o Jellyfin</h3>
+<pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
+renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>
+<p>Risultato con <code>--naming plex</code>:</p>
+<pre><code>/Volumes/Media/Movies/Dune (2021) {tmdb-438631}/Dune (2021) {tmdb-438631}.mkv
+/Volumes/Media/Movies/Dune (2021) {tmdb-438631}/Deleted Scenes/Sandworm Test.mkv
+/Volumes/Media/TV Shows/Silo (2023) {tmdb-125988}/Season 01/Silo (2023) - S01E01 - Freedom Day.mkv</code></pre>
+<p>Con <code>--naming jellyfin</code> la cartella delle serie è <code>Shows</code> e gli ID sono scritti come <code>[tmdbid-438631]</code>. Gli speciali vanno in <code>Season 00</code>, gli extra nella loro sottocartella (<code>Deleted Scenes</code>, <code>Featurettes</code>, <code>Trailers</code>, …).</p>
+<h3>Solo serie o solo film, con una sorgente precisa</h3>
+<pre><code>renameo -rename ~/Serie/Silo --db TheMovieDB::TV --format &quot;{n} - {s00e00} - {t}&quot; -non-strict
+renameo -rename ~/Film --db TheMovieDB --format &quot;{n} ({y})&quot;
+renameo -rename ~/Anime/OnePiece --db AniDB --order Absolute -non-strict
+renameo -rename ~/Musica --db ID3 --format &quot;{artist}/{album}/{pi.pad(2)} - {t}&quot;</code></pre>
+<h3>Forzare la ricerca quando il nome è ambiguo</h3>
+<pre><code>renameo -rename ~/Serie/Silo --q &quot;Silo 2023&quot; --db TheMovieDB::TV -non-strict</code></pre>
+<h3>Copiare invece di spostare, e gestire i conflitti</h3>
+<pre><code>renameo -rename -r ~/Downloads --naming plex --output /Volumes/Media --action copy --conflict auto -non-strict</code></pre>
+<p><code>--conflict auto</code> sostituisce il file esistente solo se il nuovo è di qualità migliore; <code>index</code> aggiunge un numero; <code>skip</code> (predefinito) lascia stare.</p>
+<h3>Scaricare i sottotitoli mancanti</h3>
+<pre><code>renameo -get-subtitles ~/Film/Dune --lang it</code></pre>
+<p>Richiede una API key e un account di opensubtitles.com: accedi una volta dall'app (scheda Subtitles, pulsante utente) e la riga di comando userà la stessa chiave e lo stesso account.</p>
+<h3>Poster, fanart e metadati da TheMovieDB</h3>
+<pre><code>renameo /Volumes/Media/Movies --apply artwork,metadata -r</code></pre>
+<p><code>artwork</code> scarica poster e fanart da TheMovieDB accanto ai file; <code>metadata</code> salva le informazioni negli attributi estesi del file. <code>nfo</code> e <code>url</code> creano file <code>.nfo</code>/<code>.url</code> per Kodi e sono facoltativi. <code>--apply</code> si esegue come passaggio separato, dopo la rinomina.</p>
+<h3>Altro</h3>
+<pre><code>renameo -list --q &quot;Silo&quot; --format &quot;{s00e00} - {t}&quot;          # elenco episodi
+renameo -mediainfo ~/Film --format &quot;{fn} {vf} {vc} {ac}&quot;      # info tecniche
+renameo -revert ~/Film/Dune                                   # annulla l&#x27;ultima rinomina di quei file
+renameo -check ~/Film                                         # crea/verifica checksum SFV</code></pre>
+<h2>Opzioni</h2>
+<table><thead><tr><th>Opzione</th><th>Valori</th><th>Descrizione</th></tr></thead><tbody><tr><td><code>-rename</code></td><td>| Rinomina i file indicati.</td></tr><tr><td><code>-r</code></td><td>| Entra anche nelle sottocartelle.</td></tr><tr><td><code>--db</code></td><td><code>TheMovieDB::TV</code>, <code>TheTVDB</code>, <code>TVmaze</code>, <code>AniDB</code>, <code>TheMovieDB</code>, <code>OMDb</code>, <code>AcoustID</code>, <code>ID3</code>, <code>xattr</code></td><td>Sorgente dei dati. Senza: rilevamento automatico.</td></tr><tr><td><code>--format</code></td><td>espressione</td><td>Schema del nuovo nome, vedi sotto.</td></tr><tr><td><code>--naming</code></td><td><code>plex</code>, <code>jellyfin</code>, <code>emby</code>, <code>kodi</code></td><td>Struttura pronta per i media server; usala con <code>--output</code>. Viene ignorata se c'è anche <code>--format</code>.</td></tr><tr><td><code>--output</code></td><td>cartella</td><td>Cartella di destinazione per i nomi relativi (la radice della libreria).</td></tr><tr><td><code>--action</code></td><td><code>move</code> (predefinito), <code>copy</code>, <code>keeplink</code>, <code>symlink</code>, <code>hardlink</code>, <code>clone</code>, <code>test</code></td><td>Cosa fare con i file.</td></tr><tr><td><code>--conflict</code></td><td><code>skip</code> (predefinito), <code>override</code>, <code>auto</code>, <code>index</code>, <code>fail</code></td><td>Cosa fare se la destinazione esiste già.</td></tr><tr><td><code>-non-strict</code></td><td>| Abbinamento più aggressivo, sceglie da solo tra più risultati.</td></tr><tr><td><code>--q</code></td><td>testo</td><td>Forza il nome da cercare.</td></tr><tr><td><code>--lang</code></td><td><code>it</code>, <code>en</code>, …</td><td>Lingua dei titoli (predefinita <code>en</code>).</td></tr><tr><td><code>--order</code></td><td><code>Airdate</code> (predefinito), <code>DVD</code>, <code>Absolute</code>, <code>AbsoluteAirdate</code></td><td>Ordine degli episodi.</td></tr><tr><td><code>--filter</code></td><td>espressione</td><td>Scarta i risultati che non soddisfano la condizione, es. <code>&quot;y &gt; 2000&quot;</code>.</td></tr><tr><td><code>--file-filter</code></td><td>espressione</td><td>Scarta i file in ingresso, es. <code>&quot;f.length() &gt; 100*1024*1024&quot;</code>.</td></tr><tr><td><code>-get-subtitles</code></td><td>| Scarica i sottotitoli mancanti.</td></tr><tr><td><code>-list</code></td><td>| Stampa un elenco di episodi (con <code>--q</code>).</td></tr><tr><td><code>-mediainfo</code></td><td>| Stampa le informazioni tecniche dei file.</td></tr><tr><td><code>-revert</code></td><td>| Riporta i file al nome precedente usando la cronologia.</td></tr><tr><td><code>--apply</code></td><td><code>artwork</code>, <code>metadata</code>, <code>nfo</code>, <code>url</code></td><td>Operazioni aggiuntive sui file già rinominati.</td></tr><tr><td><code>-exec</code></td><td>comando</td><td>Esegue un comando per ogni file, es. <code>-exec echo {f}</code>.</td></tr><tr><td><code>--log</code></td><td><code>all</code>, <code>fine</code>, <code>info</code>, <code>warning</code></td><td>Quanto dettaglio stampare.</td></tr><tr><td><code>--log-file</code></td><td>file</td><td>Salva il log su file.</td></tr><tr><td><code>-no-history</code>, <code>-clear-history</code></td><td>| Disattiva o svuota la cronologia delle rinomine.</td></tr><tr><td><code>-clear-cache</code>, <code>-clear-prefs</code></td><td>| Svuota la cache o le impostazioni.</td></tr><tr><td><code>-version</code>, <code>-help</code></td><td>| Versione e aiuto.</td></tr></tbody></table>
+<p>Il comando termina con codice <strong>0</strong> se tutto è andato a buon fine e <strong>1</strong> se nessun file è stato elaborato o c'è stato un errore: utile negli script.</p>
+<h2>Formati (<code>--format</code>)</h2>
+<p>Il testo tra <code>{…}</code> viene sostituito con i dati del file; il resto resta com'è. Una <code>/</code> crea sottocartelle.</p>
+<table><thead><tr><th>Formato</th><th>Risultato</th></tr></thead><tbody><tr><td><code>{n} ({y})</code></td><td><code>Dune (2021)</code></td></tr><tr><td><code>{n} - {s00e00} - {t}</code></td><td><code>Silo - S01E01 - Freedom Day</code></td></tr><tr><td><code>{n}/Season {s.pad(2)}/{n} - {s00e00} - {t}</code></td><td><code>Silo/Season 01/Silo - S01E01 - Freedom Day</code></td></tr><tr><td><code>{n} ({y}) [{vf} {vc}]</code></td><td><code>Dune (2021) [1080p x265]</code></td></tr><tr><td><code>/Volumes/Media/{plex}</code></td><td>layout Plex completo</td></tr><tr><td><code>{n} ({y})/{extra}/{extraTitle}</code></td><td><code>Dune (2021)/Deleted Scenes/Sandworm Test</code> (per gli extra)</td></tr></tbody></table>
+<p>Binding principali:</p>
+<table><thead><tr><th>Binding</th><th>Contenuto</th></tr></thead><tbody><tr><td><code>{n}</code> <code>{y}</code></td><td>nome e anno dal database (maiuscole e minuscole corrette)</td></tr><tr><td><code>{s}</code> <code>{e}</code> <code>{s00e00}</code> <code>{sxe}</code> <code>{absolute}</code> <code>{t}</code></td><td>stagione, episodio, codici, numero assoluto, titolo</td></tr><tr><td><code>{vf}</code> <code>{vc}</code> <code>{ac}</code> <code>{channels}</code></td><td>risoluzione, codec video, codec audio, canali</td></tr><tr><td><code>{lang}</code> <code>{subt}</code></td><td>lingua (per sottotitoli)</td></tr><tr><td><code>{tmdbid}</code> <code>{imdbid}</code> <code>{genre}</code> <code>{director}</code> <code>{rating}</code> <code>{certification}</code></td><td>dati TheMovieDB</td></tr><tr><td><code>{plex}</code> <code>{jellyfin}</code> <code>{emby}</code> <code>{kodi}</code></td><td>percorso completo secondo il media server (extra compresi)</td></tr><tr><td><code>{extra}</code> <code>{extraTitle}</code></td><td>cartella e titolo dell'extra (vuoti per i contenuti principali)</td></tr><tr><td><code>{fn}</code> <code>{ext}</code> <code>{f}</code> <code>{folder}</code></td><td>nome, estensione, percorso e cartella del file originale</td></tr></tbody></table>
+<p>Un formato può anche stare in un file: <code>--format ~/formati/serie.groovy</code>.</p>
+<h2>Quali file vengono presi</h2>
+<p>Solo <strong>video, audio e sottotitoli</strong>, più le cartelle disco BDMV/VIDEO_TS. Il resto (<code>.nfo</code>, <code>.jpg</code>, <code>.png</code>, <code>.txt</code>, …) viene ignorato e il log lo dice (<code>Ignore N files that are not video, audio or subtitles</code>). I <em>sample</em> sono sempre esclusi.</p>
+<h2>Extra (scene eliminate, trailer, …)</h2>
+<p>Un file è considerato un extra se:</p>
+<ul><li>sta in una cartella come <code>Deleted Scenes</code>, <code>Behind The Scenes</code>, <code>Featurettes</code>, <code>Interviews</code>, <code>Trailers</code>, <code>Shorts</code>, <code>Scenes</code>, <code>Extras</code>, <code>Other</code>, <code>Scene Eliminate</code>, <code>Dietro le Quinte</code>, <code>Contenuti Speciali</code>;</li><li>oppure ha un suffisso alla Plex (<code>-deleted</code>, <code>-trailer</code>, <code>-featurette</code>, <code>-interview</code>, <code>-behindthescenes</code>, <code>-scene</code>, <code>-short</code>, <code>-other</code>);</li><li>oppure contiene parole come <em>deleted scenes</em>, <em>making of</em>, <em>featurette</em>, <em>trailer</em>, <em>bloopers</em>.</li></ul>
+<p>L'extra viene associato al film della cartella superiore e mantiene il proprio titolo:</p>
+<ul><li>con <code>--naming</code> o <code>{plex}</code>/<code>{jellyfin}</code> va nella sottocartella corretta;</li><li>senza formato diventa <code>Titolo-deleted.mkv</code>, <code>Titolo-trailer.mkv</code> e così via, che Plex e Jellyfin riconoscono accanto al film.</li></ul>
+<h2>Serie lunghe e anime</h2>
+<p>Sono riconosciuti stagioni oltre la 100 ed episodi oltre il 1000: <code>S01E1071</code>, <code>S101E05</code>, <code>S1001E02</code>, <code>3x1071</code>, <code>Episode 1071</code>, <code>EP1071</code>, <code>S01E1071-E1072</code>, <code>Show - 1071 - Titolo</code>, <code>[Gruppo] Show - 1100v2 [1080p]</code> e le cartelle <code>Season 101</code>, <code>Stagione 120</code>, <code>S120</code>. Per gli anime con numerazione assoluta usa <code>--order Absolute</code>.</p>
+<h2>Informazioni tecniche dei video</h2>
+<p>I binding <code>{vf}</code>, <code>{vc}</code>, <code>{ac}</code>, <code>{channels}</code>, il comando <code>-mediainfo</code>, <code>--conflict auto</code> (che confronta la qualità) e il riconoscimento dei film divisi in più parti leggono i file con la libreria MediaInfo. Su macOS va installata una volta con Homebrew:</p>
+<pre><code>brew install libmediainfo</code></pre>
+<p>ReNameo la trova da solo in <code>/opt/homebrew/lib</code>. Senza, questi valori restano vuoti ma la rinomina funziona lo stesso.</p>
+<h2>Automazione</h2>
+<p>Esempio di script che sistema ogni notte la cartella dei download in una libreria Jellyfin, registrando l'esito:</p>
+<pre><code>#!/bin/bash
+renameo -rename -r &quot;$HOME/Downloads/Completati&quot; \
+  --naming jellyfin --output /Volumes/Media \
+  --action move --conflict auto -non-strict \
+  --log-file &quot;$HOME/Library/Logs/renameo.log&quot;</code></pre>
+<h2>Dove vengono salvati i dati</h2>
+<ul><li>Cache, cronologia e log: <code>~/.renameo</code> (le cartelle <code>~/.filebot</code> di versioni precedenti vengono adottate automaticamente).</li><li>Impostazioni: preferenze utente di Java (<code>-clear-prefs</code> per azzerarle).</li></ul></main></body></html>

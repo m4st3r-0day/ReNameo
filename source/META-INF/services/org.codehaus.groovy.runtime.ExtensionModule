@@ -1,0 +1,3 @@
+moduleName=renameo-scripting-extension
+moduleVersion=1.0
+extensionClasses=net.renameo.cli.ScriptShellMethods,net.renameo.format.ExpressionFormatMethods
