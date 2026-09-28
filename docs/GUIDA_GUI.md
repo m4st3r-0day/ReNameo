@@ -5,9 +5,18 @@ ReNameo rinomina e organizza **film, serie TV, anime, musica e sottotitoli** usa
 ## Avvio
 
 - **App**: apri `ReNameo.app` (in `dist/` dopo la build, oppure dove l'hai copiata, ad esempio `/Applicazioni`).
-- **Da sorgente**: `./renameo.sh` nella cartella del progetto (serve il JavaFX SDK, vedi README).
+- **Da sorgente**: `./renameo.sh` nella cartella del progetto, dopo `ant fatjar` (serve il JDK 21, vedi README).
 
 Al primo avvio ReNameo recupera automaticamente impostazioni, preset e cronologia di eventuali versioni precedenti.
+
+## Chiavi API
+
+ReNameo cerca film e serie su **TheMovieDB**, che richiede una chiave personale gratuita:
+
+1. crea un account su [themoviedb.org](https://www.themoviedb.org/signup);
+2. apri *Settings → API* ([link diretto](https://www.themoviedb.org/settings/api)), richiedi una chiave per uso personale e copia la **API Key** (quella corta, non l'*API Read Access Token*).
+
+Al primo avvio, se manca la chiave, ReNameo apre da solo la finestra **API keys**: incolla la chiave e premi **Save**. La chiave viene verificata subito con TheMovieDB e salvata nel Portachiavi di macOS. Nella stessa finestra puoi aggiungere, se vuoi, le chiavi di OMDb, Fanart.tv e AcoustID. Per cambiarle più tardi: **Impostazioni → API keys**, oppure *API keys* nella command palette (⌘K).
 
 ## La finestra
 
@@ -33,7 +42,7 @@ Ogni riga mostra il tipo (film, serie, musica), il nome, la dimensione, il forma
 
 - **Match** (⌘M) riconosce da solo, file per file, film, episodi e musica: è la scelta giusta quasi sempre. Se un gruppo di file viene classificato male (per esempio un film nuovo scambiato per una serie), ReNameo riprova in automatico con l'altro tipo, senza chiedere nulla; ti chiede solo i casi davvero ambigui.
 - **Fetch Metadata** apre l'elenco delle sorgenti, se vuoi sceglierne una precisa:
-  - *Episode Mode*: TheMovieDB (serie), TVmaze, AniDB (TheTVDB è indicato come non disponibile: la sua vecchia API è stata chiusa);
+  - *Episode Mode*: TheMovieDB (serie), TVmaze e AniDB;
   - *Movie Mode*: TheMovieDB, OMDb;
   - *Music Mode*: AcoustID, tag ID3;
   - *Smart Mode* → **Autodetect**, lo stesso riconoscimento automatico del pulsante Match.
@@ -215,7 +224,46 @@ Nomi generici o offuscati come `movie.mkv`, `VTS_01_1.mkv` o `a3f9c2e1b7d4.mkv` 
 - **Night mode**: tema scuro (predefinito);
 - **Compact rows**: righe più basse per liste lunghe;
 - **Accent color**: il colore di pulsanti e selezioni;
+- **Tools**: *API keys*, *Watch folder*, *Update offline index* e *Plugins*, spiegati qui sotto;
 - il link alla guida e la versione dell'app.
+
+## Cartella sorvegliata
+
+**Impostazioni → Watch folder** sceglie una cartella (per esempio Downloads), i nomi (Plex, Jellyfin, Emby, Kodi o i nomi predefiniti) e l'azione (sposta, copia, hard link, link simbolico). Mentre ReNameo è aperto, i nuovi file video, audio e sottotitoli che arrivano lì vengono rinominati ogni pochi minuti.
+
+- I file modificati negli ultimi 2 minuti vengono lasciati stare, così i download possono finire.
+- I file che non si riescono a riconoscere non vengono ritentati finché non cambiano.
+- Ogni rinomina finisce nella cronologia e si può annullare; un messaggio indica quanti file sono stati rinominati.
+
+Per un server o un NAS sempre acceso conviene la modalità *watch* dell'immagine Docker (vedi `docker/README.md`).
+
+## Aggiornare l'indice offline
+
+ReNameo contiene un indice dei film e delle serie più popolari, che permette di riconoscere subito anche i titoli italiani (*Il Trono di Spade* → *Game of Thrones*). **Impostazioni → Update offline index** lo riscarica da TheMovieDB, in inglese e nella lingua del sistema, in circa 20 secondi. Il nuovo indice viene usato dal prossimo avvio.
+
+## Plugin
+
+I plugin sono script Groovy nella cartella `plugins` dei dati di ReNameo (`~/.renameo/plugins` su macOS). **Impostazioni → Plugins** li elenca, li attiva o disattiva e mostra gli eventuali errori di caricamento; *Open folder* apre la cartella e *Reload* li ricarica.
+
+Un plugin può reagire a ogni rinomina (app, cartella sorvegliata, riga di comando, Docker) e aggiungere valori ai formati, da usare come `{plugin.nome}`:
+
+```groovy
+description "Aggiorna la libreria di Jellyfin dopo le rinomine"
+
+onRename { from, to ->
+    log "rinominato ${from.name} in ${to.name}"
+}
+
+binding("risoluzione") { m ->      // {plugin.risoluzione}; m contiene {n}, {y}, {height} …
+    m.height >= 2000 ? "4K" : "HD"
+}
+```
+
+Esempi pronti (aggiornamento di Jellyfin, aggiornamento di Plex, registro delle rinomine) sono in `docs/plugins` nel repository. I plugin girano con i tuoi permessi: installa solo quelli di cui ti fidi. I formati invece restano protetti e non possono eseguire programmi né modificare file.
+
+## Anteprima dei poster
+
+Con **After Rename → Download poster & fanart** attivo, l'anteprima delle modifiche mostra anche i poster dei film e delle serie per cui verranno scaricate le immagini: togli la spunta a quelli che non vuoi.
 
 ## Altre sezioni
 
@@ -244,4 +292,4 @@ Messaggi di errore: *Wrong username or password* indica credenziali sbagliate; *
 - **Film sbagliato tra omonimi**: rinomina prima la cartella in formato *Titolo (Anno)*: ReNameo le dà la precedenza.
 - **Etichetta Exists**: il file di destinazione c'è già; cambia formato o elimina il duplicato.
 - **Risoluzione e codec vuoti** (`{vf}`, `{vc}`, `{ac}`): installa la libreria MediaInfo con `brew install libmediainfo`.
-- **TheTVDB non disponibile**: la vecchia API è stata dismessa; usa TheMovieDB (predefinito) o TVmaze.
+- **TheTVDB**: non è più tra le fonti, perché la sua vecchia API è stata chiusa e la nuova è a pagamento. I preset che lo usavano passano automaticamente a TheMovieDB.

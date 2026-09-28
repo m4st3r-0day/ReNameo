@@ -37,7 +37,11 @@ public class OMDbClient implements MovieIdentificationService {
 
 	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(2, 1, TimeUnit.SECONDS);
 
-	private String apikey;
+	private volatile String apikey;
+
+	public void setApiKey(String apikey) {
+		this.apikey = apikey;
+	}
 
 	public OMDbClient(String apikey) {
 		this.apikey = apikey;

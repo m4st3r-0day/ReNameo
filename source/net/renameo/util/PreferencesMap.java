@@ -9,6 +9,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
@@ -231,7 +233,7 @@ public class PreferencesMap<T> implements Map<String, T> {
 
 			if (json != null) {
 				try {
-					return type.cast(JsonReader.jsonToJava(json));
+					return type.cast(JsonReader.jsonToJava(withType(json)));
 				} catch (Exception e) {
 					debug.log(Level.WARNING, e, e::getMessage);
 				}
@@ -242,8 +244,21 @@ public class PreferencesMap<T> implements Map<String, T> {
 
 		@Override
 		public void put(Preferences prefs, String key, T value) {
-			prefs.put(key, JsonWriter.objectToJson(value));
+			// plain JSON without Java class names, so saved settings survive renamed classes
+			Map<String, Object> options = new HashMap<String, Object>();
+			options.put(JsonWriter.TYPE, false);
+			prefs.put(key, JsonWriter.objectToJson(value, options));
 		}
+
+		/**
+		 * The stored value may name an old class (e.g. before a package rename) or none at all: always read it as the current type.
+		 */
+		private String withType(String json) {
+			String body = TOP_LEVEL_TYPE.matcher(json).replaceFirst("{");
+			return "{\"@type\":\"" + type.getName() + "\"" + (body.trim().equals("{}") ? "}" : "," + body.trim().substring(1));
+		}
+
+		private static final Pattern TOP_LEVEL_TYPE = Pattern.compile("^\\s*\\{\\s*\"@type\"\\s*:\\s*\"[^\"]*\"\\s*,?");
 	}
 
 	public static class PreferencesEntry<T> implements Entry<String, T> {

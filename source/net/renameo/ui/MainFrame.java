@@ -213,7 +213,7 @@ public class MainFrame extends JFrame {
 			});
 		}));
 
-		installAction(this.getRootPane(), getKeyStroke(VK_F1, 0), newAction("Help", evt -> GettingStartedStage.start()));
+		installAction(this.getRootPane(), getKeyStroke(VK_F1, 0), newAction("Help", evt -> openURI(getEmbeddedHelpURL())));
 
 		SwingEventBus.getInstance().register(this);
 	}
@@ -295,7 +295,11 @@ public class MainFrame extends JFrame {
 		commands.add(newAction("Toggle sidebar", evt -> setSidebarCollapsed(!Boolean.parseBoolean(persistentSidebarCollapsed.getValue()))));
 		commands.add(newAction("Toggle night mode", evt -> NightTheme.setNightMode(!NightTheme.isNightMode())));
 		commands.add(newAction("Open settings", evt -> showSettingsPopup(sidebarSettings)));
-		commands.add(newAction("Open user guide", evt -> GettingStartedStage.start()));
+		commands.add(newAction("Open user guide", evt -> openURI(getEmbeddedHelpURL())));
+		commands.add(newAction("API keys", evt -> ApiKeysDialog.show(this, false)));
+		commands.add(newAction("Watch folder", evt -> WatchFolderDialog.show(this)));
+		commands.add(newAction("Update offline index", evt -> OfflineIndexAction.run(this)));
+		commands.add(newAction("Plugins", evt -> PluginsDialog.show(this)));
 		return commands;
 	}
 
@@ -398,7 +402,7 @@ public class MainFrame extends JFrame {
 				search.selectAll();
 			}));
 
-			JButton help = Modern.iconButton(newAction("Help", evt -> GettingStartedStage.start()), Glyph.Shape.HELP, "Getting Started (F1)");
+			JButton help = Modern.iconButton(newAction("Help", evt -> openURI(getEmbeddedHelpURL())), Glyph.Shape.HELP, "User guide (F1)");
 
 			add(brand);
 			add(version, "gapleft 4");

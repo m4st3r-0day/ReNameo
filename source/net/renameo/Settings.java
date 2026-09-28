@@ -122,7 +122,11 @@ public final class Settings {
 
 	public static FileChooser getPreferredFileChooser() {
 		// use the native file dialog (modern platform look) by default, allow override via -Dnet.renameo.UserFiles.fileChooser=Swing
-		return FileChooser.valueOf(System.getProperty("net.renameo.UserFiles.fileChooser", "AWT"));
+		try {
+			return FileChooser.valueOf(System.getProperty("net.renameo.UserFiles.fileChooser", "AWT"));
+		} catch (IllegalArgumentException e) {
+			return FileChooser.AWT; // e.g. the JavaFX chooser of earlier versions
+		}
 	}
 
 	public static int getPreferredThreadPoolSize() {

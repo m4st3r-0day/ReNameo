@@ -37,6 +37,10 @@ public class ReleaseInfoTest {
 		assertEquals("[]_Infinite_Stratos_2_-_01_[]", clean(info.getReleaseGroupPattern(true), "[HorribleSubs]_Infinite_Stratos_2_-_01_[HorribleSubs]"));
 		assertEquals("_Infinite_Stratos_2_-_01_", clean(info.getReleaseGroupPattern(false), "HorribleSubs_Infinite_Stratos_2_-_01_HorribleSubs"));
 
+		// a release group name at the start of a real title is part of the title
+		assertEquals("F1 - The Movie (2025)", clean(info.getReleaseGroupPattern(false), "F1 - The Movie (2025)"));
+		assertEquals("F1.The.Movie.2025", clean(info.getReleaseGroupPattern(false), "F1.The.Movie.2025"));
+
 		assertEquals("DVL", info.getReleaseGroup("Movie-DVL"));
 		assertEquals("iMBT", info.getReleaseGroup("The.Legend.Of.Zorro-iMBT"));
 

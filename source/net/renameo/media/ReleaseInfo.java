@@ -15,6 +15,8 @@ import static net.renameo.util.StringUtilities.*;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.text.Collator;
@@ -339,8 +341,8 @@ public class ReleaseInfo {
 		// match 1..N group patterns (e.g. GROUP[INDEX])
 		String group = "((?<!\\p{Alnum})" + or(releaseGroup.get()) + "(?!\\p{Alnum})[\\p{Punct}]??)+";
 
-		// group pattern at beginning or ending of the string
-		String[] groupHeadTail = { "(?<=^[\\P{Alnum}]*)" + group, group + "(?=[\\P{Alnum}]*$)" };
+		// group pattern at the end of the string, or at the beginning in brackets or anime style with an underscore ("[HorribleSubs] Title", "HorribleSubs_Title"), so titles like "F1 - The Movie" stay intact
+		String[] groupHeadTail = { "(?<=^\\[|^\\()" + group, "^" + group + "(?=_)", group + "(?=[\\P{Alnum}]*$)" };
 
 		return compile(or(groupHeadTail), strict ? 0 : CASE_INSENSITIVE);
 	}
@@ -497,14 +499,58 @@ public class ReleaseInfo {
 
 	protected <A> Resource<A[]> resource(String name, Duration expirationTime, Function<String, A> parse, IntFunction<A[]> generator) {
 		return () -> {
-			Cache cache = Cache.getCache("data", CacheType.Persistent);
-			byte[] bytes = cache.bytes(name, n -> new URL(getProperty(n)), XZInputStream::new).expire(refreshDuration.optional().orElse(expirationTime)).get();
-
-			// all data files are UTF-8 encoded XZ compressed text files
-			Stream<String> lines = NEWLINE.splitAsStream(UTF_8.decode(ByteBuffer.wrap(bytes)));
-
-			return lines.filter(s -> s.length() > 0).map(parse).filter(Objects::nonNull).toArray(generator);
+			// a property may list several files, e.g. a current index followed by an archive
+			Stream<String> lines = Stream.empty();
+			for (String location : SPACE.split(getProperty(name).trim())) {
+				// all data files are UTF-8 encoded XZ compressed text files
+				byte[] bytes = read(name, location, expirationTime);
+				lines = Stream.concat(lines, NEWLINE.splitAsStream(UTF_8.decode(ByteBuffer.wrap(bytes))));
+			}
+			return lines.filter(s -> s.length() > 0).map(parse).filter(Objects::nonNull).distinct().toArray(generator);
 		};
+	}
+
+	private byte[] read(String name, String location, Duration expirationTime) throws Exception {
+		URL url = toURL(location);
+
+		// a file of the same name in the data folder (e.g. an offline index updated from the app) replaces the bundled one
+		if (location.startsWith(RESOURCE)) {
+			File local = getUserDataFile(location.substring(location.lastIndexOf('/') + 1));
+			if (local.isFile() && local.length() > 0) {
+				url = local.toURI().toURL();
+			}
+		}
+
+		// data bundled with the application or on disk is read as is, only downloads are cached
+		if (!url.getProtocol().startsWith("http")) {
+			try (InputStream in = new XZInputStream(url.openStream())) {
+				return in.readAllBytes();
+			}
+		}
+
+		Cache cache = Cache.getCache("data", CacheType.Persistent);
+		URL remote = url;
+		return cache.bytes(name + "|" + location, n -> remote, XZInputStream::new).expire(refreshDuration.optional().orElse(expirationTime)).get();
+	}
+
+	private static URL toURL(String location) throws Exception {
+		if (location.startsWith(RESOURCE)) {
+			URL url = ReleaseInfo.class.getResource(location.substring(RESOURCE.length()));
+			if (url == null) {
+				throw new FileNotFoundException("Missing bundled data: " + location);
+			}
+			return url;
+		}
+		return new URL(location);
+	}
+
+	private static final String RESOURCE = "resource:";
+
+	/**
+	 * Data files here take precedence over the ones bundled with the application.
+	 */
+	public static File getUserDataFile(String name) {
+		return ApplicationFolder.AppData.resolve("data/" + name);
 	}
 
 	protected String getProperty(String name) {

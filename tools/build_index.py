@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build local TMDB-based series/movie search index for FileBot 4.8.
+"""Build the offline TMDB series/movie index bundled with ReNameo (the app can also do this: Settings > Update offline index).
 
 Produces lzma (XZ) compressed tab-separated data files compatible with
 ReleaseInfo.parseSeries / parseMovie:
@@ -23,11 +23,18 @@ LANGS = ("en-US", "it-IT")
 
 
 def api_key():
-    with open("app.properties", encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("apikey.themoviedb:"):
-                return line.split(":", 1)[1].strip()
-    raise SystemExit("apikey.themoviedb not found in app.properties")
+    """TMDB_API_KEY from the environment, otherwise apikey.themoviedb from profile.properties."""
+    import os
+    key = os.environ.get("TMDB_API_KEY", "").strip()
+    if key:
+        return key
+    for name in ("profile.properties", "app.properties"):
+        if os.path.exists(name):
+            with open(name, encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("apikey.themoviedb:") and line.split(":", 1)[1].strip():
+                        return line.split(":", 1)[1].strip()
+    raise SystemExit("Set TMDB_API_KEY (free key from https://www.themoviedb.org/settings/api)")
 
 
 def fetch(path, lang, page):

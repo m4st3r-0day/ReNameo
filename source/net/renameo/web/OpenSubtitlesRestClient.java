@@ -22,11 +22,16 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.swing.Icon;
+
 import net.renameo.Language;
+import net.renameo.ResourceManager;
 import net.renameo.util.FileUtilities;
 import net.renameo.web.OpenSubtitlesSubtitleDescriptor.Property;
 
@@ -35,7 +40,7 @@ import net.renameo.web.OpenSubtitlesSubtitleDescriptor.Property;
  *
  * Every request needs an API key (free, created at opensubtitles.com under "API consumers"); downloads count against the quota of the signed in user.
  */
-public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
+public class OpenSubtitlesRestClient implements SubtitleProvider, VideoHashSubtitleService, MovieIdentificationService {
 
 	private static final String DEFAULT_API = "https://api.opensubtitles.com/api/v1";
 
@@ -55,8 +60,17 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 	private final Map<String, Object> responseCache = new ConcurrentHashMap<String, Object>();
 
 	public OpenSubtitlesRestClient(String name, String version) {
-		super(name, version);
 		this.userAgent = name + " v" + version;
+	}
+
+	@Override
+	public String getIdentifier() {
+		return "OpenSubtitles";
+	}
+
+	@Override
+	public Icon getIcon() {
+		return ResourceManager.getIcon("search.opensubtitles");
 	}
 
 	@Override
@@ -80,18 +94,15 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 		this.api = DEFAULT_API;
 	}
 
-	@Override
 	public synchronized void setUser(String username, String password_md5) {
 		// the REST API needs the real password, which the legacy settings only store as MD5 hash
 		setCredentials(username, "");
 	}
 
-	@Override
 	public synchronized boolean isAnonymous() {
 		return username.isEmpty() || password.isEmpty();
 	}
 
-	@Override
 	public synchronized void login() throws Exception {
 		if (token != null || isAnonymous()) {
 			return;
@@ -107,7 +118,6 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 		}
 	}
 
-	@Override
 	public synchronized void logout() {
 		if (token != null) {
 			try {
@@ -128,12 +138,10 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 		return getMap(request("GET", "/infos/user", null, null), "data");
 	}
 
-	@Override
 	public Map<?, ?> getServerInfo() throws Exception {
 		return getUserInfo();
 	}
 
-	@Override
 	public Map<?, ?> getDownloadLimits() throws Exception {
 		return getUserInfo();
 	}
@@ -175,6 +183,19 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 	}
 
 	@Override
+	public List<SubtitleDescriptor> getSubtitleList(SubtitleSearchResult searchResult, int[][] episodeFilter, Locale locale) throws Exception {
+		if (episodeFilter == null || episodeFilter.length == 0) {
+			return getSubtitleList(searchResult, -1, -1, locale);
+		}
+
+		// one request per season / episode of the filter, e.g. "season:2" or "season:1 episode:3"
+		Set<SubtitleDescriptor> subtitles = new LinkedHashSet<SubtitleDescriptor>();
+		for (int[] it : episodeFilter) {
+			subtitles.addAll(getSubtitleList(searchResult, it[0], it.length > 1 ? it[1] : -1, locale));
+		}
+		return new ArrayList<SubtitleDescriptor>(subtitles);
+	}
+
 	public synchronized List<SubtitleDescriptor> getSubtitleList(SubtitleSearchResult searchResult, int season, int episode, Locale locale) throws Exception {
 		Map<String, Object> parameters = new TreeMap<String, Object>();
 		addLanguage(parameters, locale);
@@ -220,24 +241,12 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 		return results;
 	}
 
-	@Override
 	public Map<File, List<SubtitleDescriptor>> getSubtitleListByHash(File[] files, Locale locale) throws Exception {
 		return getSubtitleList(files, locale);
 	}
 
-	@Override
 	public Map<File, List<SubtitleDescriptor>> getSubtitleListByTag(File[] files, Locale locale) throws Exception {
 		return getSubtitleList(files, locale);
-	}
-
-	@Override
-	public synchronized CheckResult checkSubtitle(File videoFile, File subtitleFile) throws Exception {
-		throw new UnsupportedOperationException("OpenSubtitles no longer accepts uploads from applications. Please upload subtitles on opensubtitles.com.");
-	}
-
-	@Override
-	public synchronized void uploadSubtitle(Object identity, Locale locale, File[] videoFile, File[] subtitleFile) throws Exception {
-		throw new UnsupportedOperationException("OpenSubtitles no longer accepts uploads from applications. Please upload subtitles on opensubtitles.com.");
 	}
 
 	@Override
@@ -254,12 +263,10 @@ public class OpenSubtitlesRestClient extends OpenSubtitlesClient {
 		return null;
 	}
 
-	@Override
 	public synchronized Map<File, Movie> getMovieDescriptors(Collection<File> movieFiles, Locale locale) throws Exception {
 		return emptyMap();
 	}
 
-	@Override
 	public synchronized Locale detectLanguage(byte[] data) throws Exception {
 		return null; // not offered by the REST API
 	}

@@ -12,13 +12,17 @@ import java.time.Duration;
 
 import org.tukaani.xz.XZInputStream;
 
+import net.renameo.ApplicationFolder;
 import net.renameo.Cache;
 import net.renameo.CacheType;
 import net.renameo.Resource;
 
 public enum ScriptSource {
 
-	GITHUB_STABLE {
+	/**
+	 * fn:name runs name.groovy from the user's scripts folder (FileBot's online script repository no longer exists).
+	 */
+	USER_SCRIPTS {
 
 		@Override
 		public String accept(String input) {
@@ -27,27 +31,13 @@ public enum ScriptSource {
 
 		@Override
 		public ScriptProvider getScriptProvider(String input) throws Exception {
-			URI resource = new URI(getApplicationProperty("github.stable"));
-			Resource<byte[]> bundle = getCache().bytes(resource, URI::toURL, XZInputStream::new).expire(Cache.ONE_WEEK);
-
-			return new ScriptBundle(bundle, getClass().getResourceAsStream("repository.cer"));
-		}
-
-	},
-
-	GITHUB_MASTER {
-
-		@Override
-		public String accept(String input) {
-			return input.startsWith("dev:") ? input.substring(4) : null;
-		}
-
-		@Override
-		public ScriptProvider getScriptProvider(String input) throws Exception {
-			URI parent = new URI(getApplicationProperty("github.master"));
-
-			// NOTE: GitHub only supports If-None-Match (If-Modified-Since is ignored)
-			return n -> getCache().text(n, s -> parent.resolve(s + ".groovy").toURL()).fetch(fetchIfNoneMatch(url -> n, getCache())).expire(Cache.ONE_DAY).get();
+			return name -> {
+				File script = new File(getScriptsFolder(), name + ".groovy");
+				if (!script.isFile()) {
+					throw new CmdlineException(String.format("Script not found: %s (put %s.groovy into %s)", name, name, getScriptsFolder()));
+				}
+				return readTextFile(script);
+			};
 		}
 
 	},
@@ -122,6 +112,12 @@ public enum ScriptSource {
 	public abstract String accept(String input);
 
 	public abstract ScriptProvider getScriptProvider(String input) throws Exception;
+
+	public static File getScriptsFolder() {
+		File folder = ApplicationFolder.AppData.resolve("scripts");
+		folder.mkdirs();
+		return folder;
+	}
 
 	public Cache getCache() {
 		return Cache.getCache(name(), CacheType.Persistent);

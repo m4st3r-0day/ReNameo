@@ -76,7 +76,7 @@ import net.renameo.web.Movie;
 import net.renameo.web.MovieIdentificationService;
 import net.renameo.web.MoviePart;
 import net.renameo.web.MusicIdentificationService;
-import net.renameo.web.OpenSubtitlesClient;
+import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.web.SearchResult;
 import net.renameo.web.SortOrder;
 import net.renameo.web.SubtitleDescriptor;
@@ -809,10 +809,10 @@ public class CmdlineOperations implements CmdlineInterface {
 	}
 
 	protected static boolean requireLogin(Object service) {
-		if (service instanceof OpenSubtitlesClient) {
-			OpenSubtitlesClient osdb = (OpenSubtitlesClient) service;
-			if (osdb.isAnonymous()) {
-				throw new CmdlineException(String.format("%s: Please enter your login details by calling `renameo -script fn:configure`", osdb.getName()));
+		if (service instanceof OpenSubtitlesRestClient) {
+			OpenSubtitlesRestClient osdb = (OpenSubtitlesRestClient) service;
+			if (!osdb.hasApiKey()) {
+				throw new CmdlineException(String.format("%s: API key missing. Sign in once in the app (Subtitles tab, user button): the command line uses the same key and account.", osdb.getName()));
 			}
 		}
 		return true; // no login => logged in by default

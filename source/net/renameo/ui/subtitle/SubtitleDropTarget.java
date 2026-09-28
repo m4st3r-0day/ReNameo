@@ -37,7 +37,6 @@ import javax.swing.SwingUtilities;
 
 import net.renameo.ResourceManager;
 import net.renameo.platform.mac.MacAppUtilities;
-import net.renameo.ui.subtitle.upload.SubtitleUploadDialog;
 import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.util.FileUtilities;
 import net.renameo.util.FileUtilities.ExtensionFileFilter;
@@ -45,7 +44,6 @@ import net.renameo.util.FileUtilities.ParentFilter;
 import net.renameo.util.ui.Glyph;
 import net.renameo.util.ui.Modern;
 import net.renameo.util.ui.NightTheme;
-import net.renameo.web.OpenSubtitlesClient;
 import net.renameo.web.SubtitleProvider;
 import net.renameo.web.VideoHashSubtitleService;
 
@@ -96,7 +94,7 @@ abstract class SubtitleDropTarget extends JButton {
 		setIcon(getIcon(dropAction));
 	}
 
-	protected abstract OpenSubtitlesClient getSubtitleService();
+	protected abstract OpenSubtitlesRestClient getSubtitleService();
 
 	protected abstract boolean handleDrop(List<File> files);
 
@@ -258,81 +256,10 @@ abstract class SubtitleDropTarget extends JButton {
 
 		@Override
 		protected boolean handleDrop(List<File> selection) {
-			if (getSubtitleService() instanceof OpenSubtitlesRestClient) {
-				log.info(String.format("%s no longer accepts uploads from applications: please upload your subtitles on opensubtitles.com.", getSubtitleService().getName()));
-				openURI("https://www.opensubtitles.com/en/upload");
-				return false;
-			}
-			if (getSubtitleService().isAnonymous()) {
-				log.info(String.format("%s: You must be logged in to upload subtitles.", getSubtitleService().getName()));
-				return false;
-			}
-
-			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-			// make sure we have access to the parent folder structure, not just the dropped file
-			if (isMacSandbox()) {
-				MacAppUtilities.askUnlockFolders(getWindow(this), selection);
-			}
-
-			// perform a drop action depending on the given files
-			List<File> files = listFiles(selection, FILES, HUMAN_NAME_ORDER);
-
-			List<File> videos = filter(files, VIDEO_FILES);
-			List<File> subtitles = filter(files, SUBTITLE_FILES);
-
-			Map<File, File> uploadPlan = new LinkedHashMap<File, File>();
-
-			for (File subtitle : subtitles) {
-				File video = getVideoForSubtitle(subtitle, filter(videos, new ParentFilter(subtitle.getParentFile())));
-				uploadPlan.put(subtitle, video);
-			}
-
-			setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-
-			if (uploadPlan.size() > 0) {
-				handleUpload(uploadPlan);
-				return true;
-			}
-
+			// the OpenSubtitles API does not accept uploads from applications any more
+			log.info(String.format("%s no longer accepts uploads from applications: please upload your subtitles on opensubtitles.com.", getSubtitleService().getName()));
+			openURI("https://www.opensubtitles.com/en/upload");
 			return false;
-		}
-
-		protected void handleUpload(Map<File, File> uploadPlan) {
-			SubtitleUploadDialog dialog = new SubtitleUploadDialog(getSubtitleService(), getWindow(this));
-
-			// initialize window properties
-			dialog.setIconImage(getImage(getIcon(DropAction.Accept)));
-			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-			dialog.setSize(950, 575);
-
-			// show dialog
-			dialog.setLocation(getOffsetLocation(dialog.getOwner()));
-
-			// start processing
-			dialog.setUploadPlan(uploadPlan);
-			dialog.startChecking();
-
-			// show dialog
-			dialog.setVisible(true);
-		}
-
-		protected File getVideoForSubtitle(File subtitle, List<File> videos) {
-			// 1. try to find exact match in drop data
-			return findMatch(subtitle, videos, FileUtilities::getName).orElseGet(() -> {
-				// 2. guess movie file from the parent folder if only a subtitle file was dropped in
-				return findMatch(subtitle, getChildren(subtitle.getParentFile(), VIDEO_FILES), FileUtilities::getName).orElse(null);
-			});
-		}
-
-		private Optional<File> findMatch(File file, List<File> options, Function<File, String> comparator) {
-			String subtitleFileName = comparator.apply(file).toLowerCase();
-			for (File it : options) {
-				if (subtitleFileName.length() > 0 && subtitleFileName.startsWith(comparator.apply(it).toLowerCase())) {
-					return Optional.of(it);
-				}
-			}
-			return Optional.empty();
 		}
 
 		@Override

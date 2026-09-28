@@ -10,18 +10,13 @@ import static net.renameo.util.ui.SwingUI.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.CodeSource;
-import java.security.Permission;
-import java.security.PermissionCollection;
-import java.security.Permissions;
-import java.security.Policy;
-import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
+import javax.swing.FocusManager;
 import javax.swing.SwingUtilities;
 
 import org.kohsuke.args4j.CmdLineException;
@@ -32,8 +27,11 @@ import net.renameo.format.ExpressionFormat;
 import net.renameo.platform.mac.MacAppUtilities;
 import net.renameo.platform.windows.WinAppUtilities;
 import net.renameo.ui.ReNameoMenuBar;
-import net.renameo.ui.GettingStartedStage;
+import net.renameo.ui.ApiKeysDialog;
+import net.renameo.ui.AppEvents;
+import net.renameo.plugins.Plugins;
 import net.renameo.ui.MainFrame;
+import net.renameo.ui.WatchFolder;
 import net.renameo.ui.NotificationHandler;
 import net.renameo.ui.PanelBuilder;
 import net.renameo.ui.SinglePanelFrame;
@@ -100,10 +98,12 @@ public class Main {
 
 			// initialize this stuff before anything else
 			CacheManager.getInstance();
-			initializeSecurityManager();
 
 			// initialize history spooler
 			HistorySpooler.getInstance().setPersistentHistoryEnabled(useRenameHistory());
+
+			// user plugins (Groovy scripts in the plugins folder)
+			Plugins.load();
 
 			// CLI mode => run command-line interface and then exit
 			if (args.runCLI()) {
@@ -154,13 +154,6 @@ public class Main {
 		List<File> files = args.getFiles(false);
 		if (files.size() > 0) {
 			SwingEventBus.getInstance().post(new FileTransferable(files));
-		}
-
-		// JavaFX is used for GettingStartedDialog
-		try {
-			initJavaFX();
-		} catch (Throwable e) {
-			log.log(Level.SEVERE, "Failed to initialize JavaFX. Please install JavaFX.", e);
 		}
 
 		// check if application help should be shown
@@ -238,13 +231,23 @@ public class Main {
 	 */
 	private static void checkGettingStarted() throws Exception {
 		PreferencesEntry<String> started = Settings.forPackage(Main.class).entry("getting.started").defaultValue("0");
-		if ("0".equals(started.getValue())) {
+		boolean firstRun = "0".equals(started.getValue());
+		if (firstRun) {
 			started.setValue("1");
 			started.flush();
-
-			// open Getting Started
-			SwingUtilities.invokeLater(GettingStartedStage::start);
 		}
+
+		WatchFolder.restart();
+
+		SwingUtilities.invokeLater(() -> {
+			// nothing can be matched without a TheMovieDB key, so ask for it right away
+			if (ApiKeys.isMissing(ApiKeys.Service.TMDB)) {
+				ApiKeysDialog.show(FocusManager.getCurrentManager().getActiveWindow(), true);
+			} else if (firstRun) {
+				// point new users to the built-in guide
+				SwingEventBus.getInstance().post(new AppEvents.Toast("Welcome to " + getApplicationName(), "Press F1 to open the user guide.", AppEvents.Status.Kind.READY));
+			}
+		});
 	}
 
 	private static void restoreWindowBounds(JFrame window, Settings settings) {
@@ -265,37 +268,6 @@ public class Main {
 		int width = Integer.parseInt(settings.get("window.width"));
 		int height = Integer.parseInt(settings.get("window.height"));
 		window.setBounds(x, y, width, height);
-	}
-
-	/**
-	 * Initialize default SecurityManager and grant all permissions via security policy. Initialization is required in order to run {@link ExpressionFormat} in a secure sandbox.
-	 */
-	private static void initializeSecurityManager() {
-		try {
-			// initialize security policy used by the default security manager
-			// because default the security policy is very restrictive (e.g. no FilePermission)
-			Policy.setPolicy(new Policy() {
-
-				@Override
-				public boolean implies(ProtectionDomain domain, Permission permission) {
-					// all permissions
-					return true;
-				}
-
-				@Override
-				public PermissionCollection getPermissions(CodeSource codesource) {
-					// VisualVM can't connect if this method does return
-					// a checked immutable PermissionCollection
-					return new Permissions();
-				}
-			});
-
-			// set default security manager
-			System.setSecurityManager(new SecurityManager());
-		} catch (Exception e) {
-			// Java 18+ no longer allows installing a security manager at runtime, which is harmless for local use
-			debug.fine("Security manager not available: " + e.getMessage());
-		}
 	}
 
 	public static void initializeSystemProperties(ArgumentBean args) {

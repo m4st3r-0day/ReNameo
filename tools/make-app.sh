@@ -11,23 +11,23 @@ APP_VERSION="1.0.0"
 APP_BUNDLE="dist/${APP_NAME}.app"
 ICON="packaging/macos/AppIcon.png"
 
-JFX_LIB="${JFX_LIB:-$SCRIPT_DIR/lib/javafx/javafx-sdk-21.0.6/lib}"
 JAR="dist/${APP_NAME}_${APP_VERSION}.jar"
-DATA_DIR="data"
 
-JFX_JARS="javafx.base.jar javafx.graphics.jar javafx.controls.jar javafx.swing.jar javafx.web.jar javafx.media.jar javafx.fxml.jar"
+# Java runtime bundled into the app, so it runs on Macs without Java installed
+JDK="${JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null || true)}"
+# jdeps modules plus the ones only loaded at runtime (subtitle charsets, locale data, TLS, accessibility, zip archives)
+JAVA_MODULES="java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.prefs,java.scripting,java.sql,java.xml,jdk.accessibility,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs"
 
 # check every input before touching the existing bundle
-if [ ! -f "$JFX_LIB/javafx.base.jar" ]; then
-  echo "ERROR: JavaFX SDK not found at $JFX_LIB" >&2
-  echo "Download https://download2.gluonhq.com/openjfx/21.0.6/openjfx-21.0.6_osx-aarch64_bin-sdk.zip into lib/javafx/ or set JFX_LIB." >&2
-  exit 1
-fi
 if [ ! -f "$JAR" ]; then
   echo "ERROR: $JAR not found, run 'ant fatjar' first" >&2
   exit 1
 fi
 
+if [ ! -x "$JDK/bin/jlink" ]; then
+  echo "ERROR: JDK 21 with jlink not found, set JAVA_HOME" >&2
+  exit 1
+fi
 if [ ! -f "$ICON" ]; then
   echo "ERROR: $ICON not found" >&2
   exit 1
@@ -38,22 +38,14 @@ rm -rf "$APP_BUNDLE"
 
 mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
-mkdir -p "$APP_BUNDLE/Contents/Java/javafx"
-mkdir -p "$APP_BUNDLE/Contents/Java/data"
+mkdir -p "$APP_BUNDLE/Contents/Java"
 
-echo "== bundle jar + javafx =="
+echo "== bundle java runtime (jlink) =="
+# locale data only for the most common languages (subtitle language names come from the app itself)
+"$JDK/bin/jlink" --add-modules "$JAVA_MODULES" --include-locales=en,it,de,fr,es,pt,nl --strip-debug --no-header-files --no-man-pages --compress=zip-9 --output "$APP_BUNDLE/Contents/runtime"
+
+echo "== bundle jar =="
 cp "$JAR" "$APP_BUNDLE/Contents/Java/${APP_NAME}.jar"
-for j in $JFX_JARS; do
-  cp "$JFX_LIB/$j" "$APP_BUNDLE/Contents/Java/javafx/"
-done
-# JavaFX native libraries (required for the QuantumRenderer/prism pipeline)
-cp "$JFX_LIB"/*.dylib "$APP_BUNDLE/Contents/Java/javafx/" 2>/dev/null || true
-cp "$JFX_LIB/javafx.properties" "$APP_BUNDLE/Contents/Java/javafx/" 2>/dev/null || true
-
-echo "== bundle local index data =="
-if [ -d "$DATA_DIR" ]; then
-  cp "$DATA_DIR"/* "$APP_BUNDLE/Contents/Java/data/" 2>/dev/null || true
-fi
 
 echo "== build .icns =="
 ICONSET="dist/AppIcon.iconset"
@@ -127,6 +119,9 @@ done
 CONTENTS="$(cd "$(dirname "$SELF")/.." && pwd)"
 
 JAVA_BIN="${RENAMEO_JAVA:-}"
+if [ -z "$JAVA_BIN" ] && [ -x "$CONTENTS/runtime/bin/java" ]; then
+  JAVA_BIN="$CONTENTS/runtime/bin/java"
+fi
 if [ -z "$JAVA_BIN" ]; then
   if /usr/libexec/java_home >/dev/null 2>&1; then
     JAVA_BIN="$(/usr/libexec/java_home)/bin/java"
@@ -135,23 +130,12 @@ if [ -z "$JAVA_BIN" ]; then
   fi
 fi
 
-JFX="$CONTENTS/Java/javafx"
-JFX_CP="$JFX/javafx.base.jar:$JFX/javafx.graphics.jar:$JFX/javafx.controls.jar:$JFX/javafx.swing.jar:$JFX/javafx.web.jar:$JFX/javafx.media.jar:$JFX/javafx.fxml.jar"
 
 # native libraries such as libmediainfo ({vf}, {vc}, -mediainfo) come from Homebrew
 NATIVE_PATH="$CONTENTS/Java/native"
 for d in /opt/homebrew/lib /usr/local/lib; do
   [ -d "$d" ] && NATIVE_PATH="$NATIVE_PATH:$d"
 done
-
-DATA="$CONTENTS/Java/data"
-DATA_PROPS=""
-if [ -f "$DATA/thetvdb.txt.xz" ]; then
-  DATA_PROPS="$DATA_PROPS -Durl.thetvdb-index=file://$DATA/thetvdb.txt.xz"
-fi
-if [ -f "$DATA/moviedb.txt.xz" ]; then
-  DATA_PROPS="$DATA_PROPS -Durl.movie-list=file://$DATA/moviedb.txt.xz"
-fi
 
 # Finder starts apps in /, but on the command line relative paths must keep working
 if [ $# -eq 0 ]; then
@@ -160,12 +144,9 @@ fi
 exec "$JAVA_BIN" \
   ${JAVA_OPTS:-} \
   -XX:+UseStringDeduplication \
-  -Durl.refresh=PT0S \
   -Dnet.renameo.UserFiles.fileChooser=AWT \
-  -Djava.library.path="$JFX" \
   -Djna.library.path="$NATIVE_PATH" \
-  $DATA_PROPS \
-  -cp "$CONTENTS/Java/ReNameo.jar:$JFX_CP" \
+  -cp "$CONTENTS/Java/ReNameo.jar" \
   net.renameo.Main "$@"
 LAUNCHER
 chmod +x "$APP_BUNDLE/Contents/MacOS/ReNameo"
@@ -173,8 +154,14 @@ chmod +x "$APP_BUNDLE/Contents/MacOS/ReNameo"
 echo "== ad-hoc codesign =="
 codesign --force --deep --sign - "$APP_BUNDLE"
 
-echo "== zip =="
-rm -f "dist/${APP_NAME}-mac-arm64.zip"
+echo "== zip + dmg =="
+rm -f "dist/${APP_NAME}-mac-arm64.zip" "dist/${APP_NAME}-mac-arm64.dmg"
 ditto -c -k --keepParent "$APP_BUNDLE" "dist/${APP_NAME}-mac-arm64.zip"
+DMG_DIR="dist/dmg"
+rm -rf "$DMG_DIR" && mkdir -p "$DMG_DIR"
+cp -R "$APP_BUNDLE" "$DMG_DIR/"
+ln -s /Applications "$DMG_DIR/Applications"
+hdiutil create -quiet -volname "$APP_NAME" -srcfolder "$DMG_DIR" -ov -format UDZO "dist/${APP_NAME}-mac-arm64.dmg"
+rm -rf "$DMG_DIR"
 
 echo "done: $APP_BUNDLE"

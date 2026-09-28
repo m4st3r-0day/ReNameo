@@ -29,6 +29,18 @@ public enum ApplicationFolder {
 		if (!folder.exists() && legacy.isDirectory() && !legacy.renameTo(folder)) {
 			return legacy.getPath();
 		}
+
+		// existing installations keep their folder, new ones follow the platform convention
+		if (!folder.exists()) {
+			String os = System.getProperty("os.name", "").toLowerCase();
+			if (os.contains("win") && System.getenv("APPDATA") != null) {
+				return new File(System.getenv("APPDATA"), "ReNameo").getPath();
+			}
+			if (os.contains("linux") || os.contains("bsd")) {
+				String xdg = System.getenv("XDG_DATA_HOME");
+				return new File(xdg != null && !xdg.isEmpty() ? new File(xdg) : UserHome.resolve(".local/share"), "renameo").getPath();
+			}
+		}
 		return folder.getPath();
 	}
 

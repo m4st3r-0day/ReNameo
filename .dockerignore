@@ -1,0 +1,14 @@
+.git
+build
+dist
+cache
+release
+lib/ivy
+lib/javafx
+profile.properties
+TODO.md
+TODO-MIGLIORAMENTI.md
+ROADMAP.md
+docs/DOCUMENTAZIONE.md
+docs/MIGLIORAMENTI.md
+.DS_Store

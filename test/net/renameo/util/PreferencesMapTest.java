@@ -3,7 +3,6 @@ package net.renameo.util;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
@@ -145,11 +144,45 @@ public class PreferencesMapTest {
 
 	@Test
 	public void jsonAdapter() {
-		Map<String, Color> map = PreferencesMap.map(temp, new JsonAdapter<Color>(Color.class));
-		Color color = new Color(0.25f, 0.50f, 1.00f);
+		// the adapter stores the application's own settings objects (e.g. rename presets); JDK classes can't be read reflectively on Java 17+
+		Map<String, Setting> map = PreferencesMap.map(temp, new JsonAdapter<Setting>(Setting.class));
+		Setting entry = new Setting("Plex", "{plex.name}", 3);
 
-		map.put("color", color);
-		assertEquals(color, map.get("color"));
+		map.put("preset", entry);
+		assertEquals(entry, map.get("preset"));
+
+		// stored without Java class names
+		assertFalse(temp.get("preset", "").contains("@type"));
+
+		// values written by earlier versions name an old class, e.g. from before a package rename
+		temp.put("legacy", "{\"@type\":\"net.filebot.ui.rename.Preset\",\"name\":\"Plex\",\"format\":\"{plex.name}\",\"priority\":3}");
+		assertEquals(entry, map.get("legacy"));
+	}
+
+	public static class Setting {
+
+		public String name;
+		public String format;
+		public int priority;
+
+		public Setting() {
+		}
+
+		public Setting(String name, String format, int priority) {
+			this.name = name;
+			this.format = format;
+			this.priority = priority;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			return other instanceof Setting && ((Setting) other).name.equals(name) && ((Setting) other).format.equals(format) && ((Setting) other).priority == priority;
+		}
+
+		@Override
+		public int hashCode() {
+			return name.hashCode();
+		}
 	}
 
 }

@@ -311,8 +311,8 @@ class MovieMatcher implements AutoCompleteMatcher {
 		// 1. movie by filename
 		String fileQuery = (userQuery != null) ? userQuery : checkedStripReleaseInfo(movieFile, strict);
 
-		// 2. movie by directory
-		File movieFolder = guessMovieFolder(movieFile);
+		// 2. movie by directory (bonus material is named after the folder of its movie, not "Featurettes" or "Deleted Scenes")
+		File movieFolder = VIDEO_FILES.accept(movieFile) && ExtraType.detect(movieFile) != null ? getOwnerFolder(movieFile) : guessMovieFolder(movieFile);
 		String folderQuery = (userQuery != null || movieFolder == null) ? "" : checkedStripReleaseInfo(movieFolder, strict);
 
 		// auto-ignore invalid files

@@ -231,7 +231,8 @@ public class MediaTasks {
 			Episode episode = (Episode) media;
 			SeriesInfo info = episode.getSeriesInfo();
 
-			if (info != null && info.getId() != null) {
+			// the id is only a TheMovieDB id if the series came from TheMovieDB (not TVmaze or AniDB)
+			if (info != null && info.getId() != null && info.getDatabase() != null && info.getDatabase().toLowerCase().contains("themoviedb")) {
 				// series poster + backdrop
 				int id = info.getId();
 				for (String category : new String[] { "posters", "backdrops" }) {

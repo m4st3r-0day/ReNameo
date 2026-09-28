@@ -1,0 +1,10 @@
+#!/bin/sh
+# ReNameo command line inside the container: settings, cache and history live in $RENAMEO_CONFIG
+exec java \
+  -XX:+UseStringDeduplication \
+  -Djava.awt.headless=true \
+  -Dapplication.dir="${RENAMEO_CONFIG:-/config}" \
+  -Djava.util.prefs.userRoot="${RENAMEO_CONFIG:-/config}/prefs" \
+  -Duser.home="${RENAMEO_CONFIG:-/config}" \
+  ${JAVA_OPTS:-} \
+  -jar /opt/renameo/renameo.jar "$@"

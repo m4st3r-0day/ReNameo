@@ -2,7 +2,6 @@ package net.renameo.format;
 
 import static net.renameo.util.ExceptionUtilities.*;
 
-import java.security.AccessController;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
@@ -11,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.lang.model.SourceVersion;
 import javax.script.Bindings;
@@ -77,6 +78,12 @@ public class ExpressionFormat extends Format {
 						try {
 							compilation.add(compileScriptlet(token.toString()));
 						} catch (ScriptException e) {
+							// blocked by the sandbox
+							Matcher blocked = SANDBOX_VIOLATION.matcher(String.valueOf(e.getMessage()));
+							if (blocked.find()) {
+								throw new ScriptException("Not allowed in a format (running programs, changing files or reflection): " + blocked.group(1).trim());
+							}
+
 							// try to extract syntax exception
 							ScriptException illegalSyntax = e;
 
@@ -130,12 +137,8 @@ public class ExpressionFormat extends Format {
 	}
 
 	public String format(Bindings bindings) {
-		// use privileged bindings so we are not restricted by the script sandbox
-		Bindings priviledgedBindings = PrivilegedInvocation.newProxy(Bindings.class, bindings, AccessController.getContext());
-
-		// initialize script context with the privileged bindings
 		ScriptContext context = new SimpleScriptContext();
-		context.setBindings(priviledgedBindings, ScriptContext.GLOBAL_SCOPE);
+		context.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
 
 		// reset exception state
 		List<Throwable> suppressed = new ArrayList<Throwable>();
@@ -224,6 +227,8 @@ public class ExpressionFormat extends Format {
 		return compilation;
 	}
 
+	private static final Pattern SANDBOX_VIOLATION = Pattern.compile("is not allowed: (.+)");
+
 	private static ScriptEngine engine;
 	private static Map<String, CompiledScript> scriptletCache = new HashMap<String, CompiledScript>();
 
@@ -233,7 +238,7 @@ public class ExpressionFormat extends Format {
 		// include default functions
 		ImportCustomizer imports = new ImportCustomizer();
 		imports.addStaticStars(ExpressionFormatFunctions.class.getName());
-		config.addCompilationCustomizers(imports);
+		config.addCompilationCustomizers(imports, new ExpressionSandbox());
 
 		GroovyClassLoader classLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader(), config);
 		return new GroovyScriptEngineImpl(classLoader);

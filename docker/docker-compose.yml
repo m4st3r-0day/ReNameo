@@ -1,0 +1,30 @@
+# ReNameo in watch mode: renames what arrives in /media/downloads every 5 minutes.
+#
+#   docker compose up -d
+#
+# Adjust the volumes and the environment, then check the log in ./config/logs/watch.log.
+# Try RENAMEO_ACTION=test first: it only logs what would happen.
+
+services:
+  renameo:
+    image: ghcr.io/m4st3r-0day/renameo:latest
+    container_name: renameo
+    command: watch
+    restart: unless-stopped
+    environment:
+      TMDB_API_KEY: "your-themoviedb-api-key"   # free: https://www.themoviedb.org/settings/api
+      PUID: "1000"                              # owner of the media files
+      PGID: "1000"
+      TZ: "Europe/Rome"
+      WATCH_DIR: /media/downloads               # folder to watch
+      WATCH_INTERVAL: "300"                     # seconds between runs
+      WATCH_SETTLE: "120"                       # skip files changed in the last N seconds (still downloading)
+      RENAMEO_ACTION: test                      # test, move, copy, hardlink, symlink
+      RENAMEO_NAMING: jellyfin                  # plex, jellyfin, emby, kodi
+      # OUTPUT_DIR: /media/library              # with RENAMEO_NAMING: build Movies/ and Shows/ here instead of renaming in place
+      # RENAMEO_FORMAT: "{n} ({y})/{n} ({y})"   # instead of RENAMEO_NAMING
+      # RENAMEO_LANG: it                        # language of the titles
+      # RENAMEO_CONFLICT: skip                  # skip, override, auto, index
+    volumes:
+      - ./config:/config
+      - /path/to/media:/media

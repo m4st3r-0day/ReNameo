@@ -76,6 +76,9 @@ class PreviewDialog extends JDialog {
 		Status status;
 		String message;
 
+		/** the matched movie or episode, for the artwork preview */
+		Object info;
+
 		Row(File source, File destination, String sourceName, float confidence) {
 			this.source = source;
 			this.destination = destination;
@@ -91,6 +94,9 @@ class PreviewDialog extends JDialog {
 
 		final Map<File, File> renameMap = new LinkedHashMap<File, File>();
 		final Set<File> overwrite = new HashSet<File>();
+
+		/** source files whose poster and fanart should be downloaded */
+		final Set<File> artwork = new HashSet<File>();
 	}
 
 	private final List<Row> rows;
@@ -101,7 +107,9 @@ class PreviewDialog extends JDialog {
 
 	private Plan result;
 
-	PreviewDialog(Window owner, List<Row> rows, String actionName) {
+	private ArtworkStrip artworkStrip;
+
+	PreviewDialog(Window owner, List<Row> rows, String actionName, boolean artwork) {
 		super(owner, "Preview Changes", ModalityType.DOCUMENT_MODAL);
 		this.rows = rows;
 
@@ -176,6 +184,15 @@ class PreviewDialog extends JDialog {
 		content.add(Modern.label("Preview Changes", 20f, Font.BOLD, false), "wrap");
 		content.add(summary, "wrap");
 		content.add(card, "grow, wrap");
+
+		if (artwork) {
+			artworkStrip = new ArtworkStrip(rows);
+			if (artworkStrip.isEmpty()) {
+				artworkStrip = null;
+			} else {
+				content.add(artworkStrip, "growx, wrap, gapbottom 6");
+			}
+		}
 
 		JPanel footer = new JPanel(new MigLayout("insets 0, fillx", "[][]16[grow][][][]", "[center]"));
 		footer.setOpaque(false);
@@ -327,6 +344,9 @@ class PreviewDialog extends JDialog {
 			}
 			taken.add(target);
 			plan.renameMap.put(row.source, target);
+			if (artworkStrip != null && artworkStrip.isSelected(row)) {
+				plan.artwork.add(row.source);
+			}
 		}
 		return plan;
 	}

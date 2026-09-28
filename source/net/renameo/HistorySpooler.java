@@ -18,6 +18,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 
 import net.renameo.History.Element;
+import net.renameo.plugins.Plugins;
 
 public final class HistorySpooler {
 
@@ -93,7 +94,7 @@ public final class HistorySpooler {
 		append(elements.entrySet());
 	}
 
-	public synchronized void append(Iterable<Entry<File, File>> elements) {
+	public void append(Iterable<Entry<File, File>> elements) {
 		List<Element> sequence = new ArrayList<Element>();
 
 		for (Entry<File, File> element : elements) {
@@ -106,8 +107,16 @@ public final class HistorySpooler {
 		}
 
 		if (sequence.size() > 0) {
-			sessionHistory.add(sequence); // append to session history
-			sessionHistoryTotalSize += sequence.size();
+			synchronized (this) {
+				sessionHistory.add(sequence); // append to session history
+				sessionHistoryTotalSize += sequence.size();
+			}
+		}
+
+		// plugins run after the history is safe and outside the lock (they may be slow, e.g. notify a media server)
+		for (Element e : sequence) {
+			File to = new File(e.to());
+			Plugins.fireRename(new File(e.dir(), e.from()), to.isAbsolute() ? to : new File(e.dir(), e.to()));
 		}
 	}
 

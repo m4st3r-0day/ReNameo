@@ -18,7 +18,11 @@ import net.renameo.CacheType;
 
 public class FanartTVClient implements Datasource, ArtworkProvider {
 
-	private String apikey;
+	private volatile String apikey;
+
+	public void setApiKey(String apikey) {
+		this.apikey = apikey;
+	}
 
 	public FanartTVClient(String apikey) {
 		this.apikey = apikey;

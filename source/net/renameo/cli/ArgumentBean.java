@@ -55,7 +55,7 @@ public class ArgumentBean {
 	@Option(name = "-rename", usage = "Rename media files")
 	public boolean rename = false;
 
-	@Option(name = "--db", usage = "Database (default: auto-detect)", metaVar = "[TheMovieDB::TV, TheTVDB, TVmaze, AniDB] or [TheMovieDB, OMDb] or [AcoustID, ID3] or [xattr]")
+	@Option(name = "--db", usage = "Database (default: auto-detect)", metaVar = "[TheMovieDB::TV, TVmaze, AniDB] or [TheMovieDB, OMDb] or [AcoustID, ID3] or [xattr]")
 	public String db;
 
 	@Option(name = "--order", usage = "Episode order", metaVar = "[Airdate, DVD, Absolute, AbsoluteAirdate]")

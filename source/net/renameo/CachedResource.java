@@ -92,6 +92,15 @@ public class CachedResource<K, R> implements Resource<R> {
 					return element.getObjectValue();
 				}
 
+				// 304 Not Modified, but another thread stored the value in the meantime, or it is not cached at all
+				if (data == null) {
+					Object stored = cache.get(key);
+					if (stored != null) {
+						return stored;
+					}
+					data = retry(() -> fetch.fetch(url, UNCONDITIONAL), retryLimit, retryWait);
+				}
+
 				if (data == null) {
 					throw new IOException(String.format("Response data is null: %s => %s", key, url));
 				}
@@ -199,6 +208,11 @@ public class CachedResource<K, R> implements Resource<R> {
 		};
 	}
 
+	/**
+	 * Passed as last modified time to fetch without If-Modified-Since or If-None-Match.
+	 */
+	public static final long UNCONDITIONAL = -1;
+
 	@FunctionalInterface
 	public interface Fetch {
 		ByteBuffer fetch(URL url, long lastModified) throws Exception;
@@ -241,7 +255,7 @@ public class CachedResource<K, R> implements Resource<R> {
 
 	public static Fetch fetchIfNoneMatch(Function<URL, Object> etagRetrieve, BiConsumer<URL, String> etagStore) {
 		return (url, lastModified) -> {
-			Object etagValue = etagRetrieve.apply(url);
+			Object etagValue = lastModified == UNCONDITIONAL ? null : etagRetrieve.apply(url);
 			debug.fine(WebRequest.log(url, lastModified, etagValue));
 			try {
 				return WebRequest.fetch(url, etagValue == null ? lastModified : 0, etagValue, null, storeETag(url, etagStore, etag -> !etag.equals(etagValue)));

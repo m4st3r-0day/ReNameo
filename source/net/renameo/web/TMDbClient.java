@@ -36,14 +36,18 @@ import net.renameo.ResourceManager;
 
 public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 
-	// X-RateLimit: 40 requests per 10 seconds => https://developers.themoviedb.org/3/getting-started/request-rate-limiting
-	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(35, 10, TimeUnit.SECONDS);
+	// TMDb dropped the old 40 requests per 10 seconds limit and now allows about 50 requests per second per IP; stay well below it
+	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(20, 1, TimeUnit.SECONDS);
 
 	private final String host = "api.themoviedb.org";
 	private final String version = "3";
 
-	private String apikey;
+	private volatile String apikey;
 	private boolean adult;
+
+	public void setApiKey(String apikey) {
+		this.apikey = apikey;
+	}
 
 	public TMDbClient(String apikey, boolean adult) {
 		this.apikey = apikey;
@@ -374,6 +378,12 @@ public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 		Cache cache = Cache.getCache(cacheName, CacheType.Monthly);
 		Object json = cache.json(key, k -> getResource(k, language)).fetch(withPermit(fetchIfNoneMatch(url -> key, cache), r -> REQUEST_LIMIT.acquirePermit())).expire(Cache.ONE_WEEK).get();
 
+		// an empty answer (e.g. a transient 404) must not block this lookup for a week: drop it and ask again once
+		if (asMap(json).isEmpty()) {
+			cache.remove(key);
+			json = cache.json(key, k -> getResource(k, language)).fetch(withPermit(fetchIfNoneMatch(url -> key, cache), r -> REQUEST_LIMIT.acquirePermit())).expire(Cache.ONE_WEEK).get();
+		}
+
 		if (asMap(json).isEmpty()) {
 			throw new FileNotFoundException(String.format("Resource is empty: %s => %s", json, getResource(key, language)));
 		}
@@ -382,7 +392,7 @@ public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 
 	protected URL getResource(String path, String language) throws Exception {
 		if (apikey == null || apikey.isEmpty()) {
-			throw new IllegalStateException("TheMovieDB API key missing: set apikey.themoviedb in profile.properties and rebuild (see profile.properties.example)");
+			throw new IllegalStateException("TheMovieDB API key missing: enter it in Settings > API keys, or set the TMDB_API_KEY environment variable");
 		}
 
 		StringBuilder file = new StringBuilder();

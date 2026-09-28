@@ -11,7 +11,6 @@
 		<dependency rev="59.1" org="com.ibm.icu" name="icu4j" />
 		<dependency rev="1.10.2" org="org.jsoup" name="jsoup" />
 		<dependency rev="1.6" org="org.tukaani" name="xz" />
-		<dependency rev="2.3.0" org="javax.xml.bind" name="jaxb-api" />
 		<dependency rev="4.9.12" org="com.cedarsoftware" name="json-io" />
 		<dependency rev="2.5" org="commons-io" name="commons-io" />
 		<dependency rev="3.6" org="commons-net" name="commons-net" />
@@ -25,17 +24,8 @@
 		<dependency rev="9.20-2.00beta" org="net.sf.sevenzipjbinding" name="sevenzipjbinding-all-platforms" />
 		<dependency rev="0.6" org="com.optimaize.languagedetector" name="language-detector" />
 		<dependency rev="0.6.5" org="one.util" name="streamex" />
-		<dependency rev="8.40.13" org="org.controlsfx" name="controlsfx" />
 		<dependency rev="3.0.0" org="com.googlecode.lanterna" name="lanterna" />
 		<dependency rev="2.10.1" org="com.drewnoakes" name="metadata-extractor" />
-
-		<!-- Scripting -->
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant" />
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant-launcher" />
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant-commons-net" />
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant-javamail" />
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant-jsch" />
-		<dependency rev="2.4.0" org="org.apache.ivy" name="ivy" />
 
 		<!-- Build and tests -->
 		<dependency rev="1.10.1" org="org.apache.ant" name="ant-junit" />

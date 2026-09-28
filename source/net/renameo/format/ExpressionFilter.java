@@ -2,7 +2,6 @@ package net.renameo.format;
 
 import static net.renameo.format.ExpressionFormat.*;
 
-import java.security.AccessController;
 
 import javax.script.Bindings;
 import javax.script.CompiledScript;
@@ -39,12 +38,8 @@ public class ExpressionFilter {
 	public boolean matches(Bindings bindings) {
 		this.lastException = null;
 
-		// use privileged bindings so we are not restricted by the script sandbox
-		Bindings priviledgedBindings = PrivilegedInvocation.newProxy(Bindings.class, bindings, AccessController.getContext());
-
-		// initialize script context with the privileged bindings
 		ScriptContext context = new SimpleScriptContext();
-		context.setBindings(priviledgedBindings, ScriptContext.GLOBAL_SCOPE);
+		context.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
 
 		try {
 			// evaluate user script

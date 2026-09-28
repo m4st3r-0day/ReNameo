@@ -11,6 +11,7 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
@@ -29,6 +30,9 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +60,6 @@ import javax.swing.plaf.basic.BasicTableUI;
 import javax.swing.text.JTextComponent;
 import javax.swing.undo.UndoManager;
 
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import net.renameo.Settings;
 
 public final class SwingUI {
@@ -82,20 +84,27 @@ public final class SwingUI {
 	 * Modern cross-platform UI font (SF/Helvetica Neue on macOS, Segoe UI on Windows, Noto/Sans on Linux).
 	 */
 	public static Font getModernUIFont() {
-		String family;
-		int size = 13;
+		String os = System.getProperty("os.name", "").toLowerCase();
+		String[] families;
+		int size = 12;
 
-		if (Settings.isMacApp()) {
-			family = "Helvetica Neue";
-		} else if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
-			family = "Segoe UI";
-			size = 12;
+		if (os.startsWith("mac")) {
+			families = new String[] { "Helvetica Neue", ".AppleSystemUIFont" };
+			size = 13;
+		} else if (os.contains("win")) {
+			families = new String[] { "Segoe UI Variable Text", "Segoe UI" };
 		} else {
-			family = "Noto Sans";
-			size = 12;
+			families = new String[] { "Inter", "Noto Sans", "Cantarell", "Ubuntu", "DejaVu Sans", "Liberation Sans" };
 		}
 
-		return new Font(family, Font.PLAIN, size);
+		// the first one that is installed, otherwise the logical sans serif font of the platform
+		Set<String> installed = new HashSet<String>(Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames()));
+		for (String family : families) {
+			if (installed.contains(family)) {
+				return new Font(family, Font.PLAIN, size);
+			}
+		}
+		return new Font(Font.SANS_SERIF, Font.PLAIN, size);
 	}
 
 	public static void installModernUIFont() {
@@ -106,7 +115,19 @@ public final class SwingUI {
 
 	public static void openURI(String uri) {
 		try {
-			Desktop.getDesktop().browse(URI.create(uri));
+			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+				Desktop.getDesktop().browse(URI.create(uri));
+				return;
+			}
+		} catch (Exception e) {
+			debug.log(Level.WARNING, "Desktop browse failed: " + uri, e);
+		}
+
+		// many Linux desktops are not supported by java.awt.Desktop
+		String os = System.getProperty("os.name", "").toLowerCase();
+		String[] command = os.startsWith("mac") ? new String[] { "open", uri } : os.contains("win") ? new String[] { "rundll32", "url.dll,FileProtocolHandler", uri } : new String[] { "xdg-open", uri };
+		try {
+			new ProcessBuilder(command).start();
 		} catch (Exception e) {
 			debug.log(Level.SEVERE, "Failed to open URI: " + uri, e);
 		}
@@ -528,25 +549,6 @@ public final class SwingUI {
 				}
 			}
 		}
-	}
-
-	private static boolean initJavaFX = true;
-
-	public static void initJavaFX() {
-		if (initJavaFX) {
-			initJavaFX = false;
-
-			// initialize JavaFX
-			new JFXPanel();
-
-			// disable JavaFX exit
-			Platform.setImplicitExit(false);
-		}
-	}
-
-	public static void invokeJavaFX(Runnable r) {
-		initJavaFX();
-		Platform.runLater(r);
 	}
 
 	/**

@@ -53,7 +53,6 @@ import net.renameo.util.ui.Modern;
 import net.renameo.util.ui.NightTheme;
 import net.renameo.util.ui.SimpleLabelProvider;
 import net.renameo.util.ui.SwingEventBus;
-import net.renameo.web.OpenSubtitlesClient;
 import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.web.SearchResult;
 import net.renameo.web.SubtitleDescriptor;
@@ -94,7 +93,7 @@ public class SubtitlePanel extends AbstractSearchPanel<SubtitleProvider, Subtitl
 	private final SubtitleDropTarget uploadDropTarget = new SubtitleDropTarget.Upload() {
 
 		@Override
-		public OpenSubtitlesClient getSubtitleService() {
+		public OpenSubtitlesRestClient getSubtitleService() {
 			return WebServices.OpenSubtitles;
 		};
 	};
@@ -116,7 +115,7 @@ public class SubtitlePanel extends AbstractSearchPanel<SubtitleProvider, Subtitl
 		}
 
 		@Override
-		public OpenSubtitlesClient getSubtitleService() {
+		public OpenSubtitlesRestClient getSubtitleService() {
 			return WebServices.OpenSubtitles;
 		};
 
@@ -156,7 +155,7 @@ public class SubtitlePanel extends AbstractSearchPanel<SubtitleProvider, Subtitl
 		SubtitleProvider provider = searchTextField.getSelectButton().getSelectedValue();
 
 		if (provider instanceof OpenSubtitlesRestClient && !((OpenSubtitlesRestClient) provider).hasApiKey()) {
-			log.info(String.format("%s: Please enter your API key first.", ((OpenSubtitlesClient) provider).getName()));
+			log.info(String.format("%s: Please enter your API key first.", ((OpenSubtitlesRestClient) provider).getName()));
 
 			// automatically open login dialog
 			SwingUtilities.invokeLater(() -> setUserAction.actionPerformed(new ActionEvent(searchTextField, 0, "login")));

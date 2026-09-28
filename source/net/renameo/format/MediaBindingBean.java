@@ -32,6 +32,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.AbstractMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,6 +53,7 @@ import net.renameo.MetaAttributeView;
 import net.renameo.Resource;
 import net.renameo.Settings;
 import net.renameo.hash.HashType;
+import net.renameo.plugins.Plugins;
 import net.renameo.media.MetaAttributes;
 import net.renameo.media.EmbyNamingStandard;
 import net.renameo.media.ExtraType;
@@ -1105,6 +1108,36 @@ public class MediaBindingBean {
 			// ignore => no language tags
 		}
 		return new File(path);
+	}
+
+	/**
+	 * Values defined by plugins, e.g. {plugin.quality}.
+	 */
+	@Define("plugin")
+	public Map<String, Object> getPluginBindings() {
+		MediaBindingBean bindings = this;
+		return new AbstractMap<String, Object>() {
+
+			@Override
+			public Object get(Object key) {
+				return Plugins.binding(key.toString(), createBindingObject(mediaFile, infoObject, context, property -> null));
+			}
+
+			@Override
+			public boolean containsKey(Object key) {
+				return Plugins.hasBinding(key.toString());
+			}
+
+			@Override
+			public Set<Entry<String, Object>> entrySet() {
+				return emptySet();
+			}
+
+			@Override
+			public String toString() {
+				return "plugin bindings of " + bindings.getInfoObject();
+			}
+		};
 	}
 
 	@Define("self")

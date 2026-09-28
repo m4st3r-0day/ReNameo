@@ -96,7 +96,7 @@ public class ReNameoMenuBar {
 
 	public static JMenuBar createHelp() {
 		JMenu help = new JMenu("Help");
-		help.add(newAction("User Guide", null, evt -> GettingStartedStage.start()));
+		help.add(newAction("User Guide", null, evt -> openURI(getEmbeddedHelpURL())));
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(help);

@@ -8,6 +8,8 @@ import static net.renameo.Settings.*;
 import static net.renameo.media.MediaDetection.*;
 import static net.renameo.util.FileUtilities.*;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,7 +36,6 @@ import net.renameo.web.MovieIdentificationService;
 import net.renameo.web.MusicIdentificationService;
 import net.renameo.web.OMDbClient;
 import net.renameo.platform.mac.Keychain;
-import net.renameo.web.OpenSubtitlesClient;
 import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.web.SearchResult;
 import net.renameo.web.ShooterSubtitles;
@@ -52,8 +53,8 @@ import net.renameo.web.VideoHashSubtitleService;
 public final class WebServices {
 
 	// movie sources
-	public static final OMDbClient OMDb = new OMDbClient(getApiKey("omdb"));
-	public static final TMDbClient TheMovieDB = new TMDbClientWithLocalSearch(getApiKey("themoviedb"), SystemProperty.of("net.renameo.WebServices.TheMovieDB.adult", Boolean::parseBoolean, false).get());
+	public static final OMDbClient OMDb = new OMDbClient(ApiKeys.get(ApiKeys.Service.OMDB));
+	public static final TMDbClient TheMovieDB = new TMDbClientWithLocalSearch(ApiKeys.get(ApiKeys.Service.TMDB), SystemProperty.of("net.renameo.WebServices.TheMovieDB.adult", Boolean::parseBoolean, false).get());
 
 	// episode sources
 	public static final TVMazeClient TVmaze = new TVMazeClient();
@@ -64,17 +65,37 @@ public final class WebServices {
 	public static final TMDbTVClient TheMovieDB_TV = new TMDbTVClient(TheMovieDB);
 
 	// subtitle sources
-	public static final OpenSubtitlesClient OpenSubtitles = new OpenSubtitlesClientWithLocalSearch(getApplicationName(), getApplicationVersion());
+	public static final OpenSubtitlesRestClient OpenSubtitles = new OpenSubtitlesClientWithLocalSearch(getApplicationName(), getApplicationVersion());
 	public static final ShooterSubtitles Shooter = new ShooterSubtitles();
 
 	// other sources
-	public static final FanartTVClient FanartTV = new FanartTVClient(getApiKey("fanart.tv"));
-	public static final AcoustIDClient AcoustID = new AcoustIDClient(getApiKey("acoustid"));
+	public static final FanartTVClient FanartTV = new FanartTVClient(ApiKeys.get(ApiKeys.Service.FANART_TV));
+	public static final AcoustIDClient AcoustID = new AcoustIDClient(ApiKeys.get(ApiKeys.Service.ACOUSTID));
+
+	/**
+	 * Pass a key the user just entered to the running client.
+	 */
+	public static void setApiKey(ApiKeys.Service service, String key) {
+		switch (service) {
+		case TMDB:
+			TheMovieDB.setApiKey(key); // TheMovieDB_TV shares this client
+			break;
+		case OMDB:
+			OMDb.setApiKey(key);
+			break;
+		case FANART_TV:
+			FanartTV.setApiKey(key);
+			break;
+		case ACOUSTID:
+			AcoustID.setApiKey(key);
+			break;
+		}
+	}
 	public static final XattrMetaInfoProvider XattrMetaData = new XattrMetaInfoProvider();
 	public static final ID3Lookup MediaInfoID3 = new ID3Lookup();
 
 	public static Datasource[] getServices() {
-		return new Datasource[] { TheMovieDB, OMDb, TheTVDB, AniDB, TheMovieDB_TV, TVmaze, AcoustID, MediaInfoID3, XattrMetaData, OpenSubtitles, Shooter, FanartTV };
+		return new Datasource[] { TheMovieDB, OMDb, AniDB, TheMovieDB_TV, TVmaze, AcoustID, MediaInfoID3, XattrMetaData, OpenSubtitles, Shooter, FanartTV };
 	}
 
 	public static MovieIdentificationService[] getMovieIdentificationServices() {
@@ -82,7 +103,7 @@ public final class WebServices {
 	}
 
 	public static EpisodeListProvider[] getEpisodeListProviders() {
-		return new EpisodeListProvider[] { TheTVDB, AniDB, TheMovieDB_TV, TVmaze };
+		return new EpisodeListProvider[] { TheMovieDB_TV, TVmaze, AniDB };
 	}
 
 	public static MusicIdentificationService[] getMusicIdentificationServices() {
@@ -119,8 +140,10 @@ public final class WebServices {
 	}
 
 	public static <T extends Datasource> T getService(String name, T... services) {
+		// the TheTVDB v2 API has been shut down (v4 needs a paid key): presets and commands that still name it use TheMovieDB
+		String id = "TheTVDB".equalsIgnoreCase(name) ? TheMovieDB_TV.getIdentifier() : name;
 		return stream(services).filter(it -> {
-			return it.getIdentifier().equalsIgnoreCase(name);
+			return it.getIdentifier().equalsIgnoreCase(id);
 		}).findFirst().orElse(null);
 	}
 
@@ -244,6 +267,15 @@ public final class WebServices {
 	public static final String OPENSUBTITLES_API_KEY = "osdb.apikey";
 
 	private static final String KEYCHAIN_SERVICE = "ReNameo OpenSubtitles";
+	private static final String PASSWORD_FALLBACK = "osdb.password";
+
+	private static String getSavedPassword(String user) {
+		if (Keychain.isSupported()) {
+			return Keychain.get(KEYCHAIN_SERVICE, user);
+		}
+		String encoded = Settings.forPackage(WebServices.class).get(PASSWORD_FALLBACK);
+		return encoded == null ? null : new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8);
+	}
 
 	/**
 	 * Initialize client settings from preferences and keychain
@@ -251,9 +283,12 @@ public final class WebServices {
 	static {
 		try {
 			((OpenSubtitlesRestClient) OpenSubtitles).setApiKey(getOpenSubtitlesApiKey());
-			String user = getLogin(LOGIN_OPENSUBTITLES)[0];
+
+			// environment variables (Docker, NAS, scripts) take precedence over the saved login
+			String envUser = System.getenv("OPENSUBTITLES_USER"), envPassword = System.getenv("OPENSUBTITLES_PASSWORD");
+			String user = envUser != null && !envUser.isEmpty() ? envUser : getLogin(LOGIN_OPENSUBTITLES)[0];
 			if (!user.isEmpty()) {
-				String password = Keychain.get(KEYCHAIN_SERVICE, user);
+				String password = envUser != null && !envUser.isEmpty() ? envPassword : getSavedPassword(user);
 				((OpenSubtitlesRestClient) OpenSubtitles).setCredentials(user, password);
 			}
 		} catch (Exception e) {
@@ -262,6 +297,10 @@ public final class WebServices {
 	}
 
 	public static String getOpenSubtitlesApiKey() {
+		String env = System.getenv("OPENSUBTITLES_API_KEY");
+		if (env != null && !env.trim().isEmpty()) {
+			return env.trim();
+		}
 		String key = Settings.forPackage(WebServices.class).get(OPENSUBTITLES_API_KEY);
 		if (key == null || key.trim().isEmpty()) {
 			key = getApiKey("opensubtitles");
@@ -301,6 +340,7 @@ public final class WebServices {
 		String previous = getLogin(id)[0];
 		if (!previous.isEmpty()) {
 			Keychain.delete(KEYCHAIN_SERVICE, previous);
+			Settings.forPackage(WebServices.class).remove(PASSWORD_FALLBACK);
 		}
 
 		// delete login
@@ -316,7 +356,10 @@ public final class WebServices {
 			throw new IllegalArgumentException("Illegal login: username and password are required");
 		}
 
-		if (!Keychain.set(KEYCHAIN_SERVICE, user, password)) {
+		if (!Keychain.isSupported()) {
+			// no keychain on this platform (Linux, Windows): keep it in the user's preferences
+			Settings.forPackage(WebServices.class).put(PASSWORD_FALLBACK, Base64.getEncoder().encodeToString(password.getBytes(StandardCharsets.UTF_8)));
+		} else if (!Keychain.set(KEYCHAIN_SERVICE, user, password)) {
 			debug.warning("Password could not be stored in the keychain; you will need to sign in again after restart");
 		}
 		((OpenSubtitlesRestClient) OpenSubtitles).setCredentials(user, password);

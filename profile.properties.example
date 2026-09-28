@@ -1,5 +1,6 @@
-# Copy to profile.properties and fill in your own API keys.
-# Ant reads this file before app.properties, so these values win.
+# Optional: copy to profile.properties to build your own API keys into the app.
+# Without it the app asks for the keys on first start (or reads TMDB_API_KEY etc. from the environment).
+# Ant reads this file before app.properties, so these values win. Never publish a build that contains keys.
 # Get your own free keys:
 #   TheMovieDB  https://www.themoviedb.org/settings/api
 #   Fanart.tv   https://fanart.tv/get-an-api-key/

@@ -33,7 +33,11 @@ public class AcoustIDClient implements MusicIdentificationService {
 
 	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(3, 1, TimeUnit.SECONDS);
 
-	private String apikey;
+	private volatile String apikey;
+
+	public void setApiKey(String apikey) {
+		this.apikey = apikey;
+	}
 
 	public AcoustIDClient(String apikey) {
 		this.apikey = apikey;

@@ -160,7 +160,7 @@ public class GroovyPad extends JFrame {
 
 	protected ScriptShell createScriptShell() {
 		try {
-			return new ScriptShell(s -> ScriptSource.GITHUB_STABLE.getScriptProvider(s).getScript(s), new CmdlineOperations(), new HashMap<String, Object>());
+			return new ScriptShell(s -> ScriptSource.USER_SCRIPTS.getScriptProvider(s).getScript(s), new CmdlineOperations(), new HashMap<String, Object>());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -200,11 +200,10 @@ public class GroovyPad extends JFrame {
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	protected void cancelScript(ActionEvent evt) {
 		if (currentRunner != null && !currentRunner.isDone()) {
+			// interrupts the script thread (Thread.stop() no longer exists on Java 20+)
 			currentRunner.cancel(true);
-			currentRunner.getExecutionThread().stop();
 
 			try {
 				currentRunner.get(2, TimeUnit.SECONDS);

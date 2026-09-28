@@ -111,11 +111,14 @@ class RenameAction extends AbstractAction {
 			Match<Object, File> match = matchByFile.get(from);
 			float confidence = match == null ? 1 : RenameListCellRenderer.getMatchProbablity(match);
 			String source = match == null ? null : RenameListCellRenderer.getSource(match.getValue());
-			rows.add(new PreviewDialog.Row(from, resolve(from, to), source, confidence));
+			PreviewDialog.Row row = new PreviewDialog.Row(from, resolve(from, to), source, confidence);
+			row.info = match == null ? null : match.getValue();
+			rows.add(row);
 		});
 
 		StandardRenameAction action = (StandardRenameAction) getValue(RENAME_ACTION);
-		PreviewDialog dialog = new PreviewDialog(window, rows, action.getDisplayName());
+		boolean artwork = Boolean.parseBoolean(persistentFetchArtwork.getValue()) && action != StandardRenameAction.TEST;
+		PreviewDialog dialog = new PreviewDialog(window, rows, action.getDisplayName(), artwork);
 		dialog.initInclusion(selection);
 		PreviewDialog.Plan plan = dialog.showDialog();
 		if (plan == null || plan.renameMap.isEmpty()) {
@@ -138,10 +141,10 @@ class RenameAction extends AbstractAction {
 			}
 		}
 
-		execute(plan.renameMap, action, window, rows.size() - plan.renameMap.size());
+		execute(plan.renameMap, action, window, rows.size() - plan.renameMap.size(), plan.artwork);
 	}
 
-	private void execute(Map<File, File> renameMap, StandardRenameAction action, Window window, int skipped) {
+	private void execute(Map<File, File> renameMap, StandardRenameAction action, Window window, int skipped, Set<File> artwork) {
 		List<Match<Object, File>> matches = new ArrayList<Match<Object, File>>(model.matches());
 		Map<File, File> renameLog = new LinkedHashMap<File, File>();
 
@@ -155,7 +158,7 @@ class RenameAction extends AbstractAction {
 				} catch (Throwable e) {
 					log.log(Level.SEVERE, e, cause(getRootCause(e)));
 				}
-				finish(renameMap, renameLog, matches, action, skipped);
+				finish(renameMap, renameLog, matches, action, skipped, artwork);
 			});
 			return;
 		}
@@ -165,15 +168,15 @@ class RenameAction extends AbstractAction {
 		String message = String.format("%s %d %s", action.getDisplayVerb(), renameMap.size(), renameMap.size() == 1 ? "file" : "files");
 		ProgressMonitor.runTask(message, null, new StandardRenameWorker(renameMap, renameLog, action), result -> {
 			setEnabled(true);
-			finish(renameMap, renameLog, matches, action, skipped);
+			finish(renameMap, renameLog, matches, action, skipped, artwork);
 		}, error -> {
 			setEnabled(true);
 			log.log(Level.SEVERE, error, cause(getRootCause(error)));
-			finish(renameMap, renameLog, matches, action, skipped);
+			finish(renameMap, renameLog, matches, action, skipped, artwork);
 		});
 	}
 
-	private void finish(Map<File, File> renameMap, Map<File, File> renameLog, List<Match<Object, File>> matches, StandardRenameAction action, int skipped) {
+	private void finish(Map<File, File> renameMap, Map<File, File> renameLog, List<Match<Object, File>> matches, StandardRenameAction action, int skipped, Set<File> artwork) {
 		// abort if nothing happened
 		if (renameLog.isEmpty()) {
 			return;
@@ -197,8 +200,10 @@ class RenameAction extends AbstractAction {
 		// store xattr
 		storeMetaInfo(renameMap, matches);
 
-		if (Boolean.parseBoolean(persistentFetchArtwork.getValue()) && action != StandardRenameAction.TEST) {
-			fetchArtwork(renameLog.values());
+		// poster and fanart for the titles ticked in the preview
+		List<File> artworkTargets = renameLog.entrySet().stream().filter(it -> artwork.contains(it.getKey())).map(it -> resolve(it.getKey(), it.getValue())).collect(toList());
+		if (artworkTargets.size() > 0) {
+			fetchArtwork(artworkTargets);
 		}
 
 		// delete empty folders

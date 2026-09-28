@@ -15,7 +15,7 @@ In alternativa:
 
 ```bash
 dist/ReNameo.app/Contents/MacOS/ReNameo -help     # app appena compilata
-./renameo.sh -help                                # dai sorgenti (serve JFX_DIR)
+./renameo.sh -help                                # dai sorgenti 
 java -jar dist/ReNameo_1.0.0.jar -help            # solo CLI
 ```
 
@@ -26,6 +26,21 @@ Il completamento con Tab per bash/zsh si trova in `tools/bash_completion.d/renam
 ```bash
 source tools/bash_completion.d/renameo                                          # bash
 autoload -U +X bashcompinit && bashcompinit && source tools/bash_completion.d/renameo   # zsh
+```
+
+## Chiavi API
+
+La riga di comando usa le stesse chiavi salvate nell'app (**Impostazioni → API keys**). Su server, NAS, Docker o negli script puoi passarle con variabili d'ambiente, che hanno la precedenza:
+
+| Variabile | Servizio |
+| --- | --- |
+| `TMDB_API_KEY` | TheMovieDB (obbligatoria) |
+| `OMDB_API_KEY` | OMDb |
+| `FANARTTV_API_KEY` | Fanart.tv |
+| `ACOUSTID_API_KEY` | AcoustID |
+
+```bash
+TMDB_API_KEY=la-tua-chiave renameo -rename ~/Downloads --action test -non-strict
 ```
 
 ## Regola d'oro: prima prova con `--action test`
@@ -126,7 +141,7 @@ renameo -check ~/Film                                         # crea/verifica ch
 | --- | --- | --- |
 | `-rename` | | Rinomina i file indicati. |
 | `-r` | | Entra anche nelle sottocartelle. |
-| `--db` | `TheMovieDB::TV`, `TheTVDB`, `TVmaze`, `AniDB`, `TheMovieDB`, `OMDb`, `AcoustID`, `ID3`, `xattr` | Sorgente dei dati. Senza: rilevamento automatico. |
+| `--db` | `TheMovieDB::TV`, `TVmaze`, `AniDB`, `TheMovieDB`, `OMDb`, `AcoustID`, `ID3`, `xattr` | Sorgente dei dati. Senza: rilevamento automatico. `TheTVDB` non è più disponibile e viene sostituito da TheMovieDB. |
 | `--format` | espressione | Schema del nuovo nome, vedi sotto. |
 | `--naming` | `plex`, `jellyfin`, `emby`, `kodi` | Struttura pronta per i media server; usala con `--output`. Viene ignorata se c'è anche `--format`. |
 | `--output` | cartella | Cartella di destinazione per i nomi relativi (la radice della libreria). |
@@ -222,7 +237,23 @@ renameo -rename -r "$HOME/Downloads/Completati" \
   --log-file "$HOME/Library/Logs/renameo.log"
 ```
 
+## Docker e NAS
+
+L'immagine `ghcr.io/m4st3r-0day/renameo` contiene la riga di comando, Java e MediaInfo, per `linux/amd64` e `linux/arm64`:
+
+```bash
+docker run --rm -e TMDB_API_KEY=la-tua-chiave -v /percorso/media:/media \
+  ghcr.io/m4st3r-0day/renameo -rename /media/downloads -r --action test -non-strict
+```
+
+Con il comando `watch` il container rinomina a intervalli ciò che arriva in una cartella (`WATCH_DIR`, `RENAMEO_NAMING`, `RENAMEO_ACTION`, `PUID`/`PGID` …). Tutte le opzioni, il `docker-compose.yml` e l'installazione su TrueNAS SCALE sono in `docker/README.md`.
+
+## Script e plugin
+
+- `renameo -script file.groovy` esegue uno script Groovy; `renameo -script fn:nome` esegue `nome.groovy` dalla cartella `scripts` dei dati di ReNameo.
+- I **plugin** (file `.groovy` nella cartella `plugins`) vengono caricati anche dalla riga di comando e da Docker: `onRename` viene chiamato dopo ogni rinomina e i loro valori si usano nei formati come `{plugin.nome}`. Esempi in `docs/plugins`.
+
 ## Dove vengono salvati i dati
 
-- Cache, cronologia e log: `~/.renameo` (le cartelle `~/.filebot` di versioni precedenti vengono adottate automaticamente).
+- Cache, cronologia, log, script e plugin: `~/.renameo` su macOS (le cartelle `~/.filebot` di versioni precedenti vengono adottate automaticamente), `~/.local/share/renameo` su Linux, `%APPDATA%\ReNameo` su Windows, `/config` in Docker.
 - Impostazioni: preferenze utente di Java (`-clear-prefs` per azzerarle).

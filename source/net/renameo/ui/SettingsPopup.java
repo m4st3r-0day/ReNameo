@@ -1,12 +1,14 @@
 package net.renameo.ui;
 
 import static net.renameo.Settings.*;
+import static net.renameo.util.ui.SwingUI.*;
 
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Window;
 import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -55,6 +57,12 @@ class SettingsPopup extends JPopupMenu {
 		}
 		add(swatches);
 
+		add(Modern.caption("Tools"), "gaptop 14, gapbottom 4");
+		add(tool("API keys", Glyph.Shape.LINK, owner -> ApiKeysDialog.show(owner, false)));
+		add(tool("Watch folder", Glyph.Shape.FOLDER, WatchFolderDialog::show));
+		add(tool("Update offline index", Glyph.Shape.DOWNLOAD, OfflineIndexAction::run));
+		add(tool("Plugins", Glyph.Shape.SLIDERS, PluginsDialog::show));
+
 		JPanel footer = new JPanel(new MigLayout("insets 0, fillx", "[]push[]"));
 		footer.setOpaque(false);
 		JLabel guide = Modern.label("User guide", 12.5f, Font.PLAIN, false);
@@ -67,7 +75,7 @@ class SettingsPopup extends JPopupMenu {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				setVisible(false);
-				GettingStartedStage.start();
+				openURI(getEmbeddedHelpURL());
 			}
 		});
 		footer.add(guide);
@@ -93,6 +101,23 @@ class SettingsPopup extends JPopupMenu {
 	private void apply(Runnable change) {
 		setVisible(false);
 		SwingUtilities.invokeLater(change);
+	}
+
+	private JComponent tool(String title, Glyph.Shape icon, Consumer<Window> action) {
+		JLabel link = Modern.label(title, 13f, Font.PLAIN, false);
+		link.setIcon(Glyph.of(icon, 15, NightTheme::getAccent));
+		link.setIconTextGap(8);
+		link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		link.addMouseListener(new MouseAdapter() {
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				Window owner = SwingUtilities.getWindowAncestor(link);
+				setVisible(false);
+				SwingUtilities.invokeLater(() -> action.accept(owner));
+			}
+		});
+		return link;
 	}
 
 	private JComponent row(String title, String description, boolean value, Consumer<Boolean> setter) {

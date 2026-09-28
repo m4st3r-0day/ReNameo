@@ -1,6 +1,8 @@
 # ReNameo
 
-**A modern media renamer for macOS (Apple Silicon).** ReNameo matches your movies, TV shows, anime, music and subtitles against online databases and gives them clean, consistent names that Plex, Jellyfin, Emby and Kodi recognize.
+[![CI](https://github.com/m4st3r-0day/ReNameo/actions/workflows/ci.yml/badge.svg)](https://github.com/m4st3r-0day/ReNameo/actions/workflows/ci.yml)
+
+**A modern media renamer for macOS, Linux, Windows and Docker.** ReNameo matches your movies, TV shows, anime, music and subtitles against online databases and gives them clean, consistent names that Plex, Jellyfin, Emby and Kodi recognize.
 
 ![ReNameo main window](docs/images/main-window.png)
 
@@ -10,11 +12,15 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 - [How it works](#how-it-works)
 - [Requirements](#requirements)
 - [Install](#install)
+- [API keys](#api-keys)
 - [Quick start](#quick-start)
 - [Naming profiles](#naming-profiles)
 - [Custom formats](#custom-formats)
 - [Subtitles (OpenSubtitles)](#subtitles-opensubtitles)
+- [Watch folder](#watch-folder)
+- [Plugins and scripts](#plugins-and-scripts)
 - [Command line](#command-line)
+- [Docker and TrueNAS](#docker-and-truenas)
 - [Building from source](#building-from-source)
 - [Project layout](#project-layout)
 - [Credits and license](#credits-and-license)
@@ -27,7 +33,7 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 - It keeps the title your library already uses: an Italian or original title in the folder name is preferred over the English one.
 - Long running shows are supported: more than 100 seasons, more than 1000 episodes, and `S101E01` / `S2010E05` patterns.
 - **Extras** are recognized: deleted scenes, featurettes, behind the scenes, interviews, trailers and shorts. They are attributed to their movie, not renamed as "part 2".
-- A local offline index of popular titles gives instant cross-references (e.g. *Il Trono di Spade* → *Game of Thrones*).
+- A local offline index of popular titles gives instant cross-references (e.g. *Il Trono di Spade* → *Game of Thrones*). It can be refreshed from the app.
 
 **Renaming**
 - Side-by-side **diff view** of the original and proposed names, with a confidence state for each match (Exact, Likely, Review).
@@ -37,6 +43,8 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 - A **pattern editor** with live preview, and **presets** that store format, source, language and action together.
 - **Manual match** when the automatic one is wrong, and batch actions on the selection.
 - Rename or move, copy, hard link, symlink and clone. Subtitles are paired with their video.
+- A **watch folder** renames what arrives in Downloads on its own, in the app or in Docker.
+- A **poster preview** before artwork is downloaded.
 
 **Interface**
 - Dark and light themes, a collapsible sidebar and a compact mode.
@@ -46,6 +54,7 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 
 **Other tools**
 - Episode lists, subtitle search and download, SFV / MD5 / SHA-1 checksums, a file filter, and list renaming.
+- **Plugins**: Groovy scripts that react to every rename (e.g. refresh Jellyfin or Plex) or add values to formats.
 
 ## How it works
 
@@ -74,23 +83,30 @@ flowchart TD
 
 ## Requirements
 
-- macOS 11 or later on Apple Silicon (arm64).
-- [JDK 21](https://www.oracle.com/java/technologies/downloads/#java21) or later.
-- Optional: [MediaInfo](https://mediaarea.net/en/MediaInfo) for resolution, codec and audio bindings:
+- **macOS** 11 or later on Apple Silicon, **Linux** (x86_64 or arm64, e.g. Ubuntu 22.04+), **Windows** 10/11 (x64) or **Docker**. Java is bundled with every package, nothing else to install.
+- Optional: [MediaInfo](https://mediaarea.net/en/MediaInfo) for resolution, codec and audio bindings. The Linux package and the Docker image install it automatically; on macOS:
   ```bash
   brew install libmediainfo
   ```
 
 ## Install
 
-Download `ReNameo-mac-arm64.zip` from the Releases page, unzip it and move **ReNameo.app** to Applications. The app is ad-hoc signed, so the first time you open it right-click it and choose **Open**.
+Download the package for your system from the [Releases](https://github.com/m4st3r-0day/ReNameo/releases) page.
 
-To use the same app from the terminal:
+| System | Package | Command line |
+| --- | --- | --- |
+| macOS | `ReNameo-mac-arm64.dmg`: open it and drag **ReNameo.app** to Applications. The app is ad-hoc signed, so the first time right-click it and choose **Open**. | `sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo` |
+| Ubuntu / Debian | `renameo_<version>_amd64.deb`: `sudo apt install ./renameo_*.deb` | `sudo ln -s /opt/renameo/bin/ReNameo /usr/local/bin/renameo` |
+| Windows | `ReNameo-<version>.msi`: run the installer. | `renameo.exe` in the installation folder |
+| Docker / NAS | `ghcr.io/m4st3r-0day/renameo`, see [Docker and TrueNAS](#docker-and-truenas) | |
 
-```bash
-sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo
-renameo -help
-```
+## API keys
+
+ReNameo looks up titles on TheMovieDB, which needs a free personal API key. Create an account on [themoviedb.org](https://www.themoviedb.org/signup), then copy the **API Key** from [Settings → API](https://www.themoviedb.org/settings/api).
+
+On first start the app asks for it. The key is checked right away and stored in the macOS Keychain. The same window takes optional keys for OMDb, Fanart.tv and AcoustID, and you can reopen it from **Settings → API keys**.
+
+On servers, in Docker or in scripts, pass the keys as environment variables: `TMDB_API_KEY`, `OMDB_API_KEY`, `FANARTTV_API_KEY` and `ACOUSTID_API_KEY`.
 
 ## Quick start
 
@@ -140,6 +156,32 @@ ReNameo uses the current **opensubtitles.com** REST API. The legacy opensubtitle
 
 The password is stored in the macOS Keychain. Free accounts have a daily download quota, which ReNameo shows after you sign in. The API does not allow uploads from applications, so upload subtitles on the website.
 
+## Watch folder
+
+**Settings → Watch folder** picks a folder (e.g. Downloads), the names (Plex, Jellyfin, Emby, Kodi) and the action (move, copy, hard link, symlink). While ReNameo is open, new video, audio and subtitle files there are renamed every few minutes. Files changed in the last 2 minutes are left alone, so downloads can finish, and files that can't be matched are not retried until they change. Every rename goes into the history and can be undone.
+
+For a server or NAS that runs around the clock, use the [Docker watch mode](docker/README.md) instead.
+
+## Plugins and scripts
+
+**Plugins** are Groovy scripts in the `plugins` folder of the ReNameo data folder (`~/.renameo/plugins` on macOS, `~/.local/share/renameo/plugins` on Linux, `%APPDATA%\ReNameo\plugins` on Windows, `/config/plugins` in Docker). **Settings → Plugins** lists them, turns them on and off and shows load errors.
+
+```groovy
+description "Refresh the Jellyfin library after renaming"
+
+onRename { from, to ->                      // after every rename: app, watch folder, command line, Docker
+    log "renamed ${from.name} to ${to.name}"
+}
+
+binding("resolution") { m ->                // {plugin.resolution} in formats; m has {n}, {y}, {height} (MediaInfo), ...
+    m.height >= 2000 ? "4K" : "HD"
+}
+```
+
+Ready-made examples are in [`docs/plugins`](docs/plugins): Jellyfin refresh, Plex refresh and a rename log. Plugins run with your rights, so only install plugins you trust. Formats themselves stay sandboxed: they can't run programs or change files.
+
+**Scripts** run once from the command line: `renameo -script my-script.groovy`, or `renameo -script fn:name` for `name.groovy` in the `scripts` folder of the data folder.
+
 ## Command line
 
 The app bundle is also a command line tool:
@@ -165,6 +207,15 @@ renameo -check ~/Music/album
 
 Run `renameo -help` for all options. The full reference with more examples is in the [command line guide](docs/USER_GUIDE_CLI.md).
 
+## Docker and TrueNAS
+
+```bash
+docker run --rm -e TMDB_API_KEY=your-key -v /path/to/media:/media \
+  ghcr.io/m4st3r-0day/renameo -rename /media/downloads -r --action test -non-strict
+```
+
+The image also has a **watch mode** that renames what arrives in a folder at regular intervals, with `PUID`/`PGID`, settings and history in `/config`, and hard links for seeding. The [Docker guide](docker/README.md) explains every option, the `docker-compose.yml` and how to install it on **TrueNAS SCALE** as a Custom App.
+
 ## Documentation
 
 | | English | Italiano |
@@ -179,23 +230,32 @@ The same guides are built into the app (Help → User Guide, or F1).
 Prerequisites:
 
 - JDK 21 and [Apache Ant](https://ant.apache.org) (`brew install ant`).
-- The [JavaFX 21 SDK for macOS aarch64](https://gluonhq.com/products/javafx/), unpacked into `lib/javafx/` so that `lib/javafx/javafx-sdk-21.0.6/lib` exists.
-- Your own API keys. Copy `profile.properties.example` to `profile.properties` and fill it in. That file is ignored by git, and at least a [TheMovieDB key](https://www.themoviedb.org/settings/api) is needed.
+- Optional: to build API keys into your own copy of the app, copy `profile.properties.example` to `profile.properties` and fill it in. That file is ignored by git. Without it, the app asks for the keys on first start.
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ant resolve          # first time only: download dependencies into lib/ivy
 ant fatjar           # build dist/ReNameo_1.0.0.jar
-tools/make-app.sh    # build dist/ReNameo.app and dist/ReNameo-mac-arm64.zip
+tools/make-app.sh    # build dist/ReNameo.app (with a bundled Java runtime), .zip and .dmg
 open dist/ReNameo.app
 ```
+
+Other platforms (the packages contain their own Java runtime too):
+
+```bash
+tools/package.sh deb     # on Linux: dist/packages/renameo_<version>_<arch>.deb (needs fakeroot)
+tools/package.sh msi     # on Windows: dist/packages/ReNameo-<version>.msi (needs the WiX Toolset)
+docker build -t renameo .
+```
+
+`tools/run-tests.sh` runs the unit tests. GitHub Actions builds and tests every push on Linux, macOS and Windows, and a tag like `v1.1.0` publishes all packages and the Docker image as a release.
 
 During development you can run the jar directly with `./renameo.sh` (GUI) or `./renameo.sh -help` (CLI).
 
 Other useful tools:
 
 - `python3 tools/md2html.py` regenerates the built-in help pages after you edit `docs/*.md`.
-- `python3 tools/build_index.py` rebuilds the offline title index in `data/` from TheMovieDB.
+- `python3 tools/build_index.py` rebuilds the offline title index in `data/` from TheMovieDB (`TMDB_API_KEY` must be set). Users can refresh their own copy with **Settings → Update offline index**.
 - `tools/bash_completion.d/renameo` provides bash completion for the command line.
 
 ## Project layout
@@ -204,10 +264,12 @@ Other useful tools:
 source/net/renameo/   application code (GUI in ui/, CLI in cli/, web services in web/, media detection in media/)
 test/                 unit tests (JUnit 4)
 docs/                 user guides (English and Italian) and images
-data/                 offline title index bundled with the app
-lib/                  bundled jars and native libraries (ivy/ and javafx/ are downloaded)
-packaging/macos/      app icon
-tools/                build scripts and helpers
+data/                 offline title indexes and release data, bundled into the jar
+lib/                  bundled jars and native libraries (ivy/ is downloaded by `ant resolve`)
+docker/               Docker entrypoint, docker-compose example and guide
+packaging/            icons and launcher settings for macOS, Linux and Windows
+tools/                build, packaging and test scripts
+.github/workflows/    CI and release automation
 ```
 
 ## Credits and license
