@@ -7,6 +7,7 @@
 ReNameo started from the open source code of FileBot 4.8.0 and has since been extensively reworked. It has a new interface, new matching and naming logic, media server profiles and support for current web APIs.
 
 - [Features](#features)
+- [How it works](#how-it-works)
 - [Requirements](#requirements)
 - [Install](#install)
 - [Quick start](#quick-start)
@@ -29,7 +30,7 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 - A local offline index of popular titles gives instant cross-references (e.g. *Il Trono di Spade* → *Game of Thrones*).
 
 **Renaming**
-- Side-by-side **diff view** of the original and proposed names, with a confidence state for each match (exact, probable, uncertain).
+- Side-by-side **diff view** of the original and proposed names, with a confidence state for each match (Exact, Likely, Review).
 - **Preview** before applying, **conflict detection** (duplicates and existing files), and **dry run**.
 - **Undo** with ⌘Z, plus a persistent rename **history**, also after a restart.
 - **Naming profiles** for Plex, Jellyfin, Emby and Kodi, plus Windows- and macOS-safe names.
@@ -45,6 +46,31 @@ ReNameo started from the open source code of FileBot 4.8.0 and has since been ex
 
 **Other tools**
 - Episode lists, subtitle search and download, SFV / MD5 / SHA-1 checksums, a file filter, and list renaming.
+
+## How it works
+
+```mermaid
+flowchart TD
+    A["Files and folders<br/>(drag and drop in the app, or paths on the command line)"] --> B["Filter<br/>video, audio and subtitle files only, samples skipped"]
+    B --> C["Detection<br/>movie or episode? title, year, SxxEyy, extras,<br/>read from file name and folder name"]
+    C --> D["Offline index<br/>instant title cross-references<br/>(e.g. Il Trono di Spade → Game of Thrones)"]
+    C --> E["Online lookup<br/>TheMovieDB · TVmaze · AniDB · OMDb<br/>AcoustID / ID3 for music"]
+    D --> F
+    E --> F["Matching<br/>similarity scoring, episode alignment,<br/>confidence: Exact / Likely / Review"]
+    F --> G["Naming<br/>Plex · Jellyfin · Emby · Kodi profile<br/>or a custom format"]
+    G --> H["Preview<br/>side-by-side diff, conflict detection, dry run"]
+    H --> I["Rename<br/>in place, move, copy, hard link, symlink"]
+    I --> J[("History<br/>undo with ⌘Z, -revert on the command line")]
+    F -.-> K["Subtitles<br/>OpenSubtitles search by file hash or name,<br/>saved next to the video"]
+    F -.-> L["Metadata<br/>poster and details from TheMovieDB<br/>in the inspector"]
+```
+
+1. **Filter.** Only media files are kept: video, audio and subtitles. Samples and other files are ignored.
+2. **Detection.** ReNameo reads the file name and its folder to work out whether it is a movie or an episode, plus the title, year, season and episode numbers, and whether it is an extra (deleted scene, trailer, …). Release tags such as resolution, codecs and release group are recognized and left out of the search.
+3. **Lookup.** The title is looked up in the offline index and in the online databases. Responses are cached, so running again is fast.
+4. **Matching.** Each file is paired with the best result. Episodes are aligned by season and episode number, air date or absolute number. Every match gets a confidence level (Exact, Likely or Review), and the ones marked Review are highlighted for you to check.
+5. **Naming and preview.** The new name comes from the chosen naming profile or custom format. You see every change before anything is touched, including conflicts such as two files with the same target or a file that already exists.
+6. **Rename and history.** Files are renamed with the chosen action. Every operation is recorded, so it can be undone even after a restart.
 
 ## Requirements
 
