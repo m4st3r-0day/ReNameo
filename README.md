@@ -4,7 +4,7 @@
 
 ![ReNameo main window](docs/images/main-window.png)
 
-ReNameo is a fork of the open source release of [FileBot](https://www.filebot.net) 4.8.0 by Reinhard Pointner. It has a new interface, better matching and support for current web APIs.
+ReNameo started from the open source code of FileBot 4.8.0 and has since been extensively reworked. It has a new interface, new matching and naming logic, media server profiles and support for current web APIs.
 
 - [Features](#features)
 - [Requirements](#requirements)
@@ -186,6 +186,12 @@ tools/                build scripts and helpers
 
 ## Credits and license
 
-ReNameo is based on the open source code of **FileBot 4.8.0** © Reinhard Pointner, released under the *Modified Don't Be A Dick Public License*. See [LICENSE.md](LICENSE.md). If you like the original work, consider supporting [FileBot](https://www.filebot.net).
+ReNameo was built on top of the open source code of **FileBot 4.8.0** © Reinhard Pointner, used under the *Modified Don't Be A Dick Public License* (see [LICENSE.md](LICENSE.md)). Since then it has been extensively reworked:
+- a completely new interface and theme;
+- new recognition, matching and naming logic;
+- media server naming profiles;
+- the OpenSubtitles REST client;
+- the preview, undo and history workflow;
+- a macOS-native build.
 
 Metadata and images are provided by [TheMovieDB](https://www.themoviedb.org), [TVmaze](https://www.tvmaze.com), [AniDB](https://anidb.net), [OMDb](https://www.omdbapi.com), [Fanart.tv](https://fanart.tv), [AcoustID](https://acoustid.org) and [OpenSubtitles](https://www.opensubtitles.com). ReNameo is not endorsed or certified by any of them.
