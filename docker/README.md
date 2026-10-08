@@ -2,6 +2,14 @@
 
 The image contains the ReNameo command line, a small Java runtime and MediaInfo. It runs on `linux/amd64` and `linux/arm64`.
 
+> **The image isn't published on ghcr.io yet.** Build it from this repository with the name used below, so every command and the `docker-compose.yml` work as written:
+>
+> ```bash
+> docker build -t ghcr.io/m4st3r-0day/renameo:latest .
+> ```
+>
+> On TrueNAS, build it on a machine with Docker and load it with `docker save` / `docker load`, or wait for the published image.
+
 You need a free TheMovieDB API key: create an account on [themoviedb.org](https://www.themoviedb.org/signup) and copy the **API Key** from [Settings → API](https://www.themoviedb.org/settings/api).
 
 ## Run a command once

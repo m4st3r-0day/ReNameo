@@ -64,14 +64,15 @@ Downloads/                                                      Downloads/
 
 ## Install
 
-Ready-made packages are published on the [Releases](https://github.com/m4st3r-0day/ReNameo/releases) page with each tagged version. Until the first one is out, [build from source](#building-from-source): it takes two commands.
+**macOS (Apple Silicon, macOS 11+):** download **ReNameo-1.0.0-mac-arm64.dmg** from the [latest release](https://github.com/m4st3r-0day/ReNameo/releases/latest), open it and drag **ReNameo** to Applications. ReNameo isn't notarized by Apple, so the first time open **System Settings → Privacy & Security** and click **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/ReNameo.app`. For the command line: `sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo`.
 
-| System | Package | Command line |
+**Linux, Windows and Docker:** packages will follow in a later release. Until then, [build from source](#building-from-source):
+
+| System | Build | Then |
 | --- | --- | --- |
-| macOS 11+ (Apple Silicon) | `ReNameo-mac-arm64.dmg`: open it and drag **ReNameo** to Applications. The first time, right-click the app and choose **Open** (it isn't notarized by Apple). | `sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo` |
-| Ubuntu / Debian (x86_64, arm64) | `renameo_<version>_amd64.deb`: `sudo apt install ./renameo_*.deb` | `sudo ln -s /opt/renameo/bin/ReNameo /usr/local/bin/renameo` |
-| Windows 10/11 (x64) | `ReNameo-<version>.msi`: run the installer. | `renameo.exe` in the installation folder |
-| Docker / NAS | `ghcr.io/m4st3r-0day/renameo`, see [Docker and TrueNAS](#docker-and-truenas) | |
+| Ubuntu / Debian (x86_64, arm64) | `tools/package.sh deb` | `sudo apt install ./dist/packages/renameo_*.deb` |
+| Windows 10/11 (x64) | `tools/package.sh msi` | run the installer in `dist\packages` |
+| Docker / NAS | `docker build -t renameo .` | see [Docker and TrueNAS](#docker-and-truenas) |
 
 Every package brings its own Java runtime. Optional: [MediaInfo](https://mediaarea.net/en/MediaInfo) adds resolution, codec and audio details (`brew install libmediainfo` on macOS; the Linux package and the Docker image include it).
 
@@ -195,8 +196,9 @@ renameo -check ~/Music/album
 ## Docker and TrueNAS
 
 ```bash
+docker build -t renameo .     # the image isn't published yet, build it from this repository
 docker run --rm -e TMDB_API_KEY=your-key -v /path/to/media:/media \
-  ghcr.io/m4st3r-0day/renameo -rename /media/downloads -r --action test -non-strict
+  renameo -rename /media/downloads -r --action test -non-strict
 ```
 
 The image also has a **watch mode** for downloads, with `PUID`/`PGID`, settings and history in `/config`, hard links for seeding and plugins via `RENAMEO_PLUGINS`. The [Docker guide](docker/README.md) covers every option, `docker-compose.yml` and installing on **TrueNAS SCALE**.
@@ -225,7 +227,7 @@ flowchart LR
 
 | Problem | Solution |
 | --- | --- |
-| macOS says the app "is damaged" or can't be opened | Right-click the app → **Open**, or run `xattr -dr com.apple.quarantine /Applications/ReNameo.app` |
+| macOS says the app "is damaged" or can't be opened | **System Settings → Privacy & Security → Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/ReNameo.app` |
 | Nothing is found | Check the TheMovieDB key in **Settings → API keys** (it is the short *API Key*, not the long *Read Access Token*) |
 | Resolution or codecs are empty in formats | Install MediaInfo (`brew install libmediainfo`) |
 | Wrong match | Select the file → **Manual match**, or add the year to the search |
