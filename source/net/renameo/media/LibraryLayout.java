@@ -64,7 +64,7 @@ public final class LibraryLayout {
 	}
 
 	/**
-	 * The media server path, but next to where the file is now: the folder of the series or movie is renamed in place (e.g. {@code Neagley.S01.1080p.WEB-DL-TBK} becomes {@code Neagley (2024)}) and
+	 * The media server path, but next to where the file is now: the folder of the series or movie is renamed in place (e.g. {@code Neagley.S01.1080p.WEB-DL-TBK} becomes {@code Neagley (2026)}) and
 	 * episodes go into season folders inside it. A file that isn't in a folder of its own (e.g. loose in {@code Downloads}) only gets its new name.
 	 *
 	 * @param titles
@@ -81,7 +81,7 @@ public final class LibraryLayout {
 			return new File(original.getParentFile(), standardPath.getName());
 		}
 
-		// just name and year: Neagley (2024), without database tags like [tmdbid-123]
+		// just name and year: Neagley (2026), without database tags like [tmdbid-123]
 		String name = segments.get(1).replaceAll("\\s*[\\[{][a-zA-Z]+(id)?[-=][^\\]}]*[\\]}]", "").trim();
 
 		// the series may already have a clean folder next to this one (e.g. a new season in a download folder)
@@ -118,7 +118,7 @@ public final class LibraryLayout {
 	}
 
 	/**
-	 * {@code Neagley.S01.1080p.AMZN.WEB-DL-TBK}, {@code Neagley (2024)} and {@code Neagley} are folders of Neagley, {@code Downloads} and {@code Upload.S01} are not.
+	 * {@code Neagley.S01.1080p.AMZN.WEB-DL-TBK}, {@code Neagley (2026)} and {@code Neagley} are folders of Neagley, {@code Downloads} and {@code Upload.S01} are not.
 	 */
 	static boolean isTitleFolder(String folder, Collection<String> titles) {
 		String name = key(folder);

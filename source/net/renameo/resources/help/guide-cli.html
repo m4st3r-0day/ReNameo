@@ -50,7 +50,7 @@ Processed 1 files</code></pre>
 <p>Without <code>--db</code> ReNameo works out on its own, file by file, whether it is a movie, an episode or music. <code>-non-strict</code> lets it pick the best result automatically; without it, only certain matches are accepted.</p>
 <h3>Tidy up release folders in place</h3>
 <pre><code>renameo -rename -r ~/Downloads --format &quot;{jellyfin.tidy}&quot; -non-strict</code></pre>
-<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> becomes <code>Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Title.mkv</code>: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (<code>.nfo</code>, samples) follows. Loose files only get a new name. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> and <code>{kodi.tidy}</code> work the same way; <code>{jellyfin.name}</code> renames only the file.</p>
+<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> becomes <code>Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Title.mkv</code>: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (<code>.nfo</code>, samples) follows. Loose files only get a new name. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> and <code>{kodi.tidy}</code> work the same way; <code>{jellyfin.name}</code> renames only the file.</p>
 <h3>Organize a Plex or Jellyfin library</h3>
 <pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
 renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>

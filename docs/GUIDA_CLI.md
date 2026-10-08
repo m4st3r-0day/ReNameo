@@ -76,7 +76,7 @@ Senza `--db` ReNameo riconosce da solo, file per file, se si tratta di un film, 
 renameo -rename -r ~/Downloads --format "{jellyfin.tidy}" -non-strict
 ```
 
-`Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv` diventa `Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Titolo.mkv`: la cartella viene rinominata sul posto, gli episodi vanno nella cartella della stagione e il resto della cartella (`.nfo`, sample) la segue. I file sciolti cambiano solo nome. `{plex.tidy}`, `{emby.tidy}` e `{kodi.tidy}` funzionano allo stesso modo; `{jellyfin.name}` rinomina solo il file.
+`Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv` diventa `Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Titolo.mkv`: la cartella viene rinominata sul posto, gli episodi vanno nella cartella della stagione e il resto della cartella (`.nfo`, sample) la segue. I file sciolti cambiano solo nome. `{plex.tidy}`, `{emby.tidy}` e `{kodi.tidy}` funzionano allo stesso modo; `{jellyfin.name}` rinomina solo il file.
 
 ### Organizzare una libreria Plex o Jellyfin
 

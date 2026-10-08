@@ -111,7 +111,7 @@ Every rename is recorded in the **History** (clock icon in the header), from whe
 
 From **⌄ → Naming Profile** choose **Plex**, **Jellyfin**, **Emby** or **Kodi**. Files stay where they are, but get tidied up by the server's convention:
 
-- the **folder of the series or movie** is renamed in place to *Name (Year)*, e.g. `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2024)`;
+- the **folder of the series or movie** is renamed in place to *Name (Year)*, e.g. `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2026)`;
 - episodes go into their season folder (`Season 01`), created if needed; an existing one (also spelled `Season 1`) is reused;
 - the rest of the folder (`.nfo`, samples, other seasons) follows it, as if you had renamed it by hand, and the old folder goes away;
 - a file loose in a general folder (e.g. right in `Downloads`) only gets a new name: ReNameo only touches folders whose name starts with the title of the series or movie.

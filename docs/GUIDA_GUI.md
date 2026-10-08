@@ -111,7 +111,7 @@ Ogni rinomina finisce nella **Cronologia** (icona orologio nell'intestazione), d
 
 Dal menu **⌄ → Naming Profile** scegli **Plex**, **Jellyfin**, **Emby** o **Kodi**. I file restano dove sono, ma vengono sistemati secondo la convenzione del server:
 
-- la **cartella della serie o del film** viene rinominata sul posto in *Nome (Anno)*, per esempio `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2024)`;
+- la **cartella della serie o del film** viene rinominata sul posto in *Nome (Anno)*, per esempio `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2026)`;
 - gli episodi vanno nella cartella della stagione (`Season 01`), creata se manca; se esiste già (anche come `Season 1`) viene riutilizzata;
 - il resto della cartella (`.nfo`, sample, altre stagioni) la segue, come se l'avessi rinominata a mano, e la vecchia cartella sparisce;
 - un file sciolto in una cartella generica (per esempio direttamente in `Downloads`) cambia solo nome: ReNameo tocca solo le cartelle il cui nome comincia con il titolo della serie o del film.

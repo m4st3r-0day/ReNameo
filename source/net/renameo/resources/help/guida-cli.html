@@ -50,7 +50,7 @@ Processed 1 files</code></pre>
 <p>Senza <code>--db</code> ReNameo riconosce da solo, file per file, se si tratta di un film, un episodio o musica. <code>-non-strict</code> permette di scegliere automaticamente il risultato migliore; senza, vengono accettati solo gli abbinamenti certi.</p>
 <h3>Sistemare sul posto le cartelle delle release</h3>
 <pre><code>renameo -rename -r ~/Downloads --format &quot;{jellyfin.tidy}&quot; -non-strict</code></pre>
-<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> diventa <code>Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Titolo.mkv</code>: la cartella viene rinominata sul posto, gli episodi vanno nella cartella della stagione e il resto della cartella (<code>.nfo</code>, sample) la segue. I file sciolti cambiano solo nome. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> e <code>{kodi.tidy}</code> funzionano allo stesso modo; <code>{jellyfin.name}</code> rinomina solo il file.</p>
+<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> diventa <code>Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Titolo.mkv</code>: la cartella viene rinominata sul posto, gli episodi vanno nella cartella della stagione e il resto della cartella (<code>.nfo</code>, sample) la segue. I file sciolti cambiano solo nome. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> e <code>{kodi.tidy}</code> funzionano allo stesso modo; <code>{jellyfin.name}</code> rinomina solo il file.</p>
 <h3>Organizzare una libreria Plex o Jellyfin</h3>
 <pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
 renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>
