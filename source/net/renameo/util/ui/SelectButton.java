@@ -29,10 +29,6 @@ public class SelectButton<T> extends JButton {
 	public static final String SELECTED_VALUE = "selected value";
 
 	private final Color beginColor = new Color(0xF0EEE4);
-	private final Color endColor = new Color(0xE0DED4);
-
-	private final Color beginColorHover = beginColor;
-	private final Color endColorHover = new Color(0xD8D7CD);
 
 	private final SelectIcon selectIcon = new SelectIcon();
 

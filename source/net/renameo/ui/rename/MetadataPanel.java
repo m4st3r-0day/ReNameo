@@ -51,10 +51,11 @@ import net.miginfocom.swing.MigLayout;
  */
 class MetadataPanel extends Modern.Card {
 
-	private static final Map<URL, Image> posters = Collections.synchronizedMap(new LinkedHashMap<URL, Image>(32, 0.75f, true) {
+	// keyed by the URL text: URL.hashCode() and equals() resolve the host name
+	private static final Map<String, Image> posters = Collections.synchronizedMap(new LinkedHashMap<String, Image>(32, 0.75f, true) {
 
 		@Override
-		protected boolean removeEldestEntry(Map.Entry<URL, Image> eldest) {
+		protected boolean removeEldestEntry(Map.Entry<String, Image> eldest) {
 			return size() > 64;
 		}
 	});
@@ -359,11 +360,11 @@ class MetadataPanel extends Modern.Card {
 				if (url == null || isCancelled()) {
 					return null;
 				}
-				Image poster = posters.get(url);
+				Image poster = posters.get(url.toString());
 				if (poster == null) {
 					poster = ImageIO.read(url);
 					if (poster != null) {
-						posters.put(url, poster);
+						posters.put(url.toString(), poster);
 					}
 				}
 				return poster;
@@ -401,11 +402,11 @@ class MetadataPanel extends Modern.Card {
 				Image poster = null;
 				URL url = info.getPoster();
 				if (url != null) {
-					poster = posters.get(url);
+					poster = posters.get(url.toString());
 					if (poster == null && !isCancelled()) {
 						poster = ImageIO.read(url);
 						if (poster != null) {
-							posters.put(url, poster);
+							posters.put(url.toString(), poster);
 						}
 					}
 				}

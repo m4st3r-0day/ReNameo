@@ -29,7 +29,6 @@ public class FileNameInfo {
 	private static final Pattern AV1 = compile("(?<![\\p{Alnum}])av1(?![\\p{Alnum}])", CASE_INSENSITIVE);
 	private static final Pattern DOLBY_VISION = compile("(?<![\\p{Alnum}])(dv|dovi|dolby[ ._-]?vision)(?![\\p{Alnum}])", CASE_INSENSITIVE);
 	private static final Pattern HDR = compile("(?<![\\p{Alnum}])(hdr10\\+|hdr10plus|hdr10|hdr)(?![\\p{Alnum}])", CASE_INSENSITIVE);
-	private static final Pattern BIT10 = compile("(?<![\\p{Alnum}])10[ ._-]?bit(?![\\p{Alnum}])", CASE_INSENSITIVE);
 	private static final Pattern SOURCE = compile("(?<![\\p{Alnum}])(remux|blu[ ._-]?ray|bdrip|brrip|web[ ._-]?dl|webrip|web|hdtv|dvdrip|dvd)(?![\\p{Alnum}])", CASE_INSENSITIVE);
 	private static final Pattern ATMOS = compile("(?<![\\p{Alnum}])atmos(?![\\p{Alnum}])", CASE_INSENSITIVE);
 	private static final Pattern AUDIO = compile("(?<![\\p{Alnum}])(truehd|dts[ ._-]?hd(?:[ ._-]?ma)?|dts[ ._-]?x|dts|ddp|dd\\+|e[ ._-]?ac[ ._-]?3|ac[ ._-]?3|dd(?=[ ._]?[257][ ._][01])|aac|flac|opus|mp3)(?:[ ._]?[257][ ._][01])?(?![\\p{Alnum}])", CASE_INSENSITIVE);

@@ -119,7 +119,7 @@ Did something go wrong? Press **⌘Z**, or open the history to undo an earlier r
 
 ## Naming profiles
 
-**⌄ → Naming Profile** switches between ready-made conventions. Plex, Jellyfin, Emby and Kodi **rename files in place**: they stay in their folder, and only the file name follows the media server convention.
+**⌄ → Naming Profile** switches between ready-made conventions. Plex, Jellyfin, Emby and Kodi **tidy up in place**: the folder of a series or movie gets its proper name (`Neagley.S01.1080p.WEB-DL-TBK` → `Neagley (2024)`), episodes go into `Season 01`, and the rest of the folder follows. A file loose in a general folder like `Downloads` only gets a new name. In formats this is `{jellyfin.tidy}`; `{jellyfin.name}` renames just the file.
 
 | Profile | Episode | Movie |
 | --- | --- | --- |
@@ -164,21 +164,36 @@ For a server or NAS that runs around the clock, use the [Docker watch mode](dock
 
 ## Plugins and scripts
 
-**Plugins** are Groovy scripts in the `plugins` folder of the ReNameo data folder (`~/.renameo/plugins` on macOS, `~/.local/share/renameo/plugins` on Linux, `%APPDATA%\ReNameo\plugins` on Windows, `/config/plugins` in Docker). **Settings → Plugins** lists them, turns them on and off and shows load errors.
+The **Plugins** page in the sidebar installs ready-made plugins with one click, turns them on and off, holds their settings (server, API key, …), runs their actions and shows what they write to the log:
+
+| Plugin | What it does |
+| --- | --- |
+| `jellyfin-refresh`, `emby-refresh` | Rescan the library after renaming |
+| `plex-refresh` | Rescan only the Plex folders that received files |
+| `kodi-scan` | Update the Kodi video library (JSON-RPC) |
+| `notify` | Message on ntfy, Discord, Gotify or Pushover after renaming |
+| `clutter-cleaner` | Trash samples, `.nfo`, `.txt` … and remove the empty download folders after files were moved |
+| `subtitles-all` | Missing subtitles for a whole folder, or automatically after renaming |
+| `missing-episodes` | Aired episodes that are missing from a series folder (TheMovieDB) |
+| `duplicates` | Episodes and movies you have more than once |
+| `rename-log` | Every rename in a text file |
+
+Plugins are Groovy scripts in the `plugins` folder of the ReNameo data folder (`~/.renameo/plugins` on macOS, `~/.local/share/renameo/plugins` on Linux, `%APPDATA%\ReNameo\plugins` on Windows, `/config/plugins` in Docker), so you can also write your own:
 
 ```groovy
 description "Refresh the Jellyfin library after renaming"
+setting "server", "Server", "http://localhost:8096"   // a field on the Plugins page, read with settings.server
+secret "apiKey", "API key"                            // same, masked
 
-onRename { from, to ->                      // after every rename: app, watch folder, command line, Docker
-    log "renamed ${from.name} to ${to.name}"
-}
-
-binding("resolution") { m ->                // {plugin.resolution} in formats; m has {n}, {y}, {height} (MediaInfo), ...
-    m.height >= 2000 ? "4K" : "HD"
-}
+onRename { from, to -> log "renamed ${from.name}" }   // after every rename: app, watch folder, command line, Docker
+onRenameBatch { renames -> /* once per batch */ }     // renames = [[from, to], ...]
+binding("resolution") { m -> m.height >= 2000 ? "4K" : "HD" }   // {plugin.resolution} in formats
+action("Count videos", "…") { folder -> /* a button on the Plugins page */ }
 ```
 
-Ready-made examples are in [`docs/plugins`](docs/plugins): Jellyfin refresh, Plex refresh and a rename log. Plugins run with your rights, so only install plugins you trust. Formats themselves stay sandboxed: they can't run programs or change files.
+Step by step, with complete examples: [writing plugins and scripts](docs/USER_GUIDE_PLUGINS.md) ([in italiano](docs/GUIDA_PLUGIN.md)), also under Help in the app. A short example with every instruction is in [`docs/plugins/example.groovy`](docs/plugins/example.groovy). In Docker, `RENAMEO_PLUGINS=jellyfin-refresh,notify` installs plugins and `PLUGIN_<NAME>_<SETTING>` sets their settings (e.g. `PLUGIN_JELLYFIN_REFRESH_APIKEY`). Plugins run with your rights, so only install plugins you trust. Formats themselves stay sandboxed: they can't run programs or change files.
+
+The ideas for the ready-made plugins come from the [FileBot scripts](https://github.com/filebot/scripts); the code is written from scratch for ReNameo.
 
 **Scripts** run once from the command line: `renameo -script my-script.groovy`, or `renameo -script fn:name` for `name.groovy` in the `scripts` folder of the data folder.
 

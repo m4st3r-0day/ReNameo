@@ -18,7 +18,7 @@ table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px;
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232B3E; vertical-align: top; }
 th { color: #8B93A7; font-weight: 600; }
 strong { color: #E8ECF4; }
-</style></head><body><main><nav><a href="guide-gui.html">Desktop app</a><a href="guide-cli.html" class="active">Command line</a><a class="lang" href="guida-cli.html">Italiano</a></nav><h1>ReNameo — Command Line Guide</h1>
+</style></head><body><main><nav><a href="guide-gui.html">Desktop app</a><a href="guide-cli.html" class="active">Command line</a><a href="guide-plugins.html">Plugins & scripts</a><a class="lang" href="guida-cli.html">Italiano</a></nav><h1>ReNameo — Command Line Guide</h1>
 <p>Everything the desktop app does can also be done from the terminal, including unattended use (scripts, cron, watched folders). For the window see <a href="guide-gui.html">USER_GUIDE_GUI.md</a>.</p>
 <h2>How to run it</h2>
 <p>The app already contains the command. The most convenient way is to link it as <code>renameo</code>:</p>
@@ -48,6 +48,9 @@ Processed 1 files</code></pre>
 <h3>Rename movies and series in place</h3>
 <pre><code>renameo -rename -r ~/Downloads/Movies -non-strict</code></pre>
 <p>Without <code>--db</code> ReNameo works out on its own, file by file, whether it is a movie, an episode or music. <code>-non-strict</code> lets it pick the best result automatically; without it, only certain matches are accepted.</p>
+<h3>Tidy up release folders in place</h3>
+<pre><code>renameo -rename -r ~/Downloads --format &quot;{jellyfin.tidy}&quot; -non-strict</code></pre>
+<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> becomes <code>Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Title.mkv</code>: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (<code>.nfo</code>, samples) follows. Loose files only get a new name. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> and <code>{kodi.tidy}</code> work the same way; <code>{jellyfin.name}</code> renames only the file.</p>
 <h3>Organize a Plex or Jellyfin library</h3>
 <pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
 renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>
@@ -112,6 +115,6 @@ renameo -rename -r &quot;$HOME/Downloads/Complete&quot; \
   ghcr.io/m4st3r-0day/renameo -rename /media/downloads -r --action test -non-strict</code></pre>
 <p>With the <code>watch</code> command the container renames what arrives in a folder at regular intervals (<code>WATCH_DIR</code>, <code>RENAMEO_NAMING</code>, <code>RENAMEO_ACTION</code>, <code>PUID</code>/<code>PGID</code> …). Every option, the <code>docker-compose.yml</code> and the TrueNAS SCALE setup are in <code>docker/README.md</code>.</p>
 <h2>Scripts and plugins</h2>
-<ul><li><code>renameo -script file.groovy</code> runs a Groovy script; <code>renameo -script fn:name</code> runs <code>name.groovy</code> from the <code>scripts</code> folder of the ReNameo data folder.</li><li><strong>Plugins</strong> (<code>.groovy</code> files in the <code>plugins</code> folder) are loaded by the command line and Docker too: <code>onRename</code> is called after every rename and their values are used in formats as <code>{plugin.name}</code>. Examples in <code>docs/plugins</code>.</li></ul>
+<ul><li><code>renameo -script file.groovy</code> runs a Groovy script; <code>renameo -script fn:name</code> runs <code>name.groovy</code> from the <code>scripts</code> folder of the ReNameo data folder.</li><li><strong>Plugins</strong> (<code>.groovy</code> files in the <code>plugins</code> folder) are loaded by the command line and Docker too: <code>onRename</code>/<code>onRenameBatch</code> are called after renaming and their values are used in formats as <code>{plugin.name}</code>. Without a desktop, <code>RENAMEO_PLUGINS=jellyfin-refresh,notify</code> installs ready-made plugins and <code>PLUGIN_&lt;NAME&gt;_&lt;SETTING&gt;</code> sets their settings (e.g. <code>PLUGIN_JELLYFIN_REFRESH_APIKEY</code>). How to write them: <a href="guide-plugins.html">Writing plugins and scripts</a>.</li></ul>
 <h2>Where data is stored</h2>
 <ul><li>Cache, history, logs, scripts and plugins: <code>~/.renameo</code> on macOS (<code>~/.filebot</code> folders from earlier versions are adopted automatically), <code>~/.local/share/renameo</code> on Linux, <code>%APPDATA%\ReNameo</code> on Windows, <code>/config</code> in Docker.</li><li>Settings: Java user preferences (<code>-clear-prefs</code> to reset them).</li></ul></main></body></html>

@@ -16,7 +16,7 @@ JAR="dist/${APP_NAME}_${APP_VERSION}.jar"
 # Java runtime bundled into the app, so it runs on Macs without Java installed
 JDK="${JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null || true)}"
 # jdeps modules plus the ones only loaded at runtime (subtitle charsets, locale data, TLS, accessibility, zip archives)
-JAVA_MODULES="java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.prefs,java.scripting,java.sql,java.xml,jdk.accessibility,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs"
+JAVA_MODULES="java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.prefs,java.scripting,java.sql,java.xml,jdk.accessibility,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs"
 
 # check every input before touching the existing bundle
 if [ ! -f "$JAR" ]; then

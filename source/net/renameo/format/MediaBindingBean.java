@@ -30,6 +30,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
@@ -1098,7 +1101,7 @@ public class MediaBindingBean {
 		ExtraType extra = getExtraType();
 		String path = extra == null ? null : standard.getExtraPath(infoObject, extra, ExtraType.getTitle(mediaFile));
 		if (path != null) {
-			return new File(path);
+			return new MediaServerPath(path, mediaFile, getFolderTitles());
 		}
 
 		path = standard.getPath(infoObject);
@@ -1107,7 +1110,30 @@ public class MediaBindingBean {
 		} catch (Exception e) {
 			// ignore => no language tags
 		}
-		return new File(path);
+		return new MediaServerPath(path, mediaFile, getFolderTitles());
+	}
+
+	/**
+	 * Names a folder of this series or movie may start with: the title and the alias names (e.g. a folder named after the Italian title).
+	 */
+	private List<String> getFolderTitles() {
+		List<String> titles = new ArrayList<String>();
+		if (infoObject instanceof Episode || infoObject instanceof Movie) {
+			// only values the match already has, no extra lookups online
+			for (Callable<Object> value : Arrays.<Callable<Object>> asList(this::getName, this::getAliasNames)) {
+				try {
+					Object v = value.call();
+					if (v instanceof Collection) {
+						((Collection<?>) v).forEach(it -> titles.add(String.valueOf(it)));
+					} else if (v != null) {
+						titles.add(v.toString());
+					}
+				} catch (Exception e) {
+					// e.g. no alias names
+				}
+			}
+		}
+		return titles;
 	}
 
 	/**
@@ -1200,10 +1226,10 @@ public class MediaBindingBean {
 	}
 
 	public Episode getSeasonEpisode() {
-		// magically convert AniDB absolute numbers to TheTVDB SxE numbers if AniDB is selected with airdate SxE episode sort order
+		// convert AniDB absolute numbers to SxE numbers (via TheMovieDB) if AniDB is selected with airdate SxE episode sort order
 		if (getEpisodes().stream().allMatch(it -> isAnime(it) && isRegular(it) && !isAbsolute(it))) {
 			try {
-				return getEpisodeByAbsoluteNumber(getEpisode(), TheTVDB, SortOrder.Airdate);
+				return getEpisodeByAbsoluteNumber(getEpisode(), TheMovieDB_TV, SortOrder.Airdate);
 			} catch (Exception e) {
 				debug.warning(e::toString);
 			}

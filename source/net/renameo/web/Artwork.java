@@ -40,7 +40,7 @@ public class Artwork implements Serializable {
 	}
 
 	public Locale getLanguage() {
-		return language == null ? null : new Locale(language);
+		return language == null ? null : Locale.of(language);
 	}
 
 	public double getRating() {
@@ -59,14 +59,14 @@ public class Artwork implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return url.hashCode();
+		return url.toString().hashCode(); // URL.hashCode() resolves the host name
 	}
 
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof Artwork) {
 			Artwork artwork = (Artwork) other;
-			return url.sameFile(artwork.url);
+			return url.toString().equals(artwork.url.toString());
 		}
 		return false;
 	}

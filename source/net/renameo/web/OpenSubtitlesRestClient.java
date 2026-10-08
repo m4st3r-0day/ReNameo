@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import javax.swing.Icon;
 
@@ -52,6 +53,7 @@ public class OpenSubtitlesRestClient implements SubtitleProvider, VideoHashSubti
 	private String apiKey;
 	private String username = "";
 	private String password = "";
+	private Supplier<String> passwordSource;
 
 	private String token;
 	private String api = DEFAULT_API;
@@ -88,19 +90,34 @@ public class OpenSubtitlesRestClient implements SubtitleProvider, VideoHashSubti
 	}
 
 	public synchronized void setCredentials(String username, String password) {
+		setCredentials(username, () -> password);
+	}
+
+	/**
+	 * The password is only looked up (e.g. in the keychain) when it is needed.
+	 */
+	public synchronized void setCredentials(String username, Supplier<String> password) {
 		this.username = username == null ? "" : username;
-		this.password = password == null ? "" : password;
+		this.passwordSource = password;
+		this.password = null;
 		this.token = null;
 		this.api = DEFAULT_API;
 	}
 
+	private String password() {
+		if (password == null) {
+			String value = passwordSource == null ? null : passwordSource.get();
+			password = value == null ? "" : value;
+		}
+		return password;
+	}
 	public synchronized void setUser(String username, String password_md5) {
 		// the REST API needs the real password, which the legacy settings only store as MD5 hash
 		setCredentials(username, "");
 	}
 
 	public synchronized boolean isAnonymous() {
-		return username.isEmpty() || password.isEmpty();
+		return username.isEmpty() || password().isEmpty();
 	}
 
 	public synchronized void login() throws Exception {
@@ -108,7 +125,7 @@ public class OpenSubtitlesRestClient implements SubtitleProvider, VideoHashSubti
 			return;
 		}
 
-		String body = String.format("{\"username\":%s,\"password\":%s}", quote(username), quote(password));
+		String body = String.format("{\"username\":%s,\"password\":%s}", quote(username), quote(password()));
 		Object response = request("POST", "/login", null, body);
 		token = getString(response, "token");
 

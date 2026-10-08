@@ -37,19 +37,23 @@ import net.renameo.ResourceManager;
 public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 
 	// TMDb dropped the old 40 requests per 10 seconds limit and now allows about 50 requests per second per IP; stay well below it
-	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(20, 1, TimeUnit.SECONDS);
+	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(35, 1, TimeUnit.SECONDS);
 
 	private final String host = "api.themoviedb.org";
 	private final String version = "3";
 
-	private volatile String apikey;
+	private final LazyApiKey apikey;
 	private boolean adult;
 
 	public void setApiKey(String apikey) {
-		this.apikey = apikey;
+		this.apikey.set(apikey);
 	}
 
 	public TMDbClient(String apikey, boolean adult) {
+		this(LazyApiKey.of(apikey), adult);
+	}
+
+	public TMDbClient(LazyApiKey apikey, boolean adult) {
 		this.apikey = apikey;
 		this.adult = adult;
 	}
@@ -391,7 +395,7 @@ public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 	}
 
 	protected URL getResource(String path, String language) throws Exception {
-		if (apikey == null || apikey.isEmpty()) {
+		if (apikey.isEmpty()) {
 			throw new IllegalStateException("TheMovieDB API key missing: enter it in Settings > API keys, or set the TMDB_API_KEY environment variable");
 		}
 
@@ -403,7 +407,7 @@ public class TMDbClient implements MovieIdentificationService, ArtworkProvider {
 		if (language != null) {
 			file.append("language=").append(language).append('&');
 		}
-		file.append("api_key=").append(apikey);
+		file.append("api_key=").append(apikey.get());
 
 		return new URL("https", host, file.toString());
 	}

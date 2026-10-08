@@ -25,6 +25,11 @@ public class SfvPanelBuilder implements PanelBuilder {
 	}
 
 	@Override
+	public int hashCode() {
+		return SfvPanelBuilder.class.hashCode();
+	}
+
+	@Override
 	public JComponent create() {
 		return new SfvPanel();
 	}

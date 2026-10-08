@@ -23,7 +23,7 @@ On first start, if the key is missing, ReNameo opens the **API keys** window by 
 | Area | What it contains |
 | --- | --- |
 | Top bar | Name and version, button to collapse the sidebar (⌘\\), **command palette** (⌘K), help (F1) and status indicator: green *Ready*, blue *Matching…*, orange *N to review*. |
-| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List. At the bottom, *Settings*. |
+| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Plugins. At the bottom, *Settings*. |
 | Header | Section title and, in Rename, the main actions: **Match**, **Fetch Metadata**, **Format**, Presets, **Undo**, History and show/hide inspector (⌘I). |
 | Content | In Rename: *Original Files* on the left, *Proposed Names* in the middle, *Metadata* on the right. |
 | Status bar | Files added, files matched, warnings, progress and the **Rename** button with its options menu (⌄). |
@@ -103,13 +103,20 @@ The **⌄** menu next to Rename contains:
 - **Extension**: *Preserve* keeps the original extension (default), *Override* lets the format decide.
 - **Action**: *Rename/Move* moves and renames (default); *Copy*, *Keep Link*, *Symlink*, *Hardlink*, *Clone*; *Test* simulates without touching anything.
 - **After Rename**: *Download poster & fanart* saves the images from TheMovieDB next to the renamed files.
-- **Naming Profile**: *Plex*, *Jellyfin*, *Emby*, *Kodi* (rename in place), *Windows-friendly* and *macOS-friendly* (rename in place with safe characters: `:` becomes ` - ` on Windows and `꞉` on macOS), or *Custom Format*.
+- **Naming Profile**: *Plex*, *Jellyfin*, *Emby*, *Kodi* (rename in place, with the folder of the series or movie and season folders), *Windows-friendly* and *macOS-friendly* (rename in place with safe characters: `:` becomes ` - ` on Windows and `꞉` on macOS), or *Custom Format*.
 
 Every rename is recorded in the **History** (clock icon in the header), from where you can undo it.
 
 ## Library for Plex, Jellyfin, Emby or Kodi
 
-From **⌄ → Naming Profile** choose **Plex**, **Jellyfin**, **Emby** or **Kodi**. Files are **renamed in place**: they stay in the folder they are in, only the file name changes, following the server's convention.
+From **⌄ → Naming Profile** choose **Plex**, **Jellyfin**, **Emby** or **Kodi**. Files stay where they are, but get tidied up by the server's convention:
+
+- the **folder of the series or movie** is renamed in place to *Name (Year)*, e.g. `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2024)`;
+- episodes go into their season folder (`Season 01`), created if needed; an existing one (also spelled `Season 1`) is reused;
+- the rest of the folder (`.nfo`, samples, other seasons) follows it, as if you had renamed it by hand, and the old folder goes away;
+- a file loose in a general folder (e.g. right in `Downloads`) only gets a new name: ReNameo only touches folders whose name starts with the title of the series or movie.
+
+Everything can be undone with ⌘Z or from History, folders included.
 
 ```
 TV/01. The Haunting of Hill House (2018)/Season 1/The Haunting of Hill House (2018) - S01E01 - Steven Sees a Ghost.mkv
@@ -224,7 +231,7 @@ Generic or obfuscated names such as `movie.mkv`, `VTS_01_1.mkv` or `a3f9c2e1b7d4
 - **Night mode**: dark theme (default);
 - **Compact rows**: shorter rows for long lists;
 - **Accent color**: the color of buttons and selections;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index* and *Plugins*, explained below;
+- **Tools**: *API keys*, *Watch folder*, *Update offline index* and *Plugins* (opens the Plugins page), explained below;
 - the link to this guide and the app version.
 
 ## Watch folder
@@ -243,23 +250,40 @@ ReNameo contains an index of the most popular movies and series, which recognize
 
 ## Plugins
 
-Plugins are Groovy scripts in the `plugins` folder of the ReNameo data folder (`~/.renameo/plugins` on macOS). **Settings → Plugins** lists them, turns them on and off and shows load errors; *Open folder* opens the folder and *Reload* loads them again.
+The **Plugins** page in the sidebar holds the plugins: Groovy scripts that react to renames (app, watch folder, command line, Docker), add values to formats or add actions to run on a folder.
 
-A plugin can react to every rename (app, watch folder, command line, Docker) and add values to formats, used as `{plugin.name}`:
+- **Available**: the ready-made plugins that come with the app; *Install* copies them into the `plugins` folder (`~/.renameo/plugins` on macOS).
+- **Installed**: for each plugin the *On* switch, the trash button to remove it, its settings (saved as soon as you leave a field) and its action buttons, which ask for a folder.
+- While a plugin works, its card shows what it's doing, a progress bar, the elapsed time and **Stop**; afterwards, *Last run* tells how it went.
+- **Plugin log** (drag the divider to make it bigger): time, plugin and a mark for started ▶, done ✓, stopped ■ and error ✕. Filter by plugin or *Errors only*, select and copy with ⌘C or right-click, *Save…* writes a file, *Clear* empties it.
+- At the top, *Open folder* opens the plugins folder and *Reload* loads them again after you changed them.
+
+| Plugin | What it does |
+| --- | --- |
+| `jellyfin-refresh`, `emby-refresh` | Rescan the library after renaming (server address and API key) |
+| `plex-refresh` | Lets Plex scan only the folders that received files (address and token) |
+| `kodi-scan` | Updates the Kodi video library (remote control via HTTP turned on) |
+| `notify` | Message on ntfy, Discord, Gotify or Pushover after renaming; *Send a test* to try it |
+| `clutter-cleaner` | After a move, trashes samples, `.nfo`, `.txt` … and removes the download folders left empty; only touches folders with no video, audio or subtitles left. *Clean a folder* does the same for a folder |
+| `subtitles-all` | Missing subtitles for a whole folder or, with *After renaming* = `yes`, after every rename (needs OpenSubtitles access) |
+| `missing-episodes` | Pick the folder of a series: lists the aired episodes that are missing (TheMovieDB) |
+| `duplicates` | Lists episodes and movies you have more than once, with the size of each copy; deletes nothing |
+| `rename-log` | Writes every rename to a text file |
+
+To write your own:
 
 ```groovy
 description "Refresh the Jellyfin library after renaming"
+setting "server", "Server", "http://localhost:8096"   // a field on the Plugins page, read with settings.server
+secret "apiKey", "API key"                            // same, masked
 
-onRename { from, to ->
-    log "renamed ${from.name} to ${to.name}"
-}
-
-binding("resolution") { m ->       // {plugin.resolution}; m has {n}, {y}, {height} …
-    m.height >= 2000 ? "4K" : "HD"
-}
+onRename { from, to -> log "renamed ${from.name}" }   // after every file
+onRenameBatch { renames -> /* once per batch */ }     // renames = [[from, to], ...]
+binding("resolution") { m -> m.height >= 2000 ? "4K" : "HD" }   // {plugin.resolution} in formats
+action("Count videos", "…") { folder -> /* a button on the Plugins page */ }
 ```
 
-Ready-made examples (Jellyfin refresh, Plex refresh, rename log) are in `docs/plugins` in the repository. Plugins run with your rights: only install plugins you trust. Formats themselves stay sandboxed and can't run programs or change files.
+The guide [Writing plugins and scripts](USER_GUIDE_PLUGINS.md) explains everything step by step, with complete examples; the button at the bottom of the Plugins page opens it too. Plugins run with your rights: only install plugins you trust. Formats themselves stay sandboxed and can't run programs or change files.
 
 ## Poster preview
 

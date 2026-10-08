@@ -1,7 +1,6 @@
 package net.renameo;
 
 import static java.util.Arrays.*;
-import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 import static net.renameo.Logging.*;
 import static net.renameo.Settings.*;
@@ -18,8 +17,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 
 import javax.swing.JFileChooser;
@@ -79,8 +76,10 @@ public class UserFiles {
 	}
 
 	public static List<File> showLoadDialogSelectFiles(boolean folderMode, boolean multiSelection, File defaultFile, ExtensionFileFilter filter, String title, ActionEvent evt) {
-		String defaultFileKey = ((folderMode && filter == null) || !(folderMode && filter != null && isShiftOrAltDown(evt))) ? KEY_OPEN_FOLDER : KEY_OPEN_FILE;
-		List<File> files = defaultFileChooser.showLoadDialogSelectFiles(defaultFileKey == KEY_OPEN_FOLDER, multiSelection, getFileChooserDefaultFile(defaultFileKey, defaultFile), filter, title, evt);
+		// shift or alt switches a folder chooser with a file filter to choosing files
+		boolean selectFolder = !(folderMode && filter != null && isShiftOrAltDown(evt));
+		String defaultFileKey = selectFolder ? KEY_OPEN_FOLDER : KEY_OPEN_FILE;
+		List<File> files = defaultFileChooser.showLoadDialogSelectFiles(selectFolder, multiSelection, getFileChooserDefaultFile(defaultFileKey, defaultFile), filter, title, evt);
 		if (files.size() > 0) {
 			setFileChooserDefaultFile(defaultFileKey, files.get(0));
 		}

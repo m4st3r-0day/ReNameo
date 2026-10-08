@@ -107,7 +107,7 @@ public class TheTVDBClient extends AbstractEpisodeListProvider implements Artwor
 	private Duration tokenExpireDuration = Duration.ofHours(23); // token expires after 24 hours
 
 	private String getAuthorizationToken() {
-		synchronized (tokenExpireDuration) {
+		synchronized (this) {
 			if (token == null || (tokenExpireInstant != null && Instant.now().isAfter(tokenExpireInstant))) {
 				try {
 					Object json = postJson("login", singletonMap("apikey", apikey));

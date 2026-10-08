@@ -200,6 +200,9 @@
 			<zipfileset src="${dir.dist}/lib/guava.jar">
 				<include name="com/google/**" />
 			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/failureaccess.jar">
+				<include name="com/google/**" />
+			</zipfileset>
 			<zipfileset src="${dir.dist}/lib/streamex.jar">
 				<include name="one/util/streamex/**" />
 			</zipfileset>
@@ -207,13 +210,13 @@
 				<include name="com/ibm/icu/**" />
 
 				<!-- only transliteration (which needs the word break data for Thai, Lao, Khmer, Burmese) and charset detection are used: leave out collation, currency, language, region, time zone, unit and number spellout data -->
-				<exclude name="com/ibm/icu/impl/data/icudt*/coll/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/curr/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/lang/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/region/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/zone/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/unit/**" />
-				<exclude name="com/ibm/icu/impl/data/icudt*/rbnf/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/coll/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/curr/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/lang/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/region/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/zone/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/unit/**" />
+				<exclude name="com/ibm/icu/impl/data/icud*/rbnf/**" />
 			</zipfileset>
 			<zipfileset src="${dir.dist}/lib/simmetrics.jar">
 				<include name="uk/ac/shef/wit/simmetrics/**" />
@@ -245,16 +248,39 @@
 				<include name="org/slf4j/**" />
 			</zipfileset>
 
-			<!-- include Groovy libraries -->
-			<zipfileset src="${dir.dist}/lib/groovy-all.jar">
-				<include name="groovy*/**" />
+			<!-- include Groovy libraries (Groovy 4 modules; their extension module descriptors are merged in source/META-INF/groovy) -->
+			<zipfileset src="${dir.dist}/lib/groovy.jar">
+				<include name="groovy/**" />
+				<include name="groovyjarjar*/**" />
 				<include name="org/codehaus/groovy/**" />
+				<include name="org/apache/groovy/**" />
 				<include name="META-INF/dgminfo" />
+				<include name="META-INF/groovy-release-info.properties" />
+				<include name="META-INF/groovy/org.codehaus.groovy.source.Extensions" />
 				<include name="META-INF/services/**" />
-				<include name="META-INF/*.properties" />
-
-				<!-- renameo already includes it's own extension modules -->
-				<exclude name="META-INF/services/org.codehaus.groovy.runtime.ExtensionModule" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-jsr223.jar">
+				<include name="org/codehaus/groovy/jsr223/**" />
+				<include name="META-INF/services/javax.script.ScriptEngineFactory" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-json.jar">
+				<include name="groovy/json/**" />
+				<include name="org/apache/groovy/json/**" />
+				<include name="META-INF/services/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-xml.jar">
+				<include name="groovy/xml/**" />
+				<include name="groovy/util/**" />
+				<include name="org/apache/groovy/xml/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-dateutil.jar">
+				<include name="org/apache/groovy/dateutil/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-datetime.jar">
+				<include name="org/apache/groovy/datetime/**" />
+			</zipfileset>
+			<zipfileset src="${dir.dist}/lib/groovy-nio.jar">
+				<include name="org/apache/groovy/nio/**" />
 			</zipfileset>
 
 
@@ -293,13 +319,21 @@
 				<include name="commons-logging.jar" />
 				<include name="slf4j-api.jar" />
 				<include name="slf4j-jdk14.jar" />
-				<include name="groovy-all.jar" />
+				<include name="groovy.jar" />
+				<include name="groovy-jsr223.jar" />
+				<include name="groovy-json.jar" />
+				<include name="groovy-xml.jar" />
+				<include name="groovy-dateutil.jar" />
+				<include name="groovy-datetime.jar" />
+				<include name="groovy-nio.jar" />
 				<include name="jsoup.jar" />
 			</fileset>
 			<fileset dir="${dir.lib}/ivy/bundle">
+				<include name="xmpcore.jar" />
 				<include name="args4j.jar" />
 				<include name="json-io.jar" />
 				<include name="guava.jar" />
+				<include name="failureaccess.jar" />
 			</fileset>
 			<fileset dir="${dir.lib}/jars">
 				<include name="ObjCBridge.jar" />

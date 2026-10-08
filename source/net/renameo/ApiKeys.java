@@ -4,7 +4,9 @@ import static net.renameo.Logging.*;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.renameo.platform.mac.Keychain;
 import net.renameo.util.PreferencesMap.PreferencesEntry;
@@ -87,12 +89,17 @@ public final class ApiKeys {
 	 * @return the key the user saved in this app (not the environment or built-in one)
 	 */
 	public static String getSaved(Service service) {
-		if (Keychain.isSupported()) {
-			String key = Keychain.get(KEYCHAIN_SERVICE, service.id);
-			return key == null ? "" : key.trim();
-		}
-		return preference(service).getValue().trim();
+		// every keychain read starts a process, so remember what it said
+		return saved.computeIfAbsent(service, s -> {
+			if (Keychain.isSupported()) {
+				String key = Keychain.get(KEYCHAIN_SERVICE, s.id);
+				return key == null ? "" : key.trim();
+			}
+			return preference(s).getValue().trim();
+		});
 	}
+
+	private static final Map<Service, String> saved = new ConcurrentHashMap<Service, String>();
 
 	/**
 	 * Save (or with an empty value forget) the key and pass it to the running web service clients.
@@ -112,6 +119,7 @@ public final class ApiKeys {
 			preference(service).setValue(key);
 		}
 
+		saved.put(service, key);
 		WebServices.setApiKey(service, get(service));
 	}
 
@@ -148,8 +156,7 @@ public final class ApiKeys {
 
 	private static String getBuiltIn(Service service) {
 		try {
-			String key = Settings.getApplicationProperty("apikey." + service.id);
-			return key == null ? "" : key.trim();
+			return Settings.getApplicationProperty("apikey." + service.id).trim();
 		} catch (MissingResourceException e) {
 			return "";
 		}

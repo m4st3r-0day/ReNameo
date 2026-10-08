@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.StandardOpenOption;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,10 +115,12 @@ public final class HistorySpooler {
 		}
 
 		// plugins run after the history is safe and outside the lock (they may be slow, e.g. notify a media server)
+		List<Entry<File, File>> renames = new ArrayList<Entry<File, File>>();
 		for (Element e : sequence) {
 			File to = new File(e.to());
-			Plugins.fireRename(new File(e.dir(), e.from()), to.isAbsolute() ? to : new File(e.dir(), e.to()));
+			renames.add(new SimpleImmutableEntry<File, File>(new File(e.dir(), e.from()), to.isAbsolute() ? to : new File(e.dir(), e.to())));
 		}
+		Plugins.fireRenameBatch(renames);
 	}
 
 	public synchronized void append(History importHistory) {

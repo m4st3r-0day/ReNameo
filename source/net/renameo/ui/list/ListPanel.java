@@ -239,7 +239,7 @@ public class ListPanel extends JComponent {
 	}
 
 	public void setFormatTemplate(String format) {
-		if (template != format) {
+		if (!java.util.Objects.equals(template, format)) {
 			template = format;
 			editor.setText(format);
 		}

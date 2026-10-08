@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 import com.sun.jna.Platform;
 
 import groovy.lang.Closure;
-import groovy.util.XmlSlurper;
+import groovy.xml.XmlSlurper;
 import net.renameo.ApplicationFolder;
 import net.renameo.platform.mac.MacAppUtilities;
 import net.renameo.util.FileUtilities;

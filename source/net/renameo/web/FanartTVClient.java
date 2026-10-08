@@ -18,13 +18,17 @@ import net.renameo.CacheType;
 
 public class FanartTVClient implements Datasource, ArtworkProvider {
 
-	private volatile String apikey;
+	private final LazyApiKey apikey;
 
 	public void setApiKey(String apikey) {
-		this.apikey = apikey;
+		this.apikey.set(apikey);
 	}
 
 	public FanartTVClient(String apikey) {
+		this(LazyApiKey.of(apikey));
+	}
+
+	public FanartTVClient(LazyApiKey apikey) {
 		this.apikey = apikey;
 	}
 
@@ -40,7 +44,7 @@ public class FanartTVClient implements Datasource, ArtworkProvider {
 
 	public URL getResource(String path) throws Exception {
 		// e.g. http://webservice.fanart.tv/v3/movies/17645?api_key=YOUR_KEY
-		return new URL("https://webservice.fanart.tv/v3/" + path + "?api_key=" + apikey);
+		return new URL("https://webservice.fanart.tv/v3/" + path + "?api_key=" + apikey.get());
 	}
 
 	@Override

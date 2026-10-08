@@ -32,12 +32,14 @@ docker compose -f docker/docker-compose.yml up -d
 | `WATCH_SETTLE` | `120` | skip files changed in the last N seconds |
 | `RENAMEO_ACTION` | `move` | `test`, `move`, `copy`, `hardlink`, `symlink` |
 | `RENAMEO_NAMING` | | `plex`, `jellyfin`, `emby`, `kodi` |
-| `OUTPUT_DIR` | | with `RENAMEO_NAMING`: build `Movies/` and `Shows/` there; without it files are renamed in place |
+| `OUTPUT_DIR` | | with `RENAMEO_NAMING`: build `Movies/` and `Shows/` there; without it files are renamed in place (the folder of a series or movie gets its proper name, episodes go into season folders) |
 | `RENAMEO_FORMAT` | | custom format instead of `RENAMEO_NAMING`, e.g. `{n} ({y})/{n} ({y})` |
 | `RENAMEO_LANG` | `en` | language of the titles, e.g. `it` |
 | `RENAMEO_CONFLICT` | `skip` | `skip`, `override`, `auto`, `index` |
 | `RENAMEO_DB` | auto | force a source, e.g. `TheMovieDB::TV` |
 | `PUID` / `PGID` | `1000` | user and group that own the media files (`0` runs as root) |
+| `RENAMEO_PLUGINS` | | ready-made plugins to install, e.g. `jellyfin-refresh,notify` (see the main README) |
+| `PLUGIN_<NAME>_<SETTING>` | | plugin settings, e.g. `PLUGIN_JELLYFIN_REFRESH_SERVER=http://jellyfin:8096`, `PLUGIN_JELLYFIN_REFRESH_APIKEY=…` |
 | `TZ` | `Etc/UTC` | time zone of the log |
 | `OMDB_API_KEY`, `FANARTTV_API_KEY`, `ACOUSTID_API_KEY` | | optional keys |
 | `OPENSUBTITLES_API_KEY`, `OPENSUBTITLES_USER`, `OPENSUBTITLES_PASSWORD` | | for `-get-subtitles` |

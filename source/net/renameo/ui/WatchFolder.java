@@ -38,13 +38,13 @@ public final class WatchFolder {
 
 		DEFAULT("ReNameo default names", null),
 
-		PLEX("Plex", "{plex.name}"),
+		PLEX("Plex", "{plex.tidy}"),
 
-		JELLYFIN("Jellyfin", "{jellyfin.name}"),
+		JELLYFIN("Jellyfin", "{jellyfin.tidy}"),
 
-		EMBY("Emby", "{emby.name}"),
+		EMBY("Emby", "{emby.tidy}"),
 
-		KODI("Kodi", "{kodi.name}");
+		KODI("Kodi", "{kodi.tidy}");
 
 		public final String title;
 		public final String format;

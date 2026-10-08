@@ -52,7 +52,7 @@ public final class EpisodeUtilities {
 
 		Locale locale = preferredLocale;
 		if (locale == null) {
-			locale = new Locale(info.getLanguage()); // default to original locale
+			locale = Locale.of(info.getLanguage()); // default to original locale
 		}
 
 		return getEpisodeListProvider(info.getDatabase()).getEpisodeList(info.getId(), order, locale);
@@ -68,7 +68,7 @@ public final class EpisodeUtilities {
 	public static Episode getEpisodeByAbsoluteNumber(Episode e, EpisodeListProvider service, SortOrder order) throws Exception {
 		// e.g. match AniDB episode to TheTVDB episode
 		Set<String> seriesNames = getLenientSeriesNameSet(e);
-		Locale locale = new Locale(e.getSeriesInfo().getLanguage());
+		Locale locale = Locale.of(e.getSeriesInfo().getLanguage());
 
 		// episode may be a multi-episode
 		List<Episode> multiEpisode = getMultiEpisodeList(e);
@@ -101,7 +101,7 @@ public final class EpisodeUtilities {
 
 	private static Set<String> getLenientSeriesNameSet(Episode e) {
 		// use maximum strength collator by default
-		Collator collator = Collator.getInstance(new Locale(e.getSeriesInfo().getLanguage()));
+		Collator collator = Collator.getInstance(Locale.of(e.getSeriesInfo().getLanguage()));
 		collator.setDecomposition(Collator.FULL_DECOMPOSITION);
 		collator.setStrength(Collator.PRIMARY);
 

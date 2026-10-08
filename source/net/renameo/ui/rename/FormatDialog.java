@@ -404,11 +404,11 @@ public class FormatDialog extends JDialog {
 	private JComponent createSyntaxPanel(Mode mode) {
 		JPanel panel = new JPanel(new MigLayout("fill, nogrid, novisualpadding", "[pref]", "[fill, min]"));
 		panel.setBorder(createLineBorder(NightTheme.getBorder()));
-		panel.setBackground(NightTheme.isNightMode() ? new Color(0x3A3513) : new Color(0xFFFFE1));
+		panel.setBackground(NightTheme.getCardBackground());
 		panel.setOpaque(true);
 
 		panel.add(new LinkButton(newAction(ResourceBundle.getBundle(FormatDialog.class.getName()).getString(mode.key() + ".syntax"), evt -> {
-			openURI(ResourceBundle.getBundle(FormatDialog.class.getName()).getString("help.url"));
+			openURI(getEmbeddedHelpURL());
 		})), "h min!");
 
 		return panel;
@@ -418,7 +418,7 @@ public class FormatDialog extends JDialog {
 		JPanel panel = new JPanel(new MigLayout("fill, wrap 3"));
 
 		panel.setBorder(createLineBorder(NightTheme.getBorder()));
-		panel.setBackground(NightTheme.isNightMode() ? new Color(0x3A3513) : new Color(0xFFFFE1));
+		panel.setBackground(NightTheme.getCardBackground());
 
 		for (String format : mode.getSampleExpressions()) {
 			LinkButton formatLink = new LinkButton(newAction(format, e -> setFormatCode(format)));

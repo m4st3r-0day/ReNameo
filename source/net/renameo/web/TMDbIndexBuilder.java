@@ -84,7 +84,7 @@ public class TMDbIndexBuilder {
 						try {
 							Object json = tmdb.request(list[0], singletonMap("page", page), language);
 							for (Map<?, ?> it : getMapArray(json, "results")) {
-								add(tv ? series : movies, it, tv, language == languages.get(0));
+								add(tv ? series : movies, it, tv, language.equals(languages.get(0)));
 							}
 						} catch (Exception e) {
 							// one missing page must not abort the whole index
@@ -161,7 +161,7 @@ public class TMDbIndexBuilder {
 
 	private static void write(File file, List<String> rows) throws IOException {
 		File temp = new File(file.getPath() + ".part");
-		try (OutputStream out = new XZOutputStream(new FileOutputStream(temp), new LZMA2Options(6))) {
+		try (OutputStream raw = new FileOutputStream(temp); OutputStream out = new XZOutputStream(raw, new LZMA2Options(6))) {
 			out.write(String.join("\n", rows).getBytes(UTF_8));
 		}
 		if (!temp.renameTo(file)) {

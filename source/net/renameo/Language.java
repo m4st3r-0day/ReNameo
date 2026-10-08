@@ -78,7 +78,7 @@ public class Language implements Serializable {
 
 		// e.g. x-jat
 		if (locale == null || locale.getLanguage().isEmpty()) {
-			return new Locale(iso_639_1);
+			return Locale.of(iso_639_1);
 		}
 
 		return locale;

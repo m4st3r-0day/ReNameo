@@ -111,7 +111,7 @@ public class FileTransferable implements Transferable {
 							File file = GVFS.getDefaultVFS().getPathForURI(new URI(line));
 
 							if (file == null || !file.exists()) {
-								throw new FileNotFoundException(file.getPath());
+								throw new FileNotFoundException(file == null ? line : file.getPath());
 							}
 
 							files.add(file);

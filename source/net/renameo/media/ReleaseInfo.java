@@ -644,8 +644,8 @@ public class ReleaseInfo {
 		Map<String, Locale> languageMap = new TreeMap<String, Locale>(collator);
 
 		for (String code : Locale.getISOLanguages()) {
-			Locale locale = new Locale(code); // force ISO3 language as default toString() value
-			Locale iso3locale = new Locale(locale.getISO3Language());
+			Locale locale = Locale.of(code); // force ISO3 language as default toString() value
+			Locale iso3locale = Locale.of(locale.getISO3Language());
 
 			languageMap.put(locale.getLanguage(), iso3locale);
 			languageMap.put(locale.getISO3Language(), iso3locale);
@@ -659,32 +659,32 @@ public class ReleaseInfo {
 		}
 
 		// unofficial language for pb/pob for Portuguese (Brazil)
-		Locale brazil = new Locale("pob");
+		Locale brazil = Locale.of("pob");
 		languageMap.put("brazilian", brazil);
 		languageMap.put("pb", brazil);
 		languageMap.put("pob", brazil);
 
 		// missing ISO 639-2 (B/T) locales (see https://github.com/TakahikoKawasaki/nv-i18n/blob/master/src/main/java/com/neovisionaries/i18n/LanguageAlpha3Code.java)
-		languageMap.put("tib", new Locale("bod"));
-		languageMap.put("cze", new Locale("ces"));
-		languageMap.put("wel", new Locale("cym"));
-		languageMap.put("ger", new Locale("deu"));
-		languageMap.put("gre", new Locale("ell"));
-		languageMap.put("baq", new Locale("eus"));
-		languageMap.put("per", new Locale("fas"));
-		languageMap.put("fre", new Locale("fra"));
-		languageMap.put("arm", new Locale("hye"));
-		languageMap.put("ice", new Locale("isl"));
-		languageMap.put("geo", new Locale("kat"));
-		languageMap.put("mac", new Locale("mkd"));
-		languageMap.put("mao", new Locale("mri"));
-		languageMap.put("may", new Locale("msa"));
-		languageMap.put("bur", new Locale("mya"));
-		languageMap.put("dut", new Locale("nld"));
-		languageMap.put("rum", new Locale("ron"));
-		languageMap.put("slo", new Locale("slk"));
-		languageMap.put("alb", new Locale("sqi"));
-		languageMap.put("chi", new Locale("zho"));
+		languageMap.put("tib", Locale.of("bod"));
+		languageMap.put("cze", Locale.of("ces"));
+		languageMap.put("wel", Locale.of("cym"));
+		languageMap.put("ger", Locale.of("deu"));
+		languageMap.put("gre", Locale.of("ell"));
+		languageMap.put("baq", Locale.of("eus"));
+		languageMap.put("per", Locale.of("fas"));
+		languageMap.put("fre", Locale.of("fra"));
+		languageMap.put("arm", Locale.of("hye"));
+		languageMap.put("ice", Locale.of("isl"));
+		languageMap.put("geo", Locale.of("kat"));
+		languageMap.put("mac", Locale.of("mkd"));
+		languageMap.put("mao", Locale.of("mri"));
+		languageMap.put("may", Locale.of("msa"));
+		languageMap.put("bur", Locale.of("mya"));
+		languageMap.put("dut", Locale.of("nld"));
+		languageMap.put("rum", Locale.of("ron"));
+		languageMap.put("slo", Locale.of("slk"));
+		languageMap.put("alb", Locale.of("sqi"));
+		languageMap.put("chi", Locale.of("zho"));
 
 		// remove illegal tokens
 		languageMap.remove("");

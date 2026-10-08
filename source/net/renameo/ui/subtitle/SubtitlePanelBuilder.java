@@ -25,6 +25,11 @@ public class SubtitlePanelBuilder implements PanelBuilder {
 	}
 
 	@Override
+	public int hashCode() {
+		return SubtitlePanelBuilder.class.hashCode();
+	}
+
+	@Override
 	public JComponent create() {
 		return new SubtitlePanel();
 	}

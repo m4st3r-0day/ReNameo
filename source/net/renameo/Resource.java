@@ -1,5 +1,6 @@
 package net.renameo;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 @FunctionalInterface
@@ -19,12 +20,22 @@ public interface Resource<R> {
 		return resource.memoize();
 	}
 
+	/**
+	 * Make every memoized resource compute its value again on next use, e.g. after the offline index was updated.
+	 */
+	static void invalidateAll() {
+		MemoizedResource.GENERATION.incrementAndGet();
+	}
+
 }
 
 class MemoizedResource<R> implements Resource<R> {
 
+	static final AtomicInteger GENERATION = new AtomicInteger();
+
 	private final Resource<R> resource;
 	private R value;
+	private int generation;
 
 	public MemoizedResource(Resource<R> resource) {
 		this.resource = resource;
@@ -32,8 +43,10 @@ class MemoizedResource<R> implements Resource<R> {
 
 	@Override
 	public synchronized R get() throws Exception {
-		if (value == null) {
+		int current = GENERATION.get();
+		if (value == null || generation != current) {
 			value = resource.get();
+			generation = current;
 		}
 		return value;
 	}

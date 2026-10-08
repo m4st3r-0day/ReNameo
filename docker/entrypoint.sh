@@ -55,8 +55,8 @@ elif [ -n "$RENAMEO_NAMING" ] && [ -n "$OUTPUT_DIR" ]; then
   # move into a library: Movies/..., Shows/... under OUTPUT_DIR
   set -- "$@" --naming "$RENAMEO_NAMING" --output "$OUTPUT_DIR"
 elif [ -n "$RENAMEO_NAMING" ]; then
-  # rename in place with the media server convention
-  set -- "$@" --format "{$RENAMEO_NAMING.name}"
+  # rename in place with the media server convention: the folder of a series or movie gets its proper name, episodes go into season folders
+  set -- "$@" --format "{$RENAMEO_NAMING.tidy}"
 fi
 
 [ -n "$RENAMEO_DB" ] && set -- "$@" --db "$RENAMEO_DB"

@@ -5,6 +5,8 @@ import static net.renameo.Logging.*;
 import static net.renameo.util.FileUtilities.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InterruptedIOException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,6 +16,10 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -21,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CodingErrorAction;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -116,7 +123,72 @@ public final class WebRequest {
 		return fetch(resource, ifModifiedSince, null, null, null);
 	}
 
+	/**
+	 * One shared HTTP/2 client: requests to the same server share a connection instead of each opening its own.
+	 */
+	private static final HttpClient HTTP = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).followRedirects(HttpClient.Redirect.NORMAL).connectTimeout(Duration.ofSeconds(20)).build();
+
 	public static ByteBuffer fetch(URL url, long ifModifiedSince, Object etag, Map<String, String> requestParameters, Consumer<Map<String, List<String>>> responseParameters) throws IOException {
+		// local files and resources bundled in the jar
+		if (!url.getProtocol().startsWith("http")) {
+			return fetchConnection(url, ifModifiedSince, etag, requestParameters, responseParameters);
+		}
+
+		HttpRequest.Builder request;
+		try {
+			request = HttpRequest.newBuilder(url.toURI()).timeout(Duration.ofSeconds(60)).header("Accept-Encoding", ENCODING_GZIP).header("Accept-Charset", CHARSET_UTF8);
+		} catch (URISyntaxException | IllegalArgumentException e) {
+			// not a valid URI (e.g. unencoded characters): the classic connection is more lenient
+			return fetchConnection(url, ifModifiedSince, etag, requestParameters, responseParameters);
+		}
+
+		if (ifModifiedSince > 0) {
+			request.header("If-Modified-Since", DateTimeFormatter.RFC_1123_DATE_TIME.format(Instant.ofEpochMilli(ifModifiedSince).atZone(ZoneOffset.UTC)));
+		} else if (etag != null) {
+			// If-Modified-Since must not be set if If-None-Match is set and vice versa
+			request.header("If-None-Match", etag.toString());
+		}
+		if (requestParameters != null) {
+			requestParameters.forEach(request::header);
+		}
+
+		HttpResponse<InputStream> response;
+		try {
+			response = HTTP.send(request.build(), HttpResponse.BodyHandlers.ofInputStream());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new InterruptedIOException(e.getMessage());
+		}
+
+		int status = response.statusCode();
+		try (InputStream body = decode(response.body(), response.headers().firstValue("Content-Encoding").orElse(null))) {
+			// same exceptions as HttpURLConnection, which the callers and the cache rely on
+			if (status == 404 || status == 410) {
+				throw new FileNotFoundException(url.toString());
+			}
+			if (status >= 400) {
+				throw new IOException("Server returned HTTP response code: " + status + " for URL: " + url);
+			}
+
+			// store response headers
+			if (responseParameters != null) {
+				responseParameters.accept(response.headers().map());
+			}
+
+			// no data, e.g. 304 Not Modified
+			if (status == 304) {
+				return null;
+			}
+
+			byte[] data = body.readAllBytes();
+			if (data.length == 0 && response.headers().firstValueAsLong("Content-Length").orElse(-1) < 0) {
+				return null;
+			}
+			return ByteBuffer.wrap(data);
+		}
+	}
+
+	private static ByteBuffer fetchConnection(URL url, long ifModifiedSince, Object etag, Map<String, String> requestParameters, Consumer<Map<String, List<String>>> responseParameters) throws IOException {
 		URLConnection connection = url.openConnection();
 
 		if (ifModifiedSince > 0) {
@@ -140,10 +212,7 @@ public final class WebRequest {
 		int contentLength = connection.getContentLength();
 		String encoding = connection.getContentEncoding();
 
-		InputStream inputStream = connection.getInputStream();
-		if (ENCODING_GZIP.equalsIgnoreCase(encoding)) {
-			inputStream = new GZIPInputStream(inputStream);
-		}
+		InputStream inputStream = decode(connection.getInputStream(), encoding);
 
 		// store response headers
 		if (responseParameters != null) {
@@ -170,6 +239,18 @@ public final class WebRequest {
 		}
 
 		return buffer.getByteBuffer();
+	}
+
+	private static InputStream decode(InputStream in, String encoding) throws IOException {
+		if (!ENCODING_GZIP.equalsIgnoreCase(encoding)) {
+			return in;
+		}
+		try {
+			return new GZIPInputStream(in);
+		} catch (IOException e) {
+			in.close();
+			throw e;
+		}
 	}
 
 	public static ByteBuffer post(URL url, Map<String, ?> parameters, Map<String, String> requestParameters) throws IOException {
@@ -204,10 +285,7 @@ public final class WebRequest {
 		int contentLength = connection.getContentLength();
 		String encoding = connection.getContentEncoding();
 
-		InputStream inputStream = connection.getInputStream();
-		if (ENCODING_GZIP.equalsIgnoreCase(encoding)) {
-			inputStream = new GZIPInputStream(inputStream);
-		}
+		InputStream inputStream = decode(connection.getInputStream(), encoding);
 
 		ByteBufferOutputStream buffer = new ByteBufferOutputStream(contentLength >= 0 ? contentLength : BUFFER_SIZE);
 		try {

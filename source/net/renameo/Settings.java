@@ -168,10 +168,18 @@ public final class Settings {
 	 * The user guides ship inside the jar; they are copied to the application folder so both the help window and an external browser can open them.
 	 */
 	public static String getEmbeddedHelpURL() {
+		return getEmbeddedHelpURL(false);
+	}
+
+	/**
+	 * @param plugins
+	 *            open the guide to writing plugins and scripts instead of the guide to the app
+	 */
+	public static String getEmbeddedHelpURL(boolean plugins) {
 		try {
 			File folder = ApplicationFolder.AppData.resolve("help");
 			folder.mkdirs();
-			for (String page : new String[] { "guida-gui.html", "guida-cli.html", "guide-gui.html", "guide-cli.html" }) {
+			for (String page : new String[] { "guida-gui.html", "guida-cli.html", "guida-plugin.html", "guide-gui.html", "guide-cli.html", "guide-plugins.html" }) {
 				try (InputStream in = ResourceManager.class.getResourceAsStream("resources/help/" + page)) {
 					if (in != null) {
 						Files.copy(in, new File(folder, page).toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -179,7 +187,8 @@ public final class Settings {
 				}
 			}
 			// the guide is written in Italian and English, open the one matching the system language
-			String start = "it".equals(Locale.getDefault().getLanguage()) ? "guida-gui.html" : "guide-gui.html";
+			boolean italian = "it".equals(Locale.getDefault().getLanguage());
+			String start = plugins ? (italian ? "guida-plugin.html" : "guide-plugins.html") : (italian ? "guida-gui.html" : "guide-gui.html");
 			return new File(folder, start).toURI().toString();
 		} catch (Exception e) {
 			debug.log(Level.WARNING, "Failed to prepare help pages: " + e);

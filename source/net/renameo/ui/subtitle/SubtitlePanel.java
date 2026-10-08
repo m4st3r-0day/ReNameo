@@ -3,7 +3,6 @@ package net.renameo.ui.subtitle;
 import static net.renameo.Logging.*;
 import static net.renameo.Settings.*;
 import static net.renameo.ui.LanguageComboBoxModel.*;
-import static net.renameo.util.FileUtilities.*;
 import static net.renameo.util.ui.SwingUI.*;
 
 import java.awt.Cursor;

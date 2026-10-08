@@ -72,7 +72,7 @@ class TotalProgressPanel extends JComponent {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				setVisible(e.getActionCommand() == SHOW);
+				setVisible(SHOW.equals(e.getActionCommand()));
 			}
 		};
 

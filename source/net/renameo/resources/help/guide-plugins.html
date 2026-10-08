@@ -1,0 +1,188 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Writing plugins and scripts</title><style>
+:root { color-scheme: dark; }
+body { margin: 0; background: #0D111C; color: #E8ECF4; font: 14px/1.6 -apple-system, "Helvetica Neue", "Segoe UI", sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 32px 28px 64px; }
+nav { display: flex; gap: 8px; margin-bottom: 24px; }
+nav .lang { margin-left: auto; }
+nav a { padding: 6px 14px; border-radius: 10px; background: #121827; border: 1px solid #232B3E; color: #E8ECF4; text-decoration: none; }
+nav a.active { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+h1 { font-size: 28px; margin: 0 0 16px; }
+h2 { font-size: 20px; margin: 36px 0 10px; padding-top: 12px; border-top: 1px solid #232B3E; }
+h3 { font-size: 16px; margin: 24px 0 8px; }
+p, li { color: #C9D0DE; }
+a { color: #60A5FA; }
+code { font: 12.5px/1.5 "SF Mono", Menlo, Consolas, monospace; background: #1A2133; border-radius: 6px; padding: 1px 6px; color: #E8ECF4; }
+pre { background: #0A0E17; border: 1px solid #232B3E; border-radius: 12px; padding: 14px 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232B3E; vertical-align: top; }
+th { color: #8B93A7; font-weight: 600; }
+strong { color: #E8ECF4; }
+</style></head><body><main><nav><a href="guide-gui.html">Desktop app</a><a href="guide-cli.html">Command line</a><a href="guide-plugins.html" class="active">Plugins & scripts</a><a class="lang" href="guida-plugin.html">Italiano</a></nav><h1>Writing plugins and scripts</h1>
+<p>You can extend ReNameo with small text files written in <strong>Groovy</strong>, a simple language that looks like Java and JavaScript. You don't need to be an experienced programmer: almost every example in this guide can be copied and adapted.</p>
+<p>There are two ways to do it:</p>
+<table><thead><tr><th></th><th>Plugin</th><th>Script</th></tr></thead><tbody><tr><td>What it is</td><td>A file that stays active and <strong>reacts</strong> to what ReNameo does</td><td>A file that <strong>you run</strong> when you need it, like a command</td></tr><tr><td>When it runs</td><td>After every rename, when you press one of its buttons, when a format uses <code>{plugin.name}</code></td><td>Only when you start it with <code>renameo -script …</code></td></tr><tr><td>Where it goes</td><td><code>plugins</code> folder</td><td><code>scripts</code> folder</td></tr><tr><td>Used by</td><td>App, watch folder, command line, Docker</td><td>Command line, Docker, cron</td></tr><tr><td>Examples</td><td>Tell Jellyfin to rescan, send a notification, clean up folders</td><td>Sort downloads into <em>TV Shows</em> and <em>Movies</em>, get subtitles for the whole library</td></tr></tbody></table>
+<p>Both folders are in the ReNameo data folder:</p>
+<table><thead><tr><th>System</th><th>Data folder</th></tr></thead><tbody><tr><td>macOS</td><td><code>~/.renameo</code></td></tr><tr><td>Linux</td><td><code>~/.local/share/renameo</code></td></tr><tr><td>Windows</td><td><code>%APPDATA%\ReNameo</code></td></tr><tr><td>Docker</td><td><code>/config</code></td></tr></tbody></table>
+<p>Any text editor will do (TextEdit in plain text mode, Notepad, Visual Studio Code …). Save with the <code>.groovy</code> extension and UTF-8 encoding.</p>
+<h2>Your first plugin</h2>
+<ol><li>Open the <strong>Plugins</strong> page in the sidebar and press <strong>Open folder</strong>.</li><li>Create a file <code>hello.groovy</code> in that folder with these lines:<pre><code>description &quot;My first plugin&quot;
+
+onRename { from, to -&gt;
+    log &quot;Renamed ${from.name} to ${to.name}&quot;
+}</code></pre></li><li>Go back to ReNameo and press <strong>Reload</strong>: the plugin appears under <em>Installed</em> with its description.</li><li>Rename any file. The <strong>Plugin log</strong> at the bottom of the page shows <em>Renamed … to …</em>.</li></ol>
+<p>That's it: this is a complete plugin. The file name (without <code>.groovy</code>) is the name of the plugin.</p>
+<h2>What a plugin can do</h2>
+<p>A plugin is a list of instructions. Each one is optional: use only the ones you need.</p>
+<table><thead><tr><th>Instruction</th><th>What it's for</th></tr></thead><tbody><tr><td><code>description &quot;text&quot;</code></td><td>The description shown on the Plugins page</td></tr><tr><td><code>setting &quot;key&quot;, &quot;Label&quot;, &quot;default value&quot;</code></td><td>A field on the Plugins page, e.g. the address of a server</td></tr><tr><td><code>secret &quot;key&quot;, &quot;Label&quot;</code></td><td>Like <code>setting</code>, but the text is masked (password, token, API key)</td></tr><tr><td><code>settings.key</code></td><td>Reads what the user entered in a field</td></tr><tr><td><code>onRename { from, to -&gt; … }</code></td><td>Called after <strong>every file</strong> that was renamed</td></tr><tr><td><code>onRenameBatch { renames -&gt; … }</code></td><td>Called <strong>once per batch</strong> of files renamed together</td></tr><tr><td><code>binding(&quot;name&quot;) { m -&gt; … }</code></td><td>Adds <code>{plugin.name}</code> for formats</td></tr><tr><td><code>action(&quot;Name&quot;, &quot;Explanation&quot;) { folder -&gt; … }</code></td><td>A button on the Plugins page that works on a folder the user picks</td></tr><tr><td><code>log &quot;message&quot;</code></td><td>Writes to the Plugin log (and to the terminal on the command line)</td></tr><tr><td><code>progress done, total, &quot;text&quot;</code></td><td>Shows the progress bar on the plugin card, e.g. <em>12 of 40</em></td></tr><tr><td><code>cancelled()</code></td><td>Turns true when the user presses <strong>Stop</strong></td></tr><tr><td><code>trash file</code></td><td>Moves a file to the trash</td></tr></tbody></table>
+<h3>Settings: <code>setting</code>, <code>secret</code> and <code>settings</code></h3>
+<pre><code>setting &quot;server&quot;, &quot;Server address&quot;, &quot;http://localhost:8096&quot;
+secret  &quot;apiKey&quot;, &quot;API key&quot;
+
+onRenameBatch { renames -&gt;
+    log &quot;Using ${settings.server}&quot;
+}</code></pre>
+<p>On the Plugins page the plugin shows the fields <em>Server address</em> and <em>API key</em>. What you type is saved as soon as you leave the field, and the plugin reads it with <code>settings.server</code> and <code>settings.apiKey</code>. An empty field uses the default value.</p>
+<h3>Reacting to renames: <code>onRename</code> and <code>onRenameBatch</code></h3>
+<p><code>from</code> and <code>to</code> are the file before and after renaming: <code>to.name</code> is the file name, <code>to.parentFile</code> the folder, <code>to.path</code> the full path.</p>
+<pre><code>onRename { from, to -&gt;
+    log &quot;${from.name} → ${to.path}&quot;
+}</code></pre>
+<p>When you rename 50 episodes at once, <code>onRename</code> is called 50 times. For things to do only once (tell a media server, send a notification) use <code>onRenameBatch</code>: it gets the list of all <code>[from, to]</code> pairs.</p>
+<pre><code>onRenameBatch { renames -&gt;
+    log &quot;Renamed ${renames.size()} files&quot;
+    renames.each { pair -&gt; log &quot;  ${pair[1].name}&quot; }   // pair[0] = before, pair[1] = after
+}</code></pre>
+<p>Test runs (action <strong>test</strong>) don't call plugins, because they don't move anything.</p>
+<h3>New values for formats: <code>binding</code></h3>
+<pre><code>binding(&quot;quality&quot;) { m -&gt;
+    def height = 0
+    try { height = m.height as int } catch (e) { }     // the video height comes from MediaInfo
+    height &gt;= 2000 ? &quot;4K&quot; : height &gt;= 1000 ? &quot;1080p&quot; : height &gt;= 700 ? &quot;720p&quot; : &quot;SD&quot;
+}</code></pre>
+<p>Now formats can use <code>{n} ({y}) [{plugin.quality}]</code> to get e.g. <code>Inception (2010) [1080p]</code>. <code>m</code> holds the same values as formats: <code>m.n</code>, <code>m.y</code>, <code>m.s</code>, <code>m.e</code>, <code>m.height</code> …</p>
+<h3>Buttons: <code>action</code></h3>
+<pre><code>action(&quot;Count videos&quot;, &quot;Count the videos in a folder&quot;) { folder -&gt;
+    def count = 0
+    folder.eachFileRecurse(groovy.io.FileType.FILES) { f -&gt;
+        if (f.name ==~ /(?i).+\.(mkv|mp4|avi)$/) count++
+    }
+    log &quot;${count} videos in ${folder}&quot;
+}</code></pre>
+<p>The plugin card gets a <strong>Count videos</strong> button. When you press it, ReNameo asks for a folder, runs the code in the background and shows the result in the Plugin log.</p>
+<h3>Progress bar and Stop: <code>progress</code> and <code>cancelled()</code></h3>
+<p>While a plugin works, its card shows what it's doing, for how long, and a moving bar with a <strong>Stop</strong> button. For long jobs, tell ReNameo how far you are: the bar becomes exact and the user sees <em>12 of 40 · file-name</em>.</p>
+<pre><code>action(&quot;Check videos&quot;, &quot;Example with progress and Stop&quot;) { folder -&gt;
+    def videos = folder.listFiles().findAll { it.name ==~ /(?i).+\.(mkv|mp4)$/ }
+    for (int i = 0; i &lt; videos.size(); i++) {
+        if (cancelled()) break              // the user pressed Stop
+        progress i + 1, videos.size(), videos[i].name
+        // … work on videos[i] …
+    }
+}</code></pre>
+<p><code>progress &quot;text&quot;</code> shows just a message, without numbers. Inside closures like <code>each</code> or <code>eachFileRecurse</code>, where <code>break</code> isn't allowed (and <code>return</code> only skips one item), use <code>if (cancelled()) throw new InterruptedException()</code>: ReNameo records it as <em>stopped</em>, not as an error. Stop also tries to interrupt waiting, but not everything can be interrupted: checking <code>cancelled()</code> is the reliable way.</p>
+<h2>Complete example: Telegram notifications</h2>
+<p>This plugin sends a Telegram message after every rename, has a button to try it and adds <code>{plugin.quality}</code> to formats.</p>
+<pre><code>// Send a Telegram message when ReNameo renamed files.
+
+description &quot;Telegram message after every rename&quot;
+
+secret  &quot;token&quot;, &quot;Bot token&quot;
+setting &quot;chat&quot;,  &quot;Chat ID&quot;
+
+def send = { String text -&gt;
+    def url = &quot;https://api.telegram.org/bot${settings.token}/sendMessage&quot;
+    def c = new URL(url).openConnection()
+    c.requestMethod = &quot;POST&quot;
+    c.doOutput = true
+    c.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;)
+    c.outputStream.withWriter(&quot;UTF-8&quot;) { out -&gt;
+        out &lt;&lt; groovy.json.JsonOutput.toJson([chat_id: settings.chat, text: text])
+    }
+    log &quot;Telegram answered ${c.responseCode}&quot;
+}
+
+onRenameBatch { renames -&gt;
+    def names = renames.collect { it[1].name }
+    send(&quot;ReNameo renamed ${names.size()} files:\n&quot; + names.take(10).join(&quot;\n&quot;))
+}
+
+action(&quot;Send a test message&quot;) { folder -&gt;
+    send(&quot;Test from ReNameo: it works!&quot;)
+}
+
+binding(&quot;quality&quot;) { m -&gt;
+    def height = 0
+    try { height = m.height as int } catch (e) { }
+    height &gt;= 2000 ? &quot;4K&quot; : height &gt;= 1000 ? &quot;1080p&quot; : height &gt;= 700 ? &quot;720p&quot; : &quot;SD&quot;
+}</code></pre>
+<p>To use it:</p>
+<ol><li>In Telegram, write to <strong>@BotFather</strong>, create a bot with <code>/newbot</code> and copy the token.</li><li>Send any message to your bot, then open <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> in a browser: the number after <code>&quot;chat&quot;:{&quot;id&quot;:</code> is the Chat ID.</li><li>Save the plugin as <code>telegram.groovy</code> in the plugins folder, press <strong>Reload</strong>, fill in both fields and press <strong>Send a test message</strong>.</li></ol>
+<p>The Plugin log shows <em>Telegram answered 200</em> when everything works. <em>401</em> means a wrong token, <em>400</em> a wrong Chat ID.</p>
+<h2>Testing and fixing a plugin</h2>
+<ul><li>Press <strong>Reload</strong> on the Plugins page after every change to the file.</li><li>If the plugin has a mistake, its card shows the error in red, e.g. <code>MissingPropertyException: No such property: sttings</code>: usually a misspelled name.</li><li>In the <strong>Plugin log</strong> every line has the time, the plugin name and a mark: ▶ started, ✓ done (with the duration), ■ stopped, ✕ error. The log keeps the last 2000 lines, also those written while the page was closed.</li><li>You can filter by plugin or show only errors, select lines and copy them (⌘C, or right-click → <em>Copy</em>), save them with <em>Save…</em> or empty the log with <em>Clear</em>. Handy for sending an error to whoever helps you.</li><li>Below the card's buttons, <em>Last run</em> tells when the plugin last worked and how it went.</li><li>Use <code>log</code> to see what happens: <code>log &quot;value: ${something}&quot;</code>.</li><li>To try <code>onRename</code> without touching your real files, copy a few videos into a test folder and rename them there (action <strong>move</strong>, not <strong>test</strong>).</li><li>The <strong>On</strong> switch turns a plugin off without deleting it. The trash button removes it.</li></ul>
+<p>A few Groovy things that trip people up:</p>
+<ul><li><code>==~</code> matches the <strong>whole</strong> text, <code>=~</code> looks for <strong>a part</strong>: <code>&quot;movie.mkv&quot; ==~ /.+\.mkv/</code> is true, <code>&quot;movie.mkv&quot; ==~ /\.mkv/</code> is not.</li><li>Text with <code>${…}</code> isn't a plain <code>String</code>: add <code>.toString()</code> before putting it into a list or set you compare against.</li><li>In the app plugins run in the background; on the command line the program waits for them to finish. Avoid long waits.</li></ul>
+<h2>Plugins on Docker and NAS</h2>
+<p>Without a desktop, settings come from environment variables: <code>PLUGIN_</code> + plugin name + setting name, in upper case and with <code>_</code> instead of dashes.</p>
+<pre><code>environment:
+  - RENAMEO_PLUGINS=jellyfin-refresh,notify     # install ready-made plugins
+  - PLUGIN_JELLYFIN_REFRESH_SERVER=http://jellyfin:8096
+  - PLUGIN_JELLYFIN_REFRESH_APIKEY=your-key
+  - PLUGIN_TELEGRAM_TOKEN=123456:ABC…            # your own telegram.groovy in /config/plugins
+  - PLUGIN_TELEGRAM_CHAT=42</code></pre>
+<p>Environment variables win over what is entered on the Plugins page. The exact name of each variable also shows when you hover over a settings field.</p>
+<h2>Your first script</h2>
+<p>A script is a <code>.groovy</code> file in the <code>scripts</code> folder that you run from the terminal.</p>
+<ol><li>Create <code>scripts/hello.groovy</code>:<pre><code>log.info &quot;Hello! You passed ${args.size()} folders or files&quot;
+args.each { log.info &quot;  ${it}&quot; }</code></pre></li><li>Run it:<pre><code>renameo -script fn:hello ~/Downloads</code></pre></li></ol>
+<p><code>fn:hello</code> means "the script <code>hello.groovy</code> in the <code>scripts</code> folder". Any path works too: <code>renameo -script /path/to/my-script.groovy ~/Downloads</code>.</p>
+<h3>What a script gets</h3>
+<table><thead><tr><th>Name</th><th>What it holds</th></tr></thead><tbody><tr><td><code>args</code></td><td>The files and folders written after the script name</td></tr><tr><td><code>_def</code></td><td>The values passed with <code>--def name=value</code>, e.g. <code>_def.action</code></td></tr><tr><td><code>log.info &quot;…&quot;</code>, <code>log.warning &quot;…&quot;</code></td><td>Writes to the terminal</td></tr><tr><td><code>now</code></td><td>The current date and time</td></tr></tbody></table>
+<h3>ReNameo functions in scripts</h3>
+<table><thead><tr><th>Function</th><th>What it does</th></tr></thead><tbody><tr><td><code>rename(file: list, …)</code> or <code>rename(folder: folder, …)</code></td><td>Renames, like <code>renameo -rename</code></td></tr><tr><td><code>getMissingSubtitles(folder: folder, lang: &quot;en&quot;)</code></td><td>Downloads missing subtitles</td></tr><tr><td><code>getSubtitles(file: list, lang: &quot;en&quot;)</code></td><td>Downloads subtitles even if they exist</td></tr><tr><td><code>check(file: list)</code> / <code>compute(file: list)</code></td><td>Verifies or creates checksum files (SFV, MD5 …)</td></tr><tr><td><code>extract(file: archive)</code></td><td>Extracts RAR, ZIP, 7z archives</td></tr><tr><td><code>fetchEpisodeList(query: &quot;Dark&quot;, db: &quot;TheMovieDB::TV&quot;, format: &quot;{s00e00} {t}&quot;)</code></td><td>The episode list of a series</td></tr><tr><td><code>getMediaInfo(file, &quot;{vf} {ac}&quot;)</code></td><td>Technical information about a video</td></tr><tr><td><code>parseEpisodeNumber(file)</code></td><td>Season and episode read from the name (nothing for a movie)</td></tr><tr><td><code>detectSeriesName(file)</code> / <code>detectMovie(file, false)</code></td><td>Recognizes the series or movie</td></tr><tr><td><code>execute(&quot;command&quot;, &quot;argument&quot;)</code></td><td>Runs an external program</td></tr><tr><td><code>die &quot;message&quot;</code></td><td>Stops the script with an error</td></tr></tbody></table>
+<p>The parameters of <code>rename</code> are the same as on the command line: <code>db</code> (<code>TheMovieDB</code>, <code>TheMovieDB::TV</code>, <code>TVmaze</code>, <code>AniDB</code> …), <code>format</code>, <code>action</code> (<code>test</code>, <code>move</code>, <code>copy</code>, <code>hardlink</code>, <code>symlink</code>), <code>output</code>, <code>conflict</code>, <code>lang</code>, <code>query</code>, <code>order</code>, <code>filter</code> and <code>strict: false</code> to be more tolerant (needed when several series are renamed together).</p>
+<h2>Complete example: sorting downloads</h2>
+<p>This script takes every video in a folder, including subfolders, and puts episodes into <em>TV Shows</em> and movies into <em>Movies</em>, with proper names.</p>
+<pre><code>// Rename the videos of a folder: series into &quot;TV Shows&quot;, movies into &quot;Movies&quot;.
+// Usage: renameo -script fn:sort-downloads ~/Downloads --def action=move target=/Volumes/Media
+// Without --def action=... it only does a test run and changes nothing.
+
+def action = _def.action ?: &#x27;test&#x27;
+def target = _def.target ?: &quot;${System.getProperty(&#x27;user.home&#x27;)}/Media&quot;
+
+// every video in the given folders, including subfolders
+def videos = []
+args.each { folder -&gt;
+    folder.eachFileRecurse(groovy.io.FileType.FILES) { f -&gt;
+        if (f.name ==~ /(?i).+\.(mkv|mp4|avi|m4v)$/) videos &lt;&lt; f
+    }
+}
+
+// S01E02 or 1x02 in the name means an episode, otherwise a movie
+def (episodes, movies) = videos.split { parseEpisodeNumber(it) != null }
+log.info &quot;${episodes.size()} episodes, ${movies.size()} movies&quot;
+
+if (episodes) {
+    rename(file: episodes, db: &#x27;TheMovieDB::TV&#x27;, action: action, strict: false,
+           format: &quot;${target}/TV Shows/{n}/Season {s}/{n} - {s00e00} - {t}&quot;)
+}
+if (movies) {
+    rename(file: movies, db: &#x27;TheMovieDB&#x27;, action: action, strict: false,
+           format: &quot;${target}/Movies/{n} ({y})/{n} ({y})&quot;)
+}</code></pre>
+<p>First do a test run, which shows what would happen without changing anything:</p>
+<pre><code>renameo -script fn:sort-downloads ~/Downloads --def target=/Volumes/Media</code></pre>
+<p>If the names look right, run it for real:</p>
+<pre><code>renameo -script fn:sort-downloads ~/Downloads --def action=move target=/Volumes/Media</code></pre>
+<p>Renames done by a script go into the history (they can be undone in the app) and trigger plugins, e.g. the Jellyfin refresh.</p>
+<h3>Running it on its own</h3>
+<p>On macOS and Linux, <code>cron</code> can start the script at fixed times (<code>crontab -e</code>). This line runs it every hour (<code>which renameo</code> shows the full path to use):</p>
+<pre><code>0 * * * * /usr/local/bin/renameo -script fn:sort-downloads /path/to/Downloads --def action=move target=/path/to/Media</code></pre>
+<p>With Docker, put the script into <code>/config/scripts</code> and run it like this:</p>
+<pre><code>docker run --rm -e TMDB_API_KEY=your-key -v /path/to/config:/config -v /path/to/media:/media \
+  ghcr.io/m4st3r-0day/renameo -script fn:sort-downloads /media/downloads --def action=move target=/media</code></pre>
+<h2>Security</h2>
+<p>Plugins and scripts can do anything you can do: read, move and delete files, use the network. Only install files you trust, and read them before using them. <strong>Formats</strong>, on the other hand, are sandboxed: <code>{…}</code> can't run programs or change files, even when it uses <code>{plugin.name}</code>.</p>
+<h2>Sharing a plugin</h2>
+<p>A plugin is a single file: to share it, send the <code>.groovy</code> file. Whoever gets it puts it into their <code>plugins</code> folder and presses <strong>Reload</strong>. The ready-made plugins of the app are written the same way and make a good starting point: they are in <code>source/net/renameo/plugins/catalog</code> in the repository, and every installed plugin can be opened and changed with <strong>Open folder</strong>.</p></main></body></html>

@@ -5,7 +5,6 @@ import static java.awt.event.KeyEvent.*;
 import static java.util.Arrays.*;
 import static javax.swing.BorderFactory.*;
 import static javax.swing.KeyStroke.*;
-import static javax.swing.ScrollPaneConstants.*;
 import static net.renameo.Logging.*;
 import static net.renameo.Settings.*;
 import static net.renameo.util.ui.SwingUI.*;
@@ -28,6 +27,8 @@ import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -105,6 +106,7 @@ public class MainFrame extends JFrame {
 		PAGES.put("SFV", new String[] { "Checksums", "Create and verify SFV, MD5 and SHA checksum files." });
 		PAGES.put("Filter", new String[] { "Filter & Inspect", "Inspect media attributes, extract archives and organize files." });
 		PAGES.put("List", new String[] { "List Generator", "Generate lists of names from a pattern." });
+		PAGES.put("Plugins", new String[] { "Plugins", "Tell your media server about new files, get notified, clean up folders and more." });
 	}
 
 	private final PanelSelectionList selectionList;
@@ -299,7 +301,6 @@ public class MainFrame extends JFrame {
 		commands.add(newAction("API keys", evt -> ApiKeysDialog.show(this, false)));
 		commands.add(newAction("Watch folder", evt -> WatchFolderDialog.show(this)));
 		commands.add(newAction("Update offline index", evt -> OfflineIndexAction.run(this)));
-		commands.add(newAction("Plugins", evt -> PluginsDialog.show(this)));
 		return commands;
 	}
 
@@ -396,13 +397,46 @@ public class MainFrame extends JFrame {
 
 			JButton toggleSidebar = Modern.iconButton(newAction("Toggle Sidebar", evt -> setSidebarCollapsed(!Boolean.parseBoolean(persistentSidebarCollapsed.getValue()))), Glyph.Shape.SIDEBAR, "Show / hide sidebar labels (" + (MAC ? "⌘\\" : "Ctrl \\") + ")");
 			installAction(MainFrame.this.getRootPane(), getKeyStroke(VK_BACK_SLASH, MAC ? META_DOWN_MASK : CTRL_DOWN_MASK), toggleSidebar.getAction());
-			installAction(search, getKeyStroke(VK_ESCAPE, 0), newAction("Clear Search", evt -> search.setText("")));
+			// the search field takes the focus only when asked for (click or ⌘K): as the first field of the window, Swing would give it the focus at start
+			// and every time the focused component goes away (e.g. while files are renamed)
+			search.setFocusable(false);
+			search.addMouseListener(new MouseAdapter() {
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					if (!search.isFocusable()) {
+						search.setFocusable(true);
+						search.requestFocusInWindow();
+					}
+				}
+			});
+			search.addFocusListener(new FocusAdapter() {
+
+				@Override
+				public void focusLost(FocusEvent e) {
+					if (!e.isTemporary()) {
+						search.setFocusable(false);
+					}
+				}
+			});
+			installAction(search, getKeyStroke(VK_ESCAPE, 0), newAction("Clear Search", evt -> {
+				if (search.getText().isEmpty()) {
+					search.setFocusable(false); // a second Escape leaves the field
+				} else {
+					search.setText("");
+				}
+			}));
 			installAction(MainFrame.this.getRootPane(), getKeyStroke(VK_K, MAC ? META_DOWN_MASK : CTRL_DOWN_MASK), newAction("Search", evt -> {
+				search.setFocusable(true);
 				search.requestFocusInWindow();
 				search.selectAll();
 			}));
 
 			JButton help = Modern.iconButton(newAction("Help", evt -> openURI(getEmbeddedHelpURL())), Glyph.Shape.HELP, "User guide (F1)");
+
+			// toolbar buttons don't take the keyboard focus, like in other Mac apps
+			toggleSidebar.setFocusable(false);
+			help.setFocusable(false);
 
 			add(brand);
 			add(version, "gapleft 4");

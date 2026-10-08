@@ -1,21 +1,17 @@
 package net.renameo.cli;
 
 import static java.util.Arrays.*;
-import static net.renameo.CachedResource.*;
 import static net.renameo.Logging.*;
-import static net.renameo.Settings.*;
 import static net.renameo.util.FileUtilities.*;
 
 import java.io.File;
 import java.net.URI;
 import java.time.Duration;
 
-import org.tukaani.xz.XZInputStream;
 
 import net.renameo.ApplicationFolder;
 import net.renameo.Cache;
 import net.renameo.CacheType;
-import net.renameo.Resource;
 
 public enum ScriptSource {
 

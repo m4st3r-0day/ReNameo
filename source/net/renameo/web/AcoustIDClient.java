@@ -33,13 +33,17 @@ public class AcoustIDClient implements MusicIdentificationService {
 
 	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(3, 1, TimeUnit.SECONDS);
 
-	private volatile String apikey;
+	private final LazyApiKey apikey;
 
 	public void setApiKey(String apikey) {
-		this.apikey = apikey;
+		this.apikey.set(apikey);
 	}
 
 	public AcoustIDClient(String apikey) {
+		this(LazyApiKey.of(apikey));
+	}
+
+	public AcoustIDClient(LazyApiKey apikey) {
 		this.apikey = apikey;
 	}
 
@@ -95,7 +99,7 @@ public class AcoustIDClient implements MusicIdentificationService {
 		return (String) getCache().computeIfAbsent(postParam.toString(), it -> {
 			REQUEST_LIMIT.acquirePermit();
 
-			URL url = new URL("http://api.acoustid.org/v2/lookup?client=" + apikey + "&meta=recordings+releases+releasegroups+tracks+compress");
+			URL url = new URL("http://api.acoustid.org/v2/lookup?client=" + apikey.get() + "&meta=recordings+releases+releasegroups+tracks+compress");
 			Map<String, String> requestParam = new HashMap<String, String>();
 			requestParam.put("Content-Encoding", "gzip");
 			requestParam.put("Accept-Encoding", "gzip");

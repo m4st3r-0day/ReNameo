@@ -24,7 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,6 +37,7 @@ import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
+import net.renameo.media.MatchGroups;
 import net.renameo.Cache;
 import net.renameo.Cache.TypedCache;
 import net.renameo.CacheType;
@@ -128,18 +128,7 @@ class EpisodeListMatcher implements AutoCompleteMatcher {
 		}
 
 		// handle derived files
-		List<Match<File, ?>> derivateMatches = new ArrayList<Match<File, ?>>();
-		Set<File> derivateFiles = new TreeSet<File>(fileset);
-		derivateFiles.removeAll(mediaFiles);
-
-		for (File file : derivateFiles) {
-			for (Match<File, ?> match : matches) {
-				if (file.getPath().startsWith(match.getValue().getParentFile().getPath()) && isDerived(file, match.getValue()) && match.getCandidate() instanceof Episode) {
-					derivateMatches.add(new Match<File, Object>(file, ((Episode) match.getCandidate()).clone()));
-					break;
-				}
-			}
-		}
+		List<Match<File, ?>> derivateMatches = MatchGroups.episodeDerivates(fileset, mediaFiles, matches);
 
 		// add matches from other files that are linked via filenames
 		matches.addAll(derivateMatches);

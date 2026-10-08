@@ -70,6 +70,14 @@ renameo -rename -r ~/Downloads/Movies -non-strict
 
 Without `--db` ReNameo works out on its own, file by file, whether it is a movie, an episode or music. `-non-strict` lets it pick the best result automatically; without it, only certain matches are accepted.
 
+### Tidy up release folders in place
+
+```bash
+renameo -rename -r ~/Downloads --format "{jellyfin.tidy}" -non-strict
+```
+
+`Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv` becomes `Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Title.mkv`: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (`.nfo`, samples) follows. Loose files only get a new name. `{plex.tidy}`, `{emby.tidy}` and `{kodi.tidy}` work the same way; `{jellyfin.name}` renames only the file.
+
 ### Organize a Plex or Jellyfin library
 
 ```bash
@@ -251,7 +259,7 @@ With the `watch` command the container renames what arrives in a folder at regul
 ## Scripts and plugins
 
 - `renameo -script file.groovy` runs a Groovy script; `renameo -script fn:name` runs `name.groovy` from the `scripts` folder of the ReNameo data folder.
-- **Plugins** (`.groovy` files in the `plugins` folder) are loaded by the command line and Docker too: `onRename` is called after every rename and their values are used in formats as `{plugin.name}`. Examples in `docs/plugins`.
+- **Plugins** (`.groovy` files in the `plugins` folder) are loaded by the command line and Docker too: `onRename`/`onRenameBatch` are called after renaming and their values are used in formats as `{plugin.name}`. Without a desktop, `RENAMEO_PLUGINS=jellyfin-refresh,notify` installs ready-made plugins and `PLUGIN_<NAME>_<SETTING>` sets their settings (e.g. `PLUGIN_JELLYFIN_REFRESH_APIKEY`). How to write them: [Writing plugins and scripts](USER_GUIDE_PLUGINS.md).
 
 ## Where data is stored
 

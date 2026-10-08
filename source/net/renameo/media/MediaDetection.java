@@ -1092,6 +1092,22 @@ public class MediaDetection {
 
 	private static final ArrayList<IndexEntry<Movie>> movieIndex = new ArrayList<IndexEntry<Movie>>();
 
+	/**
+	 * Use an updated offline index right away: reload the data files and drop the prepared title indexes.
+	 */
+	public static void reloadOfflineIndex() {
+		Resource.invalidateAll();
+		clearIndexCache();
+	}
+
+	private static void clearIndexCache() {
+		for (ArrayList<?> index : asList(seriesIndex, animeIndex, movieIndex)) {
+			synchronized (index) {
+				index.clear();
+			}
+		}
+	}
+
 	private static <T extends SearchResult> List<IndexEntry<T>> getIndex(Supplier<T[]> function, Function<T, List<IndexEntry<T>>> mapper, ArrayList<IndexEntry<T>> sink) {
 		synchronized (sink) {
 			if (sink.isEmpty()) {
@@ -1497,15 +1513,16 @@ public class MediaDetection {
 			for (File nfo : getChildren(folder, NFO_FILES)) {
 				String text = readTextFile(nfo);
 
+				// TheTVDB itself is no longer available, TheMovieDB resolves both kinds of ids
 				for (int imdbid : grepImdbId(text)) {
-					SearchResult series = WebServices.TheTVDB.lookupByIMDbID(imdbid, language);
+					SearchResult series = WebServices.TheMovieDB_TV.findByExternalId("imdb_id", String.format("tt%07d", imdbid), language);
 					if (series != null) {
 						names.add(series);
 					}
 				}
 
 				for (int tvdbid : grepTheTvdbId(text)) {
-					SearchResult series = WebServices.TheTVDB.lookupByID(tvdbid, language);
+					SearchResult series = WebServices.TheMovieDB_TV.findByExternalId("tvdb_id", String.valueOf(tvdbid), language);
 					if (series != null) {
 						names.add(series);
 					}
@@ -1535,7 +1552,11 @@ public class MediaDetection {
 
 	public static SeriesInfo grepSeries(File nfo, Locale locale) throws Exception {
 		List<Integer> tvdbId = grepTheTvdbId(readTextFile(nfo));
-		return tvdbId.isEmpty() ? null : WebServices.TheTVDB.getSeriesInfo(tvdbId.get(0), locale);
+		if (tvdbId.isEmpty()) {
+			return null;
+		}
+		SearchResult series = WebServices.TheMovieDB_TV.findByExternalId("tvdb_id", String.valueOf(tvdbId.get(0)), locale);
+		return series == null ? null : WebServices.TheMovieDB_TV.getSeriesInfo(series, locale);
 	}
 
 	public static <T extends SearchResult> List<T> getProbableMatches(String query, Collection<T> options, boolean alias, boolean strict) {

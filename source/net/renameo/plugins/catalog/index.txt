@@ -1,0 +1,10 @@
+jellyfin-refresh
+plex-refresh
+emby-refresh
+kodi-scan
+notify
+clutter-cleaner
+subtitles-all
+missing-episodes
+duplicates
+rename-log

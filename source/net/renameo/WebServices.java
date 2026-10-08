@@ -6,7 +6,6 @@ import static java.util.stream.Collectors.*;
 import static net.renameo.Logging.*;
 import static net.renameo.Settings.*;
 import static net.renameo.media.MediaDetection.*;
-import static net.renameo.util.FileUtilities.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -36,6 +35,7 @@ import net.renameo.web.MovieIdentificationService;
 import net.renameo.web.MusicIdentificationService;
 import net.renameo.web.OMDbClient;
 import net.renameo.platform.mac.Keychain;
+import net.renameo.web.LazyApiKey;
 import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.web.SearchResult;
 import net.renameo.web.ShooterSubtitles;
@@ -53,8 +53,8 @@ import net.renameo.web.VideoHashSubtitleService;
 public final class WebServices {
 
 	// movie sources
-	public static final OMDbClient OMDb = new OMDbClient(ApiKeys.get(ApiKeys.Service.OMDB));
-	public static final TMDbClient TheMovieDB = new TMDbClientWithLocalSearch(ApiKeys.get(ApiKeys.Service.TMDB), SystemProperty.of("net.renameo.WebServices.TheMovieDB.adult", Boolean::parseBoolean, false).get());
+	public static final OMDbClient OMDb = new OMDbClient(new LazyApiKey(() -> ApiKeys.get(ApiKeys.Service.OMDB)));
+	public static final TMDbClient TheMovieDB = new TMDbClientWithLocalSearch(new LazyApiKey(() -> ApiKeys.get(ApiKeys.Service.TMDB)), SystemProperty.of("net.renameo.WebServices.TheMovieDB.adult", Boolean::parseBoolean, false).get());
 
 	// episode sources
 	public static final TVMazeClient TVmaze = new TVMazeClient();
@@ -69,8 +69,8 @@ public final class WebServices {
 	public static final ShooterSubtitles Shooter = new ShooterSubtitles();
 
 	// other sources
-	public static final FanartTVClient FanartTV = new FanartTVClient(ApiKeys.get(ApiKeys.Service.FANART_TV));
-	public static final AcoustIDClient AcoustID = new AcoustIDClient(ApiKeys.get(ApiKeys.Service.ACOUSTID));
+	public static final FanartTVClient FanartTV = new FanartTVClient(new LazyApiKey(() -> ApiKeys.get(ApiKeys.Service.FANART_TV)));
+	public static final AcoustIDClient AcoustID = new AcoustIDClient(new LazyApiKey(() -> ApiKeys.get(ApiKeys.Service.ACOUSTID)));
 
 	/**
 	 * Pass a key the user just entered to the running client.
@@ -151,7 +151,7 @@ public final class WebServices {
 
 	public static class TMDbClientWithLocalSearch extends TMDbClient {
 
-		public TMDbClientWithLocalSearch(String apikey, boolean adult) {
+		public TMDbClientWithLocalSearch(LazyApiKey apikey, boolean adult) {
 			super(apikey, adult);
 		}
 
@@ -282,14 +282,15 @@ public final class WebServices {
 	 */
 	static {
 		try {
-			((OpenSubtitlesRestClient) OpenSubtitles).setApiKey(getOpenSubtitlesApiKey());
+			OpenSubtitles.setApiKey(getOpenSubtitlesApiKey());
 
 			// environment variables (Docker, NAS, scripts) take precedence over the saved login
 			String envUser = System.getenv("OPENSUBTITLES_USER"), envPassword = System.getenv("OPENSUBTITLES_PASSWORD");
 			String user = envUser != null && !envUser.isEmpty() ? envUser : getLogin(LOGIN_OPENSUBTITLES)[0];
 			if (!user.isEmpty()) {
-				String password = envUser != null && !envUser.isEmpty() ? envPassword : getSavedPassword(user);
-				((OpenSubtitlesRestClient) OpenSubtitles).setCredentials(user, password);
+				// the keychain is only asked when OpenSubtitles is actually used
+				String login = user;
+				OpenSubtitles.setCredentials(user, envUser != null && !envUser.isEmpty() ? () -> envPassword : () -> getSavedPassword(login));
 			}
 		} catch (Exception e) {
 			debug.log(Level.WARNING, "Failed to restore OpenSubtitles login: " + e.getMessage(), e);
@@ -315,7 +316,7 @@ public final class WebServices {
 		} else {
 			Settings.forPackage(WebServices.class).put(OPENSUBTITLES_API_KEY, key);
 		}
-		((OpenSubtitlesRestClient) OpenSubtitles).setApiKey(key);
+		OpenSubtitles.setApiKey(key);
 	}
 
 	/**
@@ -345,8 +346,8 @@ public final class WebServices {
 
 		// delete login
 		if ((user == null || user.isEmpty()) && (password == null || password.isEmpty())) {
-			((OpenSubtitlesRestClient) OpenSubtitles).logout();
-			((OpenSubtitlesRestClient) OpenSubtitles).setCredentials("", "");
+			OpenSubtitles.logout();
+			OpenSubtitles.setCredentials("", "");
 			Settings.forPackage(WebServices.class).remove(id);
 			return;
 		}
@@ -362,7 +363,7 @@ public final class WebServices {
 		} else if (!Keychain.set(KEYCHAIN_SERVICE, user, password)) {
 			debug.warning("Password could not be stored in the keychain; you will need to sign in again after restart");
 		}
-		((OpenSubtitlesRestClient) OpenSubtitles).setCredentials(user, password);
+		OpenSubtitles.setCredentials(user, password);
 		Settings.forPackage(WebServices.class).put(id, user);
 	}
 

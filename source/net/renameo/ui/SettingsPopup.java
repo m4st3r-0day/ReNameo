@@ -26,6 +26,7 @@ import javax.swing.border.LineBorder;
 import net.renameo.util.ui.Glyph;
 import net.renameo.util.ui.Modern;
 import net.renameo.util.ui.NightTheme;
+import net.renameo.util.ui.SwingEventBus;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -61,7 +62,7 @@ class SettingsPopup extends JPopupMenu {
 		add(tool("API keys", Glyph.Shape.LINK, owner -> ApiKeysDialog.show(owner, false)));
 		add(tool("Watch folder", Glyph.Shape.FOLDER, WatchFolderDialog::show));
 		add(tool("Update offline index", Glyph.Shape.DOWNLOAD, OfflineIndexAction::run));
-		add(tool("Plugins", Glyph.Shape.SLIDERS, PluginsDialog::show));
+		add(tool("Plugins", Glyph.Shape.SLIDERS, owner -> SwingEventBus.getInstance().post(new PluginsPanelBuilder())));
 
 		JPanel footer = new JPanel(new MigLayout("insets 0, fillx", "[]push[]"));
 		footer.setOpaque(false);

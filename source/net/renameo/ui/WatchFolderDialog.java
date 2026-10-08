@@ -2,7 +2,6 @@ package net.renameo.ui;
 
 import static net.renameo.util.ui.SwingUI.*;
 
-import java.awt.Dialog.ModalityType;
 import java.awt.Font;
 import java.awt.Window;
 import java.io.File;

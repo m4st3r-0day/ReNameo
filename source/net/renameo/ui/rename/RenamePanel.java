@@ -174,6 +174,13 @@ public class RenamePanel extends JComponent {
 				format.setValue(inPlaceExpression(legacy.group(1) != null ? legacy.group(1) : legacy.group(2)));
 			}
 		}
+		// the naming profiles of episodes and movies now also tidy the folder of the series or movie
+		for (PreferencesEntry<String> format : Arrays.asList(persistentEpisodeFormat, persistentMovieFormat)) {
+			Matcher inPlace = IN_PLACE_FORMAT.matcher(String.valueOf(format.getValue()));
+			if (inPlace.matches()) {
+				format.setValue(tidyExpression(inPlace.group(1)));
+			}
+		}
 
 		try {
 			// restore custom episode formatter
@@ -1314,17 +1321,27 @@ public class RenamePanel extends JComponent {
 		return "{" + binding + ".name}";
 	}
 
+	/**
+	 * Like the file name only, but the folder of the series or movie is renamed in place and episodes go into season folders.
+	 */
+	private static String tidyExpression(String binding) {
+		return "{" + binding + ".tidy}";
+	}
+
+	private static final Pattern IN_PLACE_FORMAT = Pattern.compile("^\\{(plex|jellyfin|emby|kodi)\\.name\\}$");
+
 	private void applyLibraryLayout(String binding, String server, ActionEvent evt) {
-		String expression = inPlaceExpression(binding);
+		String expression = tidyExpression(binding);
+		String music = inPlaceExpression(binding);
 
 		try {
 			renameModel.useFormatter(Episode.class, new ExpressionFormatter(expression, EpisodeFormat.SeasonEpisode, Episode.class));
 			renameModel.useFormatter(Movie.class, new ExpressionFormatter(expression, MovieFormat.NameYear, Movie.class));
-			renameModel.useFormatter(AudioTrack.class, new ExpressionFormatter(expression, new AudioTrackFormat(), AudioTrack.class));
+			renameModel.useFormatter(AudioTrack.class, new ExpressionFormatter(music, new AudioTrackFormat(), AudioTrack.class));
 			persistentEpisodeFormat.setValue(expression);
 			persistentMovieFormat.setValue(expression);
-			persistentMusicFormat.setValue(expression);
-			SwingEventBus.getInstance().post(new AppEvents.Toast("Naming profile: " + server, "Files are renamed in their current folder", AppEvents.Status.Kind.READY));
+			persistentMusicFormat.setValue(music);
+			SwingEventBus.getInstance().post(new AppEvents.Toast("Naming profile: " + server, "Folders get the series or movie name, episodes go into season folders", AppEvents.Status.Kind.READY));
 		} catch (Exception e) {
 			log.log(Level.WARNING, e, e::getMessage);
 		}

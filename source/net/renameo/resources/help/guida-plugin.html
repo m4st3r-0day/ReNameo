@@ -1,0 +1,188 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Creare plugin e script</title><style>
+:root { color-scheme: dark; }
+body { margin: 0; background: #0D111C; color: #E8ECF4; font: 14px/1.6 -apple-system, "Helvetica Neue", "Segoe UI", sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 32px 28px 64px; }
+nav { display: flex; gap: 8px; margin-bottom: 24px; }
+nav .lang { margin-left: auto; }
+nav a { padding: 6px 14px; border-radius: 10px; background: #121827; border: 1px solid #232B3E; color: #E8ECF4; text-decoration: none; }
+nav a.active { background: #3B82F6; border-color: #3B82F6; color: #fff; }
+h1 { font-size: 28px; margin: 0 0 16px; }
+h2 { font-size: 20px; margin: 36px 0 10px; padding-top: 12px; border-top: 1px solid #232B3E; }
+h3 { font-size: 16px; margin: 24px 0 8px; }
+p, li { color: #C9D0DE; }
+a { color: #60A5FA; }
+code { font: 12.5px/1.5 "SF Mono", Menlo, Consolas, monospace; background: #1A2133; border-radius: 6px; padding: 1px 6px; color: #E8ECF4; }
+pre { background: #0A0E17; border: 1px solid #232B3E; border-radius: 12px; padding: 14px 16px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232B3E; vertical-align: top; }
+th { color: #8B93A7; font-weight: 600; }
+strong { color: #E8ECF4; }
+</style></head><body><main><nav><a href="guida-gui.html">Interfaccia grafica</a><a href="guida-cli.html">Riga di comando</a><a href="guida-plugin.html" class="active">Plugin e script</a><a class="lang" href="guide-plugins.html">English</a></nav><h1>Creare plugin e script</h1>
+<p>ReNameo si può estendere con piccoli file di testo scritti in <strong>Groovy</strong>, un linguaggio semplice che assomiglia a Java e a JavaScript. Non serve saper programmare in modo approfondito: quasi tutti gli esempi di questa guida si possono copiare e adattare.</p>
+<p>Ci sono due modi di farlo:</p>
+<table><thead><tr><th></th><th>Plugin</th><th>Script</th></tr></thead><tbody><tr><td>Cos'è</td><td>Un file che resta attivo e <strong>reagisce</strong> a quello che fa ReNameo</td><td>Un file che <strong>esegui tu</strong> quando serve, come un comando</td></tr><tr><td>Quando lavora</td><td>Dopo ogni rinomina, quando premi un suo pulsante, quando un formato usa <code>{plugin.nome}</code></td><td>Solo quando lo lanci con <code>renameo -script …</code></td></tr><tr><td>Dove si mette</td><td>Cartella <code>plugins</code></td><td>Cartella <code>scripts</code></td></tr><tr><td>Si usa da</td><td>App, cartella sorvegliata, riga di comando, Docker</td><td>Riga di comando, Docker, cron</td></tr><tr><td>Esempi</td><td>Avvisare Jellyfin, mandare una notifica, pulire le cartelle</td><td>Ordinare i download in <em>Serie TV</em> e <em>Film</em>, scaricare sottotitoli per tutto l'archivio</td></tr></tbody></table>
+<p>Le cartelle sono dentro la cartella dei dati di ReNameo:</p>
+<table><thead><tr><th>Sistema</th><th>Cartella dei dati</th></tr></thead><tbody><tr><td>macOS</td><td><code>~/.renameo</code></td></tr><tr><td>Linux</td><td><code>~/.local/share/renameo</code></td></tr><tr><td>Windows</td><td><code>%APPDATA%\ReNameo</code></td></tr><tr><td>Docker</td><td><code>/config</code></td></tr></tbody></table>
+<p>Per scrivere i file basta un qualsiasi editor di testo (TextEdit in modalità testo semplice, Blocco note, Visual Studio Code …). Salva con estensione <code>.groovy</code> e codifica UTF-8.</p>
+<h2>Il tuo primo plugin</h2>
+<ol><li>Apri la pagina <strong>Plugins</strong> nella barra laterale e premi <strong>Open folder</strong>.</li><li>Crea nella cartella un file <code>ciao.groovy</code> con queste righe:<pre><code>description &quot;Il mio primo plugin&quot;
+
+onRename { da, a -&gt;
+    log &quot;Rinominato ${da.name} in ${a.name}&quot;
+}</code></pre></li><li>Torna in ReNameo e premi <strong>Reload</strong>: il plugin compare fra gli <em>Installed</em> con la sua descrizione.</li><li>Rinomina un file qualsiasi. Nel riquadro <strong>Plugin log</strong> in fondo alla pagina compare la riga <em>Rinominato … in …</em>.</li></ol>
+<p>Fatto: questo è un plugin completo. Il nome del file (senza <code>.groovy</code>) è il nome del plugin.</p>
+<h2>Cosa può fare un plugin</h2>
+<p>Un plugin è una lista di istruzioni. Ognuna è facoltativa: usa solo quelle che ti servono.</p>
+<table><thead><tr><th>Istruzione</th><th>A cosa serve</th></tr></thead><tbody><tr><td><code>description &quot;testo&quot;</code></td><td>La descrizione mostrata nella pagina Plugins</td></tr><tr><td><code>setting &quot;chiave&quot;, &quot;Etichetta&quot;, &quot;valore predefinito&quot;</code></td><td>Un campo nella pagina Plugins, per esempio l'indirizzo di un server</td></tr><tr><td><code>secret &quot;chiave&quot;, &quot;Etichetta&quot;</code></td><td>Come <code>setting</code>, ma il testo è nascosto (password, token, API key)</td></tr><tr><td><code>settings.chiave</code></td><td>Legge quello che l'utente ha scritto in un campo</td></tr><tr><td><code>onRename { da, a -&gt; … }</code></td><td>Viene chiamato dopo <strong>ogni file</strong> rinominato</td></tr><tr><td><code>onRenameBatch { rinomine -&gt; … }</code></td><td>Viene chiamato <strong>una volta per gruppo</strong> di file rinominati insieme</td></tr><tr><td><code>binding(&quot;nome&quot;) { m -&gt; … }</code></td><td>Crea <code>{plugin.nome}</code> da usare nei formati</td></tr><tr><td><code>action(&quot;Nome&quot;, &quot;Spiegazione&quot;) { cartella -&gt; … }</code></td><td>Un pulsante nella pagina Plugins che lavora su una cartella scelta dall'utente</td></tr><tr><td><code>log &quot;messaggio&quot;</code></td><td>Scrive nel Plugin log (e nel terminale, dalla riga di comando)</td></tr><tr><td><code>progress fatti, totale, &quot;testo&quot;</code></td><td>Mostra la barra di avanzamento nella scheda del plugin, per esempio <em>12 of 40</em></td></tr><tr><td><code>cancelled()</code></td><td>Diventa vero quando l'utente preme <strong>Stop</strong></td></tr><tr><td><code>trash file</code></td><td>Sposta un file nel cestino</td></tr></tbody></table>
+<h3>Impostazioni: <code>setting</code>, <code>secret</code> e <code>settings</code></h3>
+<pre><code>setting &quot;server&quot;, &quot;Indirizzo del server&quot;, &quot;http://localhost:8096&quot;
+secret  &quot;apiKey&quot;, &quot;API key&quot;
+
+onRenameBatch { rinomine -&gt;
+    log &quot;Userò ${settings.server}&quot;
+}</code></pre>
+<p>Nella pagina Plugins il plugin mostra i campi <em>Indirizzo del server</em> e <em>API key</em>. Quello che scrivi viene salvato appena lasci il campo e il plugin lo legge con <code>settings.server</code> e <code>settings.apiKey</code>. Se il campo è vuoto si usa il valore predefinito.</p>
+<h3>Reagire alle rinomine: <code>onRename</code> e <code>onRenameBatch</code></h3>
+<p><code>da</code> e <code>a</code> sono il file prima e dopo la rinomina: <code>a.name</code> è il nome del file, <code>a.parentFile</code> la cartella, <code>a.path</code> il percorso completo.</p>
+<pre><code>onRename { da, a -&gt;
+    log &quot;${da.name} → ${a.path}&quot;
+}</code></pre>
+<p>Quando rinomini 50 episodi insieme, <code>onRename</code> viene chiamato 50 volte. Per le cose da fare una volta sola (avvisare un media server, mandare una notifica) usa <code>onRenameBatch</code>: riceve la lista di tutte le coppie <code>[da, a]</code>.</p>
+<pre><code>onRenameBatch { rinomine -&gt;
+    log &quot;Rinominati ${rinomine.size()} file&quot;
+    rinomine.each { coppia -&gt; log &quot;  ${coppia[1].name}&quot; }   // coppia[0] = prima, coppia[1] = dopo
+}</code></pre>
+<p>Le rinomine di prova (azione <strong>test</strong>) non chiamano i plugin, perché non spostano nulla.</p>
+<h3>Nuovi valori per i formati: <code>binding</code></h3>
+<pre><code>binding(&quot;qualita&quot;) { m -&gt;
+    def altezza = 0
+    try { altezza = m.height as int } catch (e) { }     // l&#x27;altezza del video la legge MediaInfo
+    altezza &gt;= 2000 ? &quot;4K&quot; : altezza &gt;= 1000 ? &quot;1080p&quot; : altezza &gt;= 700 ? &quot;720p&quot; : &quot;SD&quot;
+}</code></pre>
+<p>Adesso nei formati puoi scrivere <code>{n} ({y}) [{plugin.qualita}]</code> e ottenere per esempio <code>Inception (2010) [1080p]</code>. <code>m</code> contiene gli stessi valori dei formati: <code>m.n</code>, <code>m.y</code>, <code>m.s</code>, <code>m.e</code>, <code>m.height</code> …</p>
+<h3>Pulsanti: <code>action</code></h3>
+<pre><code>action(&quot;Conta i video&quot;, &quot;Conta i video in una cartella&quot;) { cartella -&gt;
+    def quanti = 0
+    cartella.eachFileRecurse(groovy.io.FileType.FILES) { f -&gt;
+        if (f.name ==~ /(?i).+\.(mkv|mp4|avi)$/) quanti++
+    }
+    log &quot;${quanti} video in ${cartella}&quot;
+}</code></pre>
+<p>Nella scheda del plugin compare il pulsante <strong>Conta i video</strong>. Quando lo premi ReNameo chiede una cartella, esegue il codice in sottofondo e mostra il risultato nel Plugin log.</p>
+<h3>Barra di avanzamento e Stop: <code>progress</code> e <code>cancelled()</code></h3>
+<p>Mentre un plugin lavora, la sua scheda mostra cosa sta facendo, da quanto tempo e una barra che scorre, con il pulsante <strong>Stop</strong>. Se il lavoro è lungo, di' a ReNameo a che punto sei: la barra diventa precisa e l'utente vede <em>12 of 40 · nome-del-file</em>.</p>
+<pre><code>action(&quot;Controlla i video&quot;, &quot;Esempio con barra e Stop&quot;) { cartella -&gt;
+    def video = cartella.listFiles().findAll { it.name ==~ /(?i).+\.(mkv|mp4)$/ }
+    for (int i = 0; i &lt; video.size(); i++) {
+        if (cancelled()) break              // l&#x27;utente ha premuto Stop
+        progress i + 1, video.size(), video[i].name
+        // … il lavoro su video[i] …
+    }
+}</code></pre>
+<p><code>progress &quot;testo&quot;</code> mostra solo un messaggio, senza numeri. Dentro le closure come <code>each</code> o <code>eachFileRecurse</code>, dove <code>break</code> non si può usare (e <code>return</code> salta solo un elemento), usa <code>if (cancelled()) throw new InterruptedException()</code>: ReNameo lo registra come <em>stopped</em>, non come errore. Stop prova anche a interrompere le attese in corso, ma non tutte si lasciano interrompere: controllare <code>cancelled()</code> è il modo sicuro.</p>
+<h2>Esempio completo: notifiche su Telegram</h2>
+<p>Questo plugin manda un messaggio su Telegram dopo ogni rinomina, ha un pulsante per provarlo e aggiunge <code>{plugin.qualita}</code> ai formati.</p>
+<pre><code>// Manda un messaggio su Telegram quando ReNameo rinomina dei file.
+
+description &quot;Messaggio su Telegram dopo ogni rinomina&quot;
+
+secret  &quot;token&quot;, &quot;Token del bot&quot;
+setting &quot;chat&quot;,  &quot;Chat ID&quot;
+
+def invia = { String testo -&gt;
+    def url = &quot;https://api.telegram.org/bot${settings.token}/sendMessage&quot;
+    def c = new URL(url).openConnection()
+    c.requestMethod = &quot;POST&quot;
+    c.doOutput = true
+    c.setRequestProperty(&quot;Content-Type&quot;, &quot;application/json&quot;)
+    c.outputStream.withWriter(&quot;UTF-8&quot;) { out -&gt;
+        out &lt;&lt; groovy.json.JsonOutput.toJson([chat_id: settings.chat, text: testo])
+    }
+    log &quot;Telegram ha risposto ${c.responseCode}&quot;
+}
+
+onRenameBatch { rinomine -&gt;
+    def nomi = rinomine.collect { it[1].name }
+    invia(&quot;ReNameo ha rinominato ${nomi.size()} file:\n&quot; + nomi.take(10).join(&quot;\n&quot;))
+}
+
+action(&quot;Invia un messaggio di prova&quot;) { cartella -&gt;
+    invia(&quot;Prova da ReNameo: funziona!&quot;)
+}
+
+binding(&quot;qualita&quot;) { m -&gt;
+    def altezza = 0
+    try { altezza = m.height as int } catch (e) { }
+    altezza &gt;= 2000 ? &quot;4K&quot; : altezza &gt;= 1000 ? &quot;1080p&quot; : altezza &gt;= 700 ? &quot;720p&quot; : &quot;SD&quot;
+}</code></pre>
+<p>Per usarlo:</p>
+<ol><li>Su Telegram scrivi a <strong>@BotFather</strong>, crea un bot con <code>/newbot</code> e copia il token.</li><li>Manda un messaggio qualsiasi al tuo bot, poi apri <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code> nel browser: il numero dopo <code>&quot;chat&quot;:{&quot;id&quot;:</code> è il Chat ID.</li><li>Salva il plugin come <code>telegram.groovy</code> nella cartella dei plugin, premi <strong>Reload</strong>, compila i due campi e premi <strong>Invia un messaggio di prova</strong>.</li></ol>
+<p>Il Plugin log mostra <em>Telegram ha risposto 200</em> se tutto è a posto. <em>401</em> vuol dire token sbagliato, <em>400</em> Chat ID sbagliato.</p>
+<h2>Provare e correggere un plugin</h2>
+<ul><li>Dopo ogni modifica al file premi <strong>Reload</strong> nella pagina Plugins.</li><li>Se il plugin contiene un errore, la sua scheda diventa rossa e mostra il messaggio, per esempio <code>MissingPropertyException: No such property: sttings</code>: di solito è un nome scritto male.</li><li>Nel <strong>Plugin log</strong> ogni riga ha l'ora, il nome del plugin e un segno: ▶ inizio, ✓ finito (con la durata), ■ fermato, ✕ errore. Il log tiene le ultime 2000 righe, anche quelle scritte mentre la pagina era chiusa.</li><li>Puoi filtrare per plugin o mostrare solo gli errori, selezionare righe e copiarle (⌘C, oppure clic destro → <em>Copy</em>), salvarle con <em>Save…</em> o svuotare il log con <em>Clear</em>. Comodo per mandare un errore a chi ti aiuta.</li><li>Sotto i pulsanti della scheda, <em>Last run</em> dice quando il plugin ha lavorato l'ultima volta e com'è andata.</li><li>Usa <code>log</code> per vedere cosa succede: <code>log &quot;valore: ${qualcosa}&quot;</code>.</li><li>Per provare <code>onRename</code> senza toccare i tuoi file veri, copia un paio di video in una cartella di prova e rinominali lì (azione <strong>move</strong>, non <strong>test</strong>).</li><li>L'interruttore <strong>On</strong> spegne un plugin senza cancellarlo. Il cestino lo toglie del tutto.</li></ul>
+<p>Alcune cose di Groovy che fanno inciampare:</p>
+<ul><li><code>==~</code> confronta <strong>tutto</strong> il testo, <code>=~</code> cerca <strong>una parte</strong>: <code>&quot;film.mkv&quot; ==~ /.+\.mkv/</code> è vero, <code>&quot;film.mkv&quot; ==~ /\.mkv/</code> no.</li><li>Un testo con <code>${…}</code> non è un normale <code>String</code>: se lo metti in una lista o in un insieme da confrontare, aggiungi <code>.toString()</code>.</li><li>Nell'app i plugin lavorano in sottofondo; dalla riga di comando il programma aspetta che abbiano finito. Evita attese lunghe.</li></ul>
+<h2>Plugin su Docker e NAS</h2>
+<p>Senza interfaccia grafica le impostazioni si danno con variabili d'ambiente: <code>PLUGIN_</code> + nome del plugin + nome dell'impostazione, in maiuscolo e con <code>_</code> al posto dei trattini.</p>
+<pre><code>environment:
+  - RENAMEO_PLUGINS=jellyfin-refresh,notify     # installa i plugin pronti
+  - PLUGIN_JELLYFIN_REFRESH_SERVER=http://jellyfin:8096
+  - PLUGIN_JELLYFIN_REFRESH_APIKEY=la-tua-chiave
+  - PLUGIN_TELEGRAM_TOKEN=123456:ABC…            # un tuo plugin telegram.groovy in /config/plugins
+  - PLUGIN_TELEGRAM_CHAT=42</code></pre>
+<p>Le variabili d'ambiente hanno la precedenza su quello che è scritto nella pagina Plugins. Il nome esatto di ogni variabile appare anche passando il mouse su un campo delle impostazioni.</p>
+<h2>Il tuo primo script</h2>
+<p>Uno script è un file <code>.groovy</code> nella cartella <code>scripts</code> che lanci dal terminale.</p>
+<ol><li>Crea <code>scripts/ciao.groovy</code>:<pre><code>log.info &quot;Ciao! Hai passato ${args.size()} cartelle o file&quot;
+args.each { log.info &quot;  ${it}&quot; }</code></pre></li><li>Lancialo:<pre><code>renameo -script fn:ciao ~/Downloads</code></pre></li></ol>
+<p><code>fn:ciao</code> significa "lo script <code>ciao.groovy</code> nella cartella <code>scripts</code>". Puoi anche indicare un percorso qualsiasi: <code>renameo -script /percorso/mio-script.groovy ~/Downloads</code>.</p>
+<h3>Cosa riceve uno script</h3>
+<table><thead><tr><th>Nome</th><th>Cosa contiene</th></tr></thead><tbody><tr><td><code>args</code></td><td>I file e le cartelle scritti dopo il nome dello script</td></tr><tr><td><code>_def</code></td><td>I valori passati con <code>--def nome=valore</code>, per esempio <code>_def.azione</code></td></tr><tr><td><code>log.info &quot;…&quot;</code>, <code>log.warning &quot;…&quot;</code></td><td>Scrive nel terminale</td></tr><tr><td><code>now</code></td><td>La data e l'ora attuali</td></tr></tbody></table>
+<h3>Le funzioni di ReNameo negli script</h3>
+<table><thead><tr><th>Funzione</th><th>Cosa fa</th></tr></thead><tbody><tr><td><code>rename(file: lista, …)</code> o <code>rename(folder: cartella, …)</code></td><td>Rinomina, come <code>renameo -rename</code></td></tr><tr><td><code>getMissingSubtitles(folder: cartella, lang: &quot;it&quot;)</code></td><td>Scarica i sottotitoli mancanti</td></tr><tr><td><code>getSubtitles(file: lista, lang: &quot;it&quot;)</code></td><td>Scarica i sottotitoli anche se esistono già</td></tr><tr><td><code>check(file: lista)</code> / <code>compute(file: lista)</code></td><td>Verifica o crea file di checksum (SFV, MD5 …)</td></tr><tr><td><code>extract(file: archivio)</code></td><td>Estrae archivi RAR, ZIP, 7z</td></tr><tr><td><code>fetchEpisodeList(query: &quot;Dark&quot;, db: &quot;TheMovieDB::TV&quot;, format: &quot;{s00e00} {t}&quot;)</code></td><td>L'elenco degli episodi di una serie</td></tr><tr><td><code>getMediaInfo(file, &quot;{vf} {ac}&quot;)</code></td><td>Informazioni tecniche su un video</td></tr><tr><td><code>parseEpisodeNumber(file)</code></td><td>Stagione ed episodio letti dal nome (niente se è un film)</td></tr><tr><td><code>detectSeriesName(file)</code> / <code>detectMovie(file, false)</code></td><td>Riconosce la serie o il film</td></tr><tr><td><code>execute(&quot;comando&quot;, &quot;argomento&quot;)</code></td><td>Lancia un programma esterno</td></tr><tr><td><code>die &quot;messaggio&quot;</code></td><td>Ferma lo script con un errore</td></tr></tbody></table>
+<p>I parametri di <code>rename</code> sono gli stessi della riga di comando: <code>db</code> (<code>TheMovieDB</code>, <code>TheMovieDB::TV</code>, <code>TVmaze</code>, <code>AniDB</code> …), <code>format</code>, <code>action</code> (<code>test</code>, <code>move</code>, <code>copy</code>, <code>hardlink</code>, <code>symlink</code>), <code>output</code>, <code>conflict</code>, <code>lang</code>, <code>query</code>, <code>order</code>, <code>filter</code> e <code>strict: false</code> per essere più tolleranti (serve quando ci sono più serie insieme).</p>
+<h2>Esempio completo: ordinare i download</h2>
+<p>Questo script prende tutti i video di una cartella, anche nelle sottocartelle, e mette gli episodi in <em>Serie TV</em> e i film in <em>Film</em>, con i nomi giusti.</p>
+<pre><code>// Rinomina i video di una cartella: le serie in &quot;Serie TV&quot;, i film in &quot;Film&quot;.
+// Uso: renameo -script fn:ordina-download ~/Downloads --def azione=move destinazione=/Volumes/Media
+// Senza --def azione=... fa solo una prova (test) e non tocca nulla.
+
+def azione = _def.azione ?: &#x27;test&#x27;
+def destinazione = _def.destinazione ?: &quot;${System.getProperty(&#x27;user.home&#x27;)}/Media&quot;
+
+// tutti i video nelle cartelle passate, anche nelle sottocartelle
+def video = []
+args.each { cartella -&gt;
+    cartella.eachFileRecurse(groovy.io.FileType.FILES) { f -&gt;
+        if (f.name ==~ /(?i).+\.(mkv|mp4|avi|m4v)$/) video &lt;&lt; f
+    }
+}
+
+// se nel nome c&#x27;è S01E02 o 1x02 è un episodio, altrimenti un film
+def (episodi, film) = video.split { parseEpisodeNumber(it) != null }
+log.info &quot;${episodi.size()} episodi, ${film.size()} film&quot;
+
+if (episodi) {
+    rename(file: episodi, db: &#x27;TheMovieDB::TV&#x27;, action: azione, strict: false,
+           format: &quot;${destinazione}/Serie TV/{n}/Season {s}/{n} - {s00e00} - {t}&quot;)
+}
+if (film) {
+    rename(file: film, db: &#x27;TheMovieDB&#x27;, action: azione, strict: false,
+           format: &quot;${destinazione}/Film/{n} ({y})/{n} ({y})&quot;)
+}</code></pre>
+<p>Prima fai una prova, che mostra cosa succederebbe senza toccare nulla:</p>
+<pre><code>renameo -script fn:ordina-download ~/Downloads --def destinazione=/Volumes/Media</code></pre>
+<p>Se i nomi vanno bene, esegui davvero:</p>
+<pre><code>renameo -script fn:ordina-download ~/Downloads --def azione=move destinazione=/Volumes/Media</code></pre>
+<p>Le rinomine fatte da uno script finiscono nella cronologia (si possono annullare dall'app) e attivano i plugin, per esempio l'avviso a Jellyfin.</p>
+<h3>Farlo girare da solo</h3>
+<p>Su macOS e Linux puoi lanciare lo script a orari fissi con <code>cron</code> (<code>crontab -e</code>). Questa riga lo esegue ogni ora (<code>which renameo</code> mostra il percorso completo da usare):</p>
+<pre><code>0 * * * * /usr/local/bin/renameo -script fn:ordina-download /percorso/Downloads --def azione=move destinazione=/percorso/Media</code></pre>
+<p>Con Docker metti lo script in <code>/config/scripts</code> e lancialo così:</p>
+<pre><code>docker run --rm -e TMDB_API_KEY=la-tua-chiave -v /percorso/config:/config -v /percorso/media:/media \
+  ghcr.io/m4st3r-0day/renameo -script fn:ordina-download /media/downloads --def azione=move destinazione=/media</code></pre>
+<h2>Sicurezza</h2>
+<p>Plugin e script possono fare tutto quello che puoi fare tu: leggere, spostare e cancellare file, usare la rete. Installa solo file di cui ti fidi e leggili prima di usarli. I <strong>formati</strong> invece sono protetti: <code>{…}</code> non può eseguire programmi né modificare file, anche quando usa <code>{plugin.nome}</code>.</p>
+<h2>Condividere un plugin</h2>
+<p>Un plugin è un solo file: per condividerlo basta mandare il <code>.groovy</code>. Chi lo riceve lo mette nella propria cartella <code>plugins</code> e preme <strong>Reload</strong>. I plugin pronti dell'app sono scritti nello stesso modo e sono un buon punto di partenza: si trovano in <code>source/net/renameo/plugins/catalog</code> nel repository, e ogni plugin installato si può aprire e modificare con <strong>Open folder</strong>.</p></main></body></html>

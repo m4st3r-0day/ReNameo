@@ -1,0 +1,5 @@
+# ReNameo is shipped as a single jar, so the extension modules of the Groovy jars it contains are merged here
+moduleName=renameo-groovy-extensions
+moduleVersion=1.0
+extensionClasses=net.renameo.cli.ScriptShellMethods,net.renameo.format.ExpressionFormatMethods,org.codehaus.groovy.jsr223.ScriptExtensions,org.apache.groovy.xml.extensions.XmlExtensions,org.apache.groovy.dateutil.extensions.DateUtilExtensions,org.apache.groovy.datetime.extensions.DateTimeExtensions,org.apache.groovy.nio.extensions.NioExtensions
+staticExtensionClasses=org.codehaus.groovy.jsr223.ScriptStaticExtensions,org.apache.groovy.dateutil.extensions.DateUtilStaticExtensions,org.apache.groovy.datetime.extensions.DateTimeStaticExtensions

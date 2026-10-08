@@ -23,7 +23,7 @@ RUN ant -lib /usr/share/java/ivy.jar fatjar
 
 # same Java modules and languages as the macOS app
 RUN jlink \
-      --add-modules java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.prefs,java.scripting,java.sql,java.xml,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs \
+      --add-modules java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.prefs,java.scripting,java.sql,java.xml,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs \
       --include-locales=en,it,de,fr,es,pt,nl \
       --strip-debug --no-header-files --no-man-pages --compress=zip-9 \
       --output /opt/runtime

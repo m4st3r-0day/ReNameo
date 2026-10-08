@@ -191,6 +191,25 @@ public enum StandardRenameAction implements RenameAction {
 		throw new IllegalArgumentException(String.format("%s not in %s", name, names()));
 	}
 
+	/**
+	 * Folders a rename created (e.g. {@code Neagley (2024)/Season 01}) are removed again when undoing leaves them empty, up to the folder the file came from.
+	 */
+	private static void removeEmptyFolders(File folder, File original) {
+		String keep = original.getAbsolutePath() + File.separator;
+		for (int depth = 0; folder != null && depth < 3 && !keep.startsWith(folder.getAbsolutePath() + File.separator); depth++, folder = folder.getParentFile()) {
+			String[] children = folder.list();
+			if (children == null || !stream(children).allMatch(n -> n.equals(".DS_Store") || n.equals("Thumbs.db") || n.equals("desktop.ini"))) {
+				return;
+			}
+			for (String n : children) {
+				new File(folder, n).delete();
+			}
+			if (!folder.delete()) {
+				return;
+			}
+		}
+	}
+
 	public static File revert(File current, File original) throws IOException {
 		// do nothing if current and original path is exactly the same
 		if (current.equals(original)) {
@@ -199,7 +218,9 @@ public enum StandardRenameAction implements RenameAction {
 
 		// reverse move
 		if (current.exists() && !original.exists()) {
-			return FileUtilities.moveRename(current, original);
+			File restored = FileUtilities.moveRename(current, original);
+			removeEmptyFolders(current.getParentFile(), original);
+			return restored;
 		}
 
 		BasicFileAttributes currentAttr = Files.readAttributes(current.toPath(), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);

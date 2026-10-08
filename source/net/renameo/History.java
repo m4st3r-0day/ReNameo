@@ -200,7 +200,7 @@ public class History {
 
 			for (Sequence sequence : history.sequences()) {
 				org.w3c.dom.Element sequenceElement = document.createElement("sequence");
-				sequenceElement.setAttribute("date", HISTORY_DATE_FORMAT.format(sequence.date()));
+				sequenceElement.setAttribute("date", new SimpleDateFormat(HISTORY_DATE_PATTERN).format(sequence.date()));
 
 				for (Element element : sequence.elements()) {
 					org.w3c.dom.Element renameElement = document.createElement("rename");
@@ -260,6 +260,7 @@ public class History {
 		}
 	}
 
-	private static final SimpleDateFormat HISTORY_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+	// SimpleDateFormat is not thread safe, so each write creates its own
+	private static final String HISTORY_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
 
 }

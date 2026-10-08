@@ -101,7 +101,7 @@ public class FileTree extends JTree {
 				addSeparator();
 			}
 
-			if (selectedFiles.size() > 0) {
+			if (selectedFiles != null && selectedFiles.size() > 0) {
 				add(new JMenuItem(new RevealAction("Reveal", selectedFiles)));
 				add(new RevealAction("Reveal Folder", selectedFiles.stream().map(File::getParentFile).distinct().collect(toList())));
 				addSeparator();

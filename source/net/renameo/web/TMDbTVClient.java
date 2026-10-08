@@ -169,4 +169,22 @@ public class TMDbTVClient extends AbstractEpisodeListProvider implements Artwork
 		return new SeriesData(info, episodes);
 	}
 
+	/**
+	 * Find a series by the id another database gives it, e.g. an IMDb or TheTVDB id from an .nfo file.
+	 *
+	 * @param source
+	 *            imdb_id (like tt0944947) or tvdb_id
+	 */
+	public SearchResult findByExternalId(String source, String id, Locale locale) throws Exception {
+		Object json = tmdb.request("find/" + id, singletonMap("external_source", source), locale);
+		for (Map<?, ?> it : getMapArray(json, "tv_results")) {
+			Integer tmdbId = getInteger(it, "id");
+			String name = getString(it, "name");
+			if (tmdbId != null && name != null) {
+				return new SearchResult(tmdbId, name);
+			}
+		}
+		return null;
+	}
+
 }

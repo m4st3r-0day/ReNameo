@@ -25,6 +25,11 @@ public class ListPanelBuilder implements PanelBuilder {
 	}
 
 	@Override
+	public int hashCode() {
+		return ListPanelBuilder.class.hashCode();
+	}
+
+	@Override
 	public JComponent create() {
 		return new ListPanel();
 	}

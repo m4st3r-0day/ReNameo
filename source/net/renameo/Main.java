@@ -1,11 +1,9 @@
 package net.renameo;
 
 import static java.awt.GraphicsEnvironment.*;
-import static java.util.stream.Collectors.*;
 import static net.renameo.Logging.*;
 import static net.renameo.Settings.*;
 import static net.renameo.util.FileUtilities.*;
-import static net.renameo.util.XPathUtilities.*;
 import static net.renameo.util.ui.SwingUI.*;
 
 import java.io.File;
@@ -23,7 +21,6 @@ import org.kohsuke.args4j.CmdLineException;
 
 import net.renameo.cli.ArgumentBean;
 import net.renameo.cli.ArgumentProcessor;
-import net.renameo.format.ExpressionFormat;
 import net.renameo.platform.mac.MacAppUtilities;
 import net.renameo.platform.windows.WinAppUtilities;
 import net.renameo.ui.ReNameoMenuBar;

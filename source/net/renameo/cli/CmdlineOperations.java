@@ -35,7 +35,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.logging.Level;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -52,6 +51,8 @@ import net.renameo.format.MediaBindingBean;
 import net.renameo.hash.HashType;
 import net.renameo.hash.VerificationFileReader;
 import net.renameo.hash.VerificationFileWriter;
+import net.renameo.media.LibraryLayout;
+import net.renameo.media.MatchGroups;
 import net.renameo.media.AutoDetection;
 import net.renameo.media.AutoDetection.Group;
 import net.renameo.media.AutoDetection.Type;
@@ -64,7 +65,6 @@ import net.renameo.similarity.Match;
 import net.renameo.subtitle.SubtitleFormat;
 import net.renameo.subtitle.SubtitleNaming;
 import net.renameo.util.EntryList;
-import net.renameo.util.FileUtilities.ParentFilter;
 import net.renameo.vfs.FileInfo;
 import net.renameo.vfs.MemoryFile;
 import net.renameo.vfs.SimpleFileInfo;
@@ -74,7 +74,6 @@ import net.renameo.web.Episode;
 import net.renameo.web.EpisodeListProvider;
 import net.renameo.web.Movie;
 import net.renameo.web.MovieIdentificationService;
-import net.renameo.web.MoviePart;
 import net.renameo.web.MusicIdentificationService;
 import net.renameo.web.OpenSubtitlesRestClient;
 import net.renameo.web.SearchResult;
@@ -252,18 +251,7 @@ public class CmdlineOperations implements CmdlineInterface {
 		}
 
 		// handle derived files
-		List<Match<File, ?>> derivateMatches = new ArrayList<Match<File, ?>>();
-		SortedSet<File> derivateFiles = new TreeSet<File>(fileset);
-		derivateFiles.removeAll(mediaFiles);
-
-		for (File file : derivateFiles) {
-			for (Match<File, ?> match : matches) {
-				if (file.getPath().startsWith(match.getValue().getParentFile().getPath()) && isDerived(file, match.getValue()) && match.getCandidate() instanceof Episode) {
-					derivateMatches.add(new Match<File, Object>(file, ((Episode) match.getCandidate()).clone()));
-					break;
-				}
-			}
-		}
+		List<Match<File, ?>> derivateMatches = MatchGroups.episodeDerivates(fileset, mediaFiles, matches);
 
 		// add matches from other files that are linked via filenames
 		matches.addAll(derivateMatches);
@@ -362,70 +350,12 @@ public class CmdlineOperations implements CmdlineInterface {
 		orphanedFiles.removeAll(movieFiles);
 		orphanedFiles.removeAll(nfoFiles);
 
-		Map<File, List<File>> derivatesByMovieFile = new HashMap<File, List<File>>();
-		for (File movieFile : movieFiles) {
-			derivatesByMovieFile.put(movieFile, new ArrayList<File>());
-		}
-		for (File file : orphanedFiles) {
-			List<File> orphanParent = listPath(file);
-			for (File movieFile : movieFiles) {
-				if (orphanParent.contains(movieFile.getParentFile()) && isDerived(file, movieFile)) {
-					derivatesByMovieFile.get(movieFile).add(file);
-					break;
-				}
-			}
-		}
-		for (List<File> derivates : derivatesByMovieFile.values()) {
-			orphanedFiles.removeAll(derivates);
-		}
+		Map<File, List<File>> derivatesByMovieFile = MatchGroups.mapDerivatives(movieFiles, orphanedFiles);
 
 		// match movie hashes online
 		Map<File, Movie> movieByFile = new TreeMap<File, Movie>();
 		if (query == null) {
-			// collect useful nfo files even if they are not part of the selected fileset
-			Set<File> effectiveNfoFileSet = new TreeSet<File>(nfoFiles);
-			for (File dir : mapByFolder(movieFiles).keySet()) {
-				effectiveNfoFileSet.addAll(getChildren(dir, NFO_FILES));
-			}
-			for (File dir : filter(fileset, FOLDERS)) {
-				effectiveNfoFileSet.addAll(getChildren(dir, NFO_FILES));
-			}
-
-			for (File nfo : effectiveNfoFileSet) {
-				try {
-					Movie movie = grepMovie(nfo, service, locale);
-
-					// ignore illegal nfos
-					if (movie == null) {
-						continue;
-					}
-
-					if (nfoFiles.contains(nfo)) {
-						movieByFile.put(nfo, movie);
-					}
-
-					if (isDiskFolder(nfo.getParentFile())) {
-						// special handling for disk folders
-						for (File folder : fileset) {
-							if (nfo.getParentFile().equals(folder)) {
-								movieByFile.put(folder, movie);
-							}
-						}
-					} else {
-						// match movie info to movie files that match the nfo file name
-						SortedSet<File> siblingMovieFiles = new TreeSet<File>(filter(movieFiles, new ParentFilter(nfo.getParentFile())));
-						String baseName = stripReleaseInfo(getName(nfo)).toLowerCase();
-
-						for (File movieFile : siblingMovieFiles) {
-							if (!baseName.isEmpty() && stripReleaseInfo(getName(movieFile)).toLowerCase().startsWith(baseName)) {
-								movieByFile.put(movieFile, movie);
-							}
-						}
-					}
-				} catch (Exception e) {
-					log.log(Level.WARNING, "Failed to grep IMDbID: " + nfo.getName(), e);
-				}
-			}
+			MatchGroups.matchNfoFiles(fileset, movieFiles, nfoFiles, service, locale, movieByFile, log);
 		} else {
 			log.fine(format("Looking up movie by query [%s]", query));
 			List<Movie> results = service.searchMovie(query, locale);
@@ -502,35 +432,7 @@ public class CmdlineOperations implements CmdlineInterface {
 		}
 
 		// collect all File/MoviePart matches
-		List<Match<File, ?>> matches = new ArrayList<Match<File, ?>>();
-
-		filesByMovie.forEach((movie, fs) -> {
-			// bonus material belongs to the movie but must not be numbered as CD1, CD2, ...
-			SortedSet<File> features = new TreeSet<File>();
-			for (File f : fs) {
-				if (VIDEO_FILES.accept(f) && ExtraType.detect(f) != null) {
-					matches.add(new Match<File, Movie>(f, movie.clone()));
-				} else {
-					features.add(f);
-				}
-			}
-
-			groupByMediaCharacteristics(features).forEach(moviePartFiles -> {
-				// resolve movie parts
-				for (int i = 0; i < moviePartFiles.size(); i++) {
-					Movie moviePart = moviePartFiles.size() == 1 ? movie : new MoviePart(movie, i + 1, moviePartFiles.size());
-					matches.add(new Match<File, Movie>(moviePartFiles.get(i), moviePart.clone()));
-
-					// automatically add matches for derived files
-					List<File> derivates = derivatesByMovieFile.get(moviePartFiles.get(i));
-					if (derivates != null) {
-						for (File derivate : derivates) {
-							matches.add(new Match<File, Movie>(derivate, moviePart.clone()));
-						}
-					}
-				}
-			});
-		});
+		List<Match<File, ?>> matches = MatchGroups.movieMatches(filesByMovie, derivatesByMovieFile);
 
 		// rename movies
 		return renameAll(formatMatches(matches, format, outputDir), renameAction, conflictAction, matches, exec);
@@ -701,6 +603,14 @@ public class CmdlineOperations implements CmdlineInterface {
 				}
 			}
 		} finally {
+			// the folder of a series or movie that got a new name: the rest of it follows (other seasons, .nfo …), as if the folder was renamed
+			if (renameLog.size() > 0 && renameAction == StandardRenameAction.MOVE) {
+				LibraryLayout.finishRelocations(renameLog).forEach((from, to) -> {
+					log.info(format("[%s] from [%s] to [%s]", renameAction, from, to));
+					renameLog.put(from, to);
+				});
+			}
+
 			// update history and xattr metadata
 			if (renameLog.size() > 0) {
 				writeHistory(renameAction, renameLog, matches);

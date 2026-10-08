@@ -4,7 +4,7 @@
 Supports the Markdown subset used by the guides: headings, paragraphs, bullet and
 numbered lists, tables, fenced code blocks, inline code, bold, italic and links.
 
-Usage: python3 tools/md2html.py   (run from the project root after editing docs/GUIDA_*.md)
+Usage: python3 tools/md2html.py   (run from the project root after editing the guides in docs/)
 """
 
 import html
@@ -19,8 +19,10 @@ PAGES = {
     "GUIDA_CLI.md": ("guida-cli.html", "it", "cli"),
     "USER_GUIDE_GUI.md": ("guide-gui.html", "en", "gui"),
     "USER_GUIDE_CLI.md": ("guide-cli.html", "en", "cli"),
+    "GUIDA_PLUGIN.md": ("guida-plugin.html", "it", "plugins"),
+    "USER_GUIDE_PLUGINS.md": ("guide-plugins.html", "en", "plugins"),
 }
-LABELS = {"it": {"gui": "Interfaccia grafica", "cli": "Riga di comando"}, "en": {"gui": "Desktop app", "cli": "Command line"}}
+LABELS = {"it": {"gui": "Interfaccia grafica", "cli": "Riga di comando", "plugins": "Plugin e script"}, "en": {"gui": "Desktop app", "cli": "Command line", "plugins": "Plugins & scripts"}}
 
 CSS = """
 :root { color-scheme: dark; }
@@ -105,12 +107,38 @@ def convert(lines):
             tag = "ol" if m.group(2)[0].isdigit() else "ul"
             items = []
             while i < len(lines):
-                m = re.match(r"^(\s*)([-*]|\d+\.)\s+(.*)$", lines[i].rstrip("\n"))
-                if not m:
+                current = lines[i].rstrip("\n")
+                m = re.match(r"^(\s*)([-*]|\d+\.)\s+(.*)$", current)
+                if m:
+                    items.append([inline(m.group(3))])
+                    i += 1
+                    continue
+                if not current.strip():
+                    # a blank line ends the list, unless an indented block or the next item follows
+                    j = i
+                    while j < len(lines) and not lines[j].strip():
+                        j += 1
+                    if j < len(lines) and (lines[j].startswith("  ") or re.match(r"^([-*]|\d+\.)\s", lines[j])):
+                        i = j
+                        continue
                     break
-                items.append("<li>%s</li>" % inline(m.group(3)))
-                i += 1
-            out.append("<%s>%s</%s>" % (tag, "".join(items), tag))
+                if current.startswith("  ") and current.strip().startswith("```"):
+                    # fenced code inside a list item
+                    indent = len(current) - len(current.lstrip())
+                    code = []
+                    i += 1
+                    while i < len(lines) and not lines[i].strip().startswith("```"):
+                        code.append(lines[i].rstrip("\n")[indent:])
+                        i += 1
+                    items[-1].append("<pre><code>%s</code></pre>" % html.escape("\n".join(code)))
+                    i += 1
+                    continue
+                if current.startswith("  "):
+                    items[-1].append("<p>%s</p>" % inline(current.strip()))
+                    i += 1
+                    continue
+                break
+            out.append("<%s>%s</%s>" % (tag, "".join("<li>%s</li>" % "".join(parts) for parts in items), tag))
             continue
         if not line.strip():
             i += 1
@@ -129,7 +157,7 @@ def main():
         with open(os.path.join(ROOT, "docs", source), encoding="utf-8") as f:
             lines = f.readlines()
         title = re.sub(r"^#\s+", "", lines[0]).strip()
-        nav = "".join('<a href="%s"%s>%s</a>' % (page_for(lang, s), ' class="active"' if s == section else "", LABELS[lang][s]) for s in ("gui", "cli"))
+        nav = "".join('<a href="%s"%s>%s</a>' % (page_for(lang, s), ' class="active"' if s == section else "", LABELS[lang][s]) for s in ("gui", "cli", "plugins"))
         other = "en" if lang == "it" else "it"
         nav += '<a class="lang" href="%s">%s</a>' % (page_for(other, section), "English" if other == "en" else "Italiano")
         page = '<!doctype html><html lang="%s"><head><meta charset="utf-8"><title>%s</title><style>%s</style></head><body><main><nav>%s</nav>%s</main></body></html>\n' % (

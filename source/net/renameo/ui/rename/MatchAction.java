@@ -1,7 +1,6 @@
 package net.renameo.ui.rename;
 
 import static net.renameo.Logging.*;
-import static net.renameo.util.ui.SwingUI.*;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -11,7 +10,6 @@ import javax.swing.AbstractAction;
 
 import net.renameo.ResourceManager;
 import net.renameo.similarity.EpisodeMetrics;
-import net.renameo.similarity.Match;
 import net.renameo.similarity.Matcher;
 import net.renameo.util.ui.ProgressMonitor;
 

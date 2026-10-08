@@ -25,6 +25,11 @@ public class FilterPanelBuilder implements PanelBuilder {
 	}
 
 	@Override
+	public int hashCode() {
+		return FilterPanelBuilder.class.hashCode();
+	}
+
+	@Override
 	public JComponent create() {
 		FilterPanel panel = new FilterPanel();
 		panel.addTool(new ExtractTool());

@@ -70,8 +70,8 @@ public class ExpressionFormatTest {
 			// exception must be thrown
 			fail("exception expected");
 		} catch (ScriptException e) {
-			// check message
-			assertEquals("SyntaxError: unexpected token: .", e.getMessage());
+			// a readable syntax error, whose exact wording depends on the Groovy parser
+			assertTrue(e.getMessage(), e.getMessage().startsWith("SyntaxError: ") && e.getMessage().contains("."));
 		}
 	}
 

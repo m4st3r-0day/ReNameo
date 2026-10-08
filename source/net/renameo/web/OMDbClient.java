@@ -37,13 +37,17 @@ public class OMDbClient implements MovieIdentificationService {
 
 	private static final FloodLimit REQUEST_LIMIT = new FloodLimit(2, 1, TimeUnit.SECONDS);
 
-	private volatile String apikey;
+	private final LazyApiKey apikey;
 
 	public void setApiKey(String apikey) {
-		this.apikey = apikey;
+		this.apikey.set(apikey);
 	}
 
 	public OMDbClient(String apikey) {
+		this(LazyApiKey.of(apikey));
+	}
+
+	public OMDbClient(LazyApiKey apikey) {
 		this.apikey = apikey;
 	}
 
@@ -139,7 +143,7 @@ public class OMDbClient implements MovieIdentificationService {
 		Cache cache = Cache.getCache(getName(), CacheType.Monthly);
 
 		return cache.json(encodeParameters(parameters, true), s -> {
-			return getResource('?' + s + "&apikey=" + apikey);
+			return getResource('?' + s + "&apikey=" + apikey.get());
 		}).fetch(withPermit(fetchIfModified(), r -> REQUEST_LIMIT.acquirePermit())).expire(Cache.ONE_WEEK).get();
 	}
 

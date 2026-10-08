@@ -40,6 +40,7 @@ import net.renameo.NativeRenameAction;
 import net.renameo.ResourceManager;
 import net.renameo.StandardRenameAction;
 import net.renameo.UserFiles;
+import net.renameo.media.LibraryLayout;
 import net.renameo.platform.mac.MacAppUtilities;
 import net.renameo.cli.MediaTasks;
 import net.renameo.similarity.Match;
@@ -195,7 +196,13 @@ class RenameAction extends AbstractAction {
 			}
 		});
 
-		HistorySpooler.getInstance().append(renameLog.entrySet());
+		// the folder of a series or movie that got a new name: the rest of it follows (other seasons, .nfo …), as if the folder was renamed
+		Map<File, File> history = renameLog;
+		if (action == StandardRenameAction.MOVE) {
+			history = new LinkedHashMap<File, File>(renameLog);
+			history.putAll(LibraryLayout.finishRelocations(renameLog));
+		}
+		HistorySpooler.getInstance().append(history.entrySet());
 
 		// store xattr
 		storeMetaInfo(renameMap, matches);

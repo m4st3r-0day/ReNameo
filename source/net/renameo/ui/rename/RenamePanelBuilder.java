@@ -25,6 +25,11 @@ public class RenamePanelBuilder implements PanelBuilder {
 	}
 
 	@Override
+	public int hashCode() {
+		return RenamePanelBuilder.class.hashCode();
+	}
+
+	@Override
 	public JComponent create() {
 		return new RenamePanel();
 	}

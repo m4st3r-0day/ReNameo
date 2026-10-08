@@ -23,7 +23,7 @@ Al primo avvio, se manca la chiave, ReNameo apre da solo la finestra **API keys*
 | Zona | Cosa contiene |
 | --- | --- |
 | Barra superiore | Nome e versione, pulsante per compattare la barra laterale (⌘\\), **command palette** (⌘K), aiuto (F1) e indicatore di stato: verde *Ready*, blu *Matching…*, arancione *N to review*. |
-| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List. In fondo, *Settings*. |
+| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Plugins. In fondo, *Settings*. |
 | Intestazione | Titolo della sezione e, in Rename, le azioni principali: **Match**, **Fetch Metadata**, **Format**, Preset, **Undo**, Cronologia e mostra/nascondi inspector (⌘I). |
 | Contenuto | In Rename: *Original Files* a sinistra, *Proposed Names* al centro, *Metadata* a destra. |
 | Barra di stato | File aggiunti, file abbinati, avvisi, avanzamento e pulsante **Rename** con il menu delle opzioni (⌄). |
@@ -109,7 +109,14 @@ Ogni rinomina finisce nella **Cronologia** (icona orologio nell'intestazione), d
 
 ## Libreria per Plex, Jellyfin, Emby o Kodi
 
-Dal menu **⌄ → Naming Profile** scegli **Plex**, **Jellyfin**, **Emby** o **Kodi**. I file vengono **rinominati sul posto**: restano nella cartella in cui si trovano, cambia solo il nome del file, secondo la convenzione del server.
+Dal menu **⌄ → Naming Profile** scegli **Plex**, **Jellyfin**, **Emby** o **Kodi**. I file restano dove sono, ma vengono sistemati secondo la convenzione del server:
+
+- la **cartella della serie o del film** viene rinominata sul posto in *Nome (Anno)*, per esempio `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2024)`;
+- gli episodi vanno nella cartella della stagione (`Season 01`), creata se manca; se esiste già (anche come `Season 1`) viene riutilizzata;
+- il resto della cartella (`.nfo`, sample, altre stagioni) la segue, come se l'avessi rinominata a mano, e la vecchia cartella sparisce;
+- un file sciolto in una cartella generica (per esempio direttamente in `Downloads`) cambia solo nome: ReNameo tocca solo le cartelle il cui nome comincia con il titolo della serie o del film.
+
+Tutto si annulla con ⌘Z o dalla cronologia, cartelle comprese.
 
 ```
 Serie/01. The Haunting of Hill House (2018)/Season 1/The Haunting of Hill House (2018) - S01E01 - Steven Sees a Ghost.mkv
@@ -224,7 +231,7 @@ Nomi generici o offuscati come `movie.mkv`, `VTS_01_1.mkv` o `a3f9c2e1b7d4.mkv` 
 - **Night mode**: tema scuro (predefinito);
 - **Compact rows**: righe più basse per liste lunghe;
 - **Accent color**: il colore di pulsanti e selezioni;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index* e *Plugins*, spiegati qui sotto;
+- **Tools**: *API keys*, *Watch folder*, *Update offline index* e *Plugins* (apre la pagina Plugins), spiegati qui sotto;
 - il link alla guida e la versione dell'app.
 
 ## Cartella sorvegliata
@@ -243,23 +250,40 @@ ReNameo contiene un indice dei film e delle serie più popolari, che permette di
 
 ## Plugin
 
-I plugin sono script Groovy nella cartella `plugins` dei dati di ReNameo (`~/.renameo/plugins` su macOS). **Impostazioni → Plugins** li elenca, li attiva o disattiva e mostra gli eventuali errori di caricamento; *Open folder* apre la cartella e *Reload* li ricarica.
+La pagina **Plugins** nella barra laterale raccoglie i plugin: script Groovy che reagiscono alle rinomine (app, cartella sorvegliata, riga di comando, Docker), aggiungono valori ai formati o azioni da eseguire su una cartella.
 
-Un plugin può reagire a ogni rinomina (app, cartella sorvegliata, riga di comando, Docker) e aggiungere valori ai formati, da usare come `{plugin.nome}`:
+- **Available**: i plugin pronti inclusi nell'app; *Install* li copia nella cartella `plugins` (`~/.renameo/plugins` su macOS).
+- **Installed**: per ogni plugin l'interruttore *On*, il cestino per rimuoverlo, i campi delle impostazioni (salvati appena lasci il campo) e i pulsanti delle azioni, che chiedono una cartella.
+- Mentre un plugin lavora, la sua scheda mostra cosa sta facendo, una barra di avanzamento, il tempo trascorso e **Stop**; dopo, *Last run* dice com'è andata.
+- **Plugin log** (trascina il divisore per ingrandirlo): ora, plugin e un segno per inizio ▶, fine ✓, fermato ■ ed errore ✕. Filtra per plugin o *Errors only*, seleziona e copia con ⌘C o clic destro, *Save…* salva in un file, *Clear* svuota.
+- In alto, *Open folder* apre la cartella dei plugin e *Reload* li ricarica dopo averli modificati.
+
+| Plugin | Cosa fa |
+| --- | --- |
+| `jellyfin-refresh`, `emby-refresh` | Aggiornano la libreria dopo le rinomine (indirizzo del server e API key) |
+| `plex-refresh` | Fa scansionare a Plex solo le cartelle che hanno ricevuto file (indirizzo e token) |
+| `kodi-scan` | Aggiorna la libreria video di Kodi (controllo remoto via HTTP attivo) |
+| `notify` | Messaggio su ntfy, Discord, Gotify o Pushover dopo le rinomine; *Send a test* per provarlo |
+| `clutter-cleaner` | Dopo uno spostamento sposta nel cestino sample, `.nfo`, `.txt` … e toglie le cartelle di download rimaste vuote; tocca solo le cartelle senza più video, audio o sottotitoli. *Clean a folder* fa lo stesso su una cartella |
+| `subtitles-all` | Sottotitoli mancanti per una cartella intera o, con *After renaming* = `yes`, dopo ogni rinomina (serve l'accesso a OpenSubtitles) |
+| `missing-episodes` | Scegli la cartella di una serie: elenca gli episodi già andati in onda che mancano (TheMovieDB) |
+| `duplicates` | Elenca episodi e film presenti più volte, con la dimensione di ogni copia; non cancella nulla |
+| `rename-log` | Scrive ogni rinomina in un file di testo |
+
+Per scrivere un plugin tuo:
 
 ```groovy
 description "Aggiorna la libreria di Jellyfin dopo le rinomine"
+setting "server", "Server", "http://localhost:8096"   // campo nella pagina Plugins, letto con settings.server
+secret "apiKey", "API key"                            // come sopra, nascosto
 
-onRename { from, to ->
-    log "rinominato ${from.name} in ${to.name}"
-}
-
-binding("risoluzione") { m ->      // {plugin.risoluzione}; m contiene {n}, {y}, {height} …
-    m.height >= 2000 ? "4K" : "HD"
-}
+onRename { from, to -> log "rinominato ${from.name}" }   // dopo ogni file
+onRenameBatch { renames -> /* una volta per gruppo */ }   // renames = [[from, to], ...]
+binding("risoluzione") { m -> m.height >= 2000 ? "4K" : "HD" }   // {plugin.risoluzione} nei formati
+action("Conta i video", "…") { folder -> /* pulsante nella pagina Plugins */ }
 ```
 
-Esempi pronti (aggiornamento di Jellyfin, aggiornamento di Plex, registro delle rinomine) sono in `docs/plugins` nel repository. I plugin girano con i tuoi permessi: installa solo quelli di cui ti fidi. I formati invece restano protetti e non possono eseguire programmi né modificare file.
+La guida [Creare plugin e script](GUIDA_PLUGIN.md) spiega tutto passo passo, con esempi completi; si apre anche dal pulsante in fondo alla pagina Plugins. I plugin girano con i tuoi permessi: installa solo quelli di cui ti fidi. I formati invece restano protetti e non possono eseguire programmi né modificare file.
 
 ## Anteprima dei poster
 

@@ -10,6 +10,7 @@ import java.util.logging.Level;
 
 import net.renameo.ApiKeys;
 import net.renameo.WebServices;
+import net.renameo.media.MediaDetection;
 import net.renameo.media.ReleaseInfo;
 import net.renameo.util.ui.ProgressMonitor;
 import net.renameo.util.ui.SwingEventBus;
@@ -41,7 +42,9 @@ public final class OfflineIndexAction {
 			return new TMDbIndexBuilder(WebServices.TheMovieDB).build(ReleaseInfo.getUserDataFile("x").getParentFile(), languages, progress, cancelled);
 		}, result -> {
 			if (result != null) {
-				String detail = String.format("%d series · %d movies · used from the next start", result.series, result.movies);
+				// use the new index right away
+				MediaDetection.reloadOfflineIndex();
+				String detail = String.format("%d series · %d movies", result.series, result.movies);
 				SwingEventBus.getInstance().post(new AppEvents.Toast("Offline index updated", detail, AppEvents.Status.Kind.READY));
 			}
 		}, error -> {

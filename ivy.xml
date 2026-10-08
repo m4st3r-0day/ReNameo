@@ -3,31 +3,39 @@
 	<info organisation="net.renameo" module="renameo" />
 	<dependencies>
 		<!-- Application -->
-		<dependency rev="2.4.13" org="org.codehaus.groovy" name="groovy-all" />
-		<dependency rev="5.14.0" org="net.java.dev.jna" name="jna" />
-		<dependency rev="5.14.0" org="net.java.dev.jna" name="jna-platform" />
-		<dependency rev="2.33" org="args4j" name="args4j" />
-		<dependency rev="2.10.4" org="net.sf.ehcache" name="ehcache" />
-		<dependency rev="59.1" org="com.ibm.icu" name="icu4j" />
-		<dependency rev="1.10.2" org="org.jsoup" name="jsoup" />
-		<dependency rev="1.6" org="org.tukaani" name="xz" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-jsr223" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-xml" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-json" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-dateutil" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-datetime" />
+		<dependency rev="4.0.33" org="org.apache.groovy" name="groovy-nio" />
+		<dependency rev="5.17.0" org="net.java.dev.jna" name="jna" />
+		<dependency rev="5.17.0" org="net.java.dev.jna" name="jna-platform" />
+		<dependency rev="2.37" org="args4j" name="args4j" />
+		<dependency rev="2.10.9.2" org="net.sf.ehcache" name="ehcache" />
+		<dependency rev="78.3" org="com.ibm.icu" name="icu4j" />
+		<dependency rev="1.21.2" org="org.jsoup" name="jsoup" />
+		<dependency rev="1.10" org="org.tukaani" name="xz" />
 		<dependency rev="4.9.12" org="com.cedarsoftware" name="json-io" />
-		<dependency rev="2.5" org="commons-io" name="commons-io" />
-		<dependency rev="3.6" org="commons-net" name="commons-net" />
-		<dependency rev="1.7.25" org="org.slf4j" name="slf4j-jdk14" />
+		<dependency rev="2.20.0" org="commons-io" name="commons-io" />
+		<dependency rev="1.7.36" org="org.slf4j" name="slf4j-jdk14" />
 		<dependency rev="1.10.0" org="net.java.dev.glazedlists" name="glazedlists_java16" />
-		<dependency rev="5.1" org="com.miglayout" name="miglayout-swing" />
-		<dependency rev="2.1" org="org.apache.commons" name="commons-vfs2" />
+		<dependency rev="11.4.2" org="com.miglayout" name="miglayout-swing" />
+		<dependency rev="2.10.0" org="org.apache.commons" name="commons-vfs2" />
 		<dependency rev="0.7" org="com.github.junrar" name="junrar" />
-		<dependency rev="2.6.1" org="com.fifesoft" name="rsyntaxtextarea" />
+		<dependency rev="3.6.0" org="com.fifesoft" name="rsyntaxtextarea" />
 		<dependency rev="9.20-2.00beta" org="net.sf.sevenzipjbinding" name="sevenzipjbinding" />
 		<dependency rev="9.20-2.00beta" org="net.sf.sevenzipjbinding" name="sevenzipjbinding-all-platforms" />
 		<dependency rev="0.6" org="com.optimaize.languagedetector" name="language-detector" />
-		<dependency rev="0.6.5" org="one.util" name="streamex" />
-		<dependency rev="3.0.0" org="com.googlecode.lanterna" name="lanterna" />
-		<dependency rev="2.10.1" org="com.drewnoakes" name="metadata-extractor" />
+		<dependency rev="0.8.3" org="one.util" name="streamex" />
+		<dependency rev="3.1.3" org="com.googlecode.lanterna" name="lanterna" />
+		<dependency rev="2.19.0" org="com.drewnoakes" name="metadata-extractor" />
 
 		<!-- Build and tests -->
-		<dependency rev="1.10.1" org="org.apache.ant" name="ant-junit" />
+		<dependency rev="4.13.2" org="junit" name="junit" />
+		<dependency rev="1.3" org="org.hamcrest" name="hamcrest-library" />
+		<!-- json-io asks for the old groovy-all, ReNameo uses the Groovy 4 modules above -->
+		<exclude org="org.codehaus.groovy" module="groovy-all" />
 	</dependencies>
 </ivy-module>

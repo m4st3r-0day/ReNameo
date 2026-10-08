@@ -18,7 +18,7 @@ table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px;
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #232B3E; vertical-align: top; }
 th { color: #8B93A7; font-weight: 600; }
 strong { color: #E8ECF4; }
-</style></head><body><main><nav><a href="guida-gui.html">Interfaccia grafica</a><a href="guida-cli.html" class="active">Riga di comando</a><a class="lang" href="guide-cli.html">English</a></nav><h1>ReNameo — Guida alla riga di comando</h1>
+</style></head><body><main><nav><a href="guida-gui.html">Interfaccia grafica</a><a href="guida-cli.html" class="active">Riga di comando</a><a href="guida-plugin.html">Plugin e script</a><a class="lang" href="guide-cli.html">English</a></nav><h1>ReNameo — Guida alla riga di comando</h1>
 <p>Tutto quello che fa l'interfaccia grafica si può fare anche dal terminale, anche in modo automatico (script, cron, cartelle monitorate). Per la finestra vedi <a href="guida-gui.html">GUIDA_GUI.md</a>.</p>
 <h2>Come lanciarlo</h2>
 <p>L'app contiene già il comando. Il modo più comodo è collegarlo come <code>renameo</code>:</p>
@@ -48,6 +48,9 @@ Processed 1 files</code></pre>
 <h3>Rinominare film e serie sul posto</h3>
 <pre><code>renameo -rename -r ~/Downloads/Film -non-strict</code></pre>
 <p>Senza <code>--db</code> ReNameo riconosce da solo, file per file, se si tratta di un film, un episodio o musica. <code>-non-strict</code> permette di scegliere automaticamente il risultato migliore; senza, vengono accettati solo gli abbinamenti certi.</p>
+<h3>Sistemare sul posto le cartelle delle release</h3>
+<pre><code>renameo -rename -r ~/Downloads --format &quot;{jellyfin.tidy}&quot; -non-strict</code></pre>
+<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> diventa <code>Downloads/Neagley (2024)/Season 01/Neagley (2024) - S01E01 - Titolo.mkv</code>: la cartella viene rinominata sul posto, gli episodi vanno nella cartella della stagione e il resto della cartella (<code>.nfo</code>, sample) la segue. I file sciolti cambiano solo nome. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> e <code>{kodi.tidy}</code> funzionano allo stesso modo; <code>{jellyfin.name}</code> rinomina solo il file.</p>
 <h3>Organizzare una libreria Plex o Jellyfin</h3>
 <pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
 renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>
@@ -112,6 +115,6 @@ renameo -rename -r &quot;$HOME/Downloads/Completati&quot; \
   ghcr.io/m4st3r-0day/renameo -rename /media/downloads -r --action test -non-strict</code></pre>
 <p>Con il comando <code>watch</code> il container rinomina a intervalli ciò che arriva in una cartella (<code>WATCH_DIR</code>, <code>RENAMEO_NAMING</code>, <code>RENAMEO_ACTION</code>, <code>PUID</code>/<code>PGID</code> …). Tutte le opzioni, il <code>docker-compose.yml</code> e l'installazione su TrueNAS SCALE sono in <code>docker/README.md</code>.</p>
 <h2>Script e plugin</h2>
-<ul><li><code>renameo -script file.groovy</code> esegue uno script Groovy; <code>renameo -script fn:nome</code> esegue <code>nome.groovy</code> dalla cartella <code>scripts</code> dei dati di ReNameo.</li><li>I <strong>plugin</strong> (file <code>.groovy</code> nella cartella <code>plugins</code>) vengono caricati anche dalla riga di comando e da Docker: <code>onRename</code> viene chiamato dopo ogni rinomina e i loro valori si usano nei formati come <code>{plugin.nome}</code>. Esempi in <code>docs/plugins</code>.</li></ul>
+<ul><li><code>renameo -script file.groovy</code> esegue uno script Groovy; <code>renameo -script fn:nome</code> esegue <code>nome.groovy</code> dalla cartella <code>scripts</code> dei dati di ReNameo.</li><li>I <strong>plugin</strong> (file <code>.groovy</code> nella cartella <code>plugins</code>) vengono caricati anche dalla riga di comando e da Docker: <code>onRename</code>/<code>onRenameBatch</code> vengono chiamati dopo le rinomine e i loro valori si usano nei formati come <code>{plugin.nome}</code>. Senza interfaccia, <code>RENAMEO_PLUGINS=jellyfin-refresh,notify</code> installa i plugin pronti e <code>PLUGIN_&lt;NOME&gt;_&lt;IMPOSTAZIONE&gt;</code> ne imposta i valori (es. <code>PLUGIN_JELLYFIN_REFRESH_APIKEY</code>). Come scriverli: <a href="guida-plugin.html">Creare plugin e script</a>.</li></ul>
 <h2>Dove vengono salvati i dati</h2>
 <ul><li>Cache, cronologia, log, script e plugin: <code>~/.renameo</code> su macOS (le cartelle <code>~/.filebot</code> di versioni precedenti vengono adottate automaticamente), <code>~/.local/share/renameo</code> su Linux, <code>%APPDATA%\ReNameo</code> su Windows, <code>/config</code> in Docker.</li><li>Impostazioni: preferenze utente di Java (<code>-clear-prefs</code> per azzerarle).</li></ul></main></body></html>
