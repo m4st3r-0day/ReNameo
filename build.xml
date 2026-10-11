@@ -16,7 +16,7 @@
 	<!-- define output paths -->
 	<property name="dir.cache" location="${basedir}/cache" />
 	<property name="dir.release" location="${basedir}/release/${release}" />
-	<property name="path.fatjar" location="${dir.dist}/${release}.jar" />
+	<property name="path.fatjar" location="${dir.dist}/${application.name}.jar" />
 
 
 	<!-- timestamp variables -->

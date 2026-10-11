@@ -8,6 +8,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,11 +19,13 @@ import java.util.stream.Collectors;
 
 import javax.swing.SwingUtilities;
 
+import net.renameo.HistorySpooler;
 import net.renameo.Settings;
 import net.renameo.StandardRenameAction;
 import net.renameo.cli.CmdlineOperations;
 import net.renameo.cli.ConflictAction;
 import net.renameo.format.ExpressionFileFormat;
+import net.renameo.media.LibraryStats;
 import net.renameo.util.DefaultThreadFactory;
 import net.renameo.util.PreferencesMap.PreferencesEntry;
 import net.renameo.util.ui.SwingEventBus;
@@ -137,8 +140,10 @@ public final class WatchFolder {
 		}
 
 		long settled = System.currentTimeMillis() - SETTLE_MILLIS;
+		// new files only: not renamed by ReNameo before, not failed before (unless changed since), no sample clips
+		Set<File> renamedBefore = HistorySpooler.getInstance().getRenamedFiles();
 		List<File> files = listFiles(root, MEDIA_FILES, HUMAN_NAME_ORDER).stream().filter(f -> {
-			return f.lastModified() < settled && !Long.valueOf(f.lastModified()).equals(unmatched.get(f));
+			return f.lastModified() < settled && !Long.valueOf(f.lastModified()).equals(unmatched.get(f)) && !renamedBefore.contains(f) && !LibraryStats.isSample(f);
 		}).collect(Collectors.toList());
 
 		if (files.isEmpty()) {

@@ -26,7 +26,7 @@ Everything after the image name is a normal `renameo` command, see the [command 
 
 ## Watch a folder
 
-With `watch` as the command, the container renames what arrives in `WATCH_DIR` at regular intervals. Files changed in the last `WATCH_SETTLE` seconds are skipped, so downloads in progress are left alone.
+With `watch` as the command, the container renames what arrives in `WATCH_DIR` at regular intervals. Files changed in the last `WATCH_SETTLE` seconds are skipped, so downloads in progress are left alone. Files ReNameo already renamed (they are in the history in `/config`) and sample clips are skipped too, so a run with nothing new only logs `No new files to rename` and asks TheMovieDB nothing.
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
@@ -45,6 +45,7 @@ docker compose -f docker/docker-compose.yml up -d
 | `RENAMEO_LANG` | `en` | language of the titles, e.g. `it` |
 | `RENAMEO_CONFLICT` | `skip` | `skip`, `override`, `auto`, `index` |
 | `RENAMEO_DB` | auto | force a source, e.g. `TheMovieDB::TV` |
+| `RENAMEO_MOVIE_IDS` | `true` | `false` names movie files just `Name (Year)`, without the database ID (the folder keeps it) |
 | `PUID` / `PGID` | `1000` | user and group that own the media files (`0` runs as root) |
 | `RENAMEO_PLUGINS` | | ready-made plugins to install, e.g. `jellyfin-refresh,notify` (see the main README) |
 | `PLUGIN_<NAME>_<SETTING>` | | plugin settings, e.g. `PLUGIN_JELLYFIN_REFRESH_SERVER=http://jellyfin:8096`, `PLUGIN_JELLYFIN_REFRESH_APIKEY=…` |

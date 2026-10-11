@@ -76,13 +76,22 @@ public final class LibraryLayout {
 			return original == null || original.getParentFile() == null ? new File(standardPath.getName()) : new File(original.getParentFile(), standardPath.getName());
 		}
 
-		File media = getMediaFolder(original, titles);
-		if (media == null) {
-			return new File(original.getParentFile(), standardPath.getName());
-		}
-
 		// just name and year: Neagley (2026), without database tags like [tmdbid-123]
 		String name = segments.get(1).replaceAll("\\s*[\\[{][a-zA-Z]+(id)?[-=][^\\]}]*[\\]}]", "").trim();
+
+		File media = getMediaFolder(original, titles);
+		if (media == null) {
+			// a loose file next to the folder of its series or movie (e.g. a new episode in Downloads) goes into it
+			File[] siblings = original.getParentFile().listFiles(File::isDirectory);
+			if (siblings != null) {
+				for (File it : siblings) {
+					if (it.getName().equals(name) || sameFolder(it.getName(), name) && isTitleFolder(it.getName(), titles)) {
+						return descend(it, segments.subList(2, segments.size()));
+					}
+				}
+			}
+			return new File(original.getParentFile(), standardPath.getName());
+		}
 
 		// the series may already have a clean folder next to this one (e.g. a new season in a download folder)
 		File target = new File(media.getParentFile(), name);
@@ -162,6 +171,50 @@ public final class LibraryLayout {
 			}
 		}
 		return moves;
+	}
+
+	/**
+	 * What {@link #finishRelocations(Map)} would move for these renames, without touching anything: for the preview.
+	 *
+	 * @return the files that follow their folder (old path => new path)
+	 */
+	public static Map<File, File> previewRelocations(Map<File, File> renames) {
+		Map<File, File> moves = new LinkedHashMap<File, File>();
+		for (Entry<File, File> it : getRelocationsFor(renames).entrySet()) {
+			planContents(it.getKey(), it.getValue(), renames.keySet(), moves);
+		}
+		return moves;
+	}
+
+	/**
+	 * Folders that will go away because their series or movie gets a new folder (old folder => new folder).
+	 */
+	public static Map<File, File> getRelocationsFor(Map<File, File> renames) {
+		Map<File, File> used = new LinkedHashMap<File, File>();
+		relocations.forEach((from, to) -> {
+			if (from.isDirectory() && renames.entrySet().stream().anyMatch(r -> isInside(r.getKey(), from) && isInside(FileUtilities.resolve(r.getKey(), r.getValue()), to))) {
+				used.put(from, to);
+			}
+		});
+		return used;
+	}
+
+	private static void planContents(File from, File to, Set<File> renamed, Map<File, File> moves) {
+		File[] children = from.listFiles();
+		if (children == null) {
+			return;
+		}
+		for (File it : children) {
+			File target = new File(to, it.getName());
+			if (JUNK.contains(it.getName()) || renamed.contains(it)) {
+				continue;
+			}
+			if (it.isDirectory()) {
+				planContents(it, target, renamed, moves);
+			} else if (!target.exists()) {
+				moves.put(it, target);
+			}
+		}
 	}
 
 	private static void moveContents(File from, File to, Map<File, File> moves) throws Exception {

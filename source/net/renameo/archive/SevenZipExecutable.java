@@ -31,8 +31,38 @@ public class SevenZipExecutable implements ArchiveExtractor {
 	}
 
 	protected String get7zCommand() {
-		// use 7z executable path as specified by the cmdline or default to "7z" and let the shell figure it out
-		return System.getProperty("net.renameo.Archive.7z", "7z");
+		String command = findCommand();
+		return command != null ? command : "7z";
+	}
+
+	private static String command;
+	private static boolean searched;
+
+	/**
+	 * The 7-Zip program: the one given with -Dnet.renameo.Archive.7z (the macOS app brings its own), or 7zz / 7z / 7za on the PATH or in the usual places.
+	 *
+	 * @return its path, or null if there is none
+	 */
+	public static synchronized String findCommand() {
+		if (!searched) {
+			searched = true;
+			List<File> candidates = new ArrayList<File>();
+			String given = System.getProperty("net.renameo.Archive.7z");
+			if (given != null) {
+				candidates.add(new File(given));
+			}
+			List<String> dirs = new ArrayList<String>(asList(String.valueOf(System.getenv("PATH")).split(File.pathSeparator)));
+			dirs.addAll(asList("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "C:\\Program Files\\7-Zip"));
+			for (String name : new String[] { "7zz", "7z", "7za" }) {
+				for (String dir : dirs) {
+					candidates.add(new File(dir, name));
+					candidates.add(new File(dir, name + ".exe"));
+				}
+			}
+			command = candidates.stream().filter(f -> f.isFile() && f.canExecute()).map(File::getPath).findFirst().orElse(null);
+			debug.fine("7-Zip program: " + command);
+		}
+		return command;
 	}
 
 	protected CharSequence execute(String... command) throws IOException {

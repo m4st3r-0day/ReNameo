@@ -20,7 +20,7 @@ public interface PanelBuilder {
 	public JComponent create();
 
 	public static PanelBuilder[] defaultSequence() {
-		return new PanelBuilder[] { new RenamePanelBuilder(), new EpisodeListPanelBuilder(), new SubtitlePanelBuilder(), new SfvPanelBuilder(), new FilterPanelBuilder(), new ListPanelBuilder(), new PluginsPanelBuilder() };
+		return new PanelBuilder[] { new RenamePanelBuilder(), new EpisodeListPanelBuilder(), new SubtitlePanelBuilder(), new SfvPanelBuilder(), new FilterPanelBuilder(), new ListPanelBuilder(), new LibraryPanelBuilder(), new PluginsPanelBuilder() };
 	}
 
 	public static PanelBuilder[] episodeHandlerSequence() {

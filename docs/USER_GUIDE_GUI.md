@@ -23,7 +23,7 @@ On first start, if the key is missing, ReNameo opens the **API keys** window by 
 | Area | What it contains |
 | --- | --- |
 | Top bar | Name and version, button to collapse the sidebar (⌘\\), **command palette** (⌘K), help (F1) and status indicator: green *Ready*, blue *Matching…*, orange *N to review*. |
-| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Plugins. At the bottom, *Settings*. |
+| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Plugins. At the bottom, *Settings*. |
 | Header | Section title and, in Rename, the main actions: **Match**, **Fetch Metadata**, **Format**, Presets, **Undo**, History and show/hide inspector (⌘I). |
 | Content | In Rename: *Original Files* on the left, *Proposed Names* in the middle, *Metadata* on the right. |
 | Status bar | Files added, files matched, warnings, progress and the **Rename** button with its options menu (⌄). |
@@ -93,6 +93,7 @@ Press **Rename** (or ⌘↵): before touching any file, **Preview Changes** open
 
 - **Needs review** rows (low confidence) are excluded until you tick them;
 - **conflicts** (destination already exists, or two files with the same new name) are highlighted before anything happens; choose what to do at the bottom: *Skip*, *Overwrite* (the existing file goes to the Trash) or *Auto-number* (`Name (2).mkv`);
+- **List | Folders** at the top right switches the view: *Folders* shows the folders **before** and **after**, side by side. New folders are green, folders that go away are struck through in red, renamed files are blue and files that follow their folder (`.nfo`, samples …) are gray. The choice is remembered;
 - **Dry Run** simulates everything (files still present, write permissions, conflicts) without touching anything;
 - **Apply Changes** runs it.
 
@@ -114,9 +115,11 @@ From **⌄ → Naming Profile** choose **Plex**, **Jellyfin**, **Emby** or **Kod
 - the **folder of the series or movie** is renamed in place to *Name (Year)*, e.g. `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2026)`;
 - episodes go into their season folder (`Season 01`), created if needed; an existing one (also spelled `Season 1`) is reused;
 - the rest of the folder (`.nfo`, samples, other seasons) follows it, as if you had renamed it by hand, and the old folder goes away;
-- a file loose in a general folder (e.g. right in `Downloads`) only gets a new name: ReNameo only touches folders whose name starts with the title of the series or movie.
+- a file loose in a general folder (e.g. right in `Downloads`) goes into the folder of its series or movie if that is right next to it (a new episode joins `Neagley (2026)/Season 01`), otherwise it only gets a new name: ReNameo only renames folders whose name starts with the title of the series or movie.
 
 Everything can be undone with ⌘Z or from History, folders included.
+
+Plex, Jellyfin and Emby put the database ID into movie file names (`Dune (2021) [tmdbid-438631].mkv`), which helps them pick the right movie. If you prefer just *Name (Year)*, untick **Database ID in movie file names** in the same menu; the folder stays *Name (Year)* either way.
 
 ```
 TV/01. The Haunting of Hill House (2018)/Season 1/The Haunting of Hill House (2018) - S01E01 - Steven Sees a Ghost.mkv
@@ -231,7 +234,7 @@ Generic or obfuscated names such as `movie.mkv`, `VTS_01_1.mkv` or `a3f9c2e1b7d4
 - **Night mode**: dark theme (default);
 - **Compact rows**: shorter rows for long lists;
 - **Accent color**: the color of buttons and selections;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index* and *Plugins* (opens the Plugins page), explained below;
+- **Tools**: *API keys*, *Watch folder*, *Update offline index*, *Plugins* (opens the Plugins page) and *Check for updates*, explained below;
 - the link to this guide and the app version.
 
 ## Watch folder
@@ -247,6 +250,21 @@ For a server or NAS that runs around the clock, use the Docker *watch* mode inst
 ## Updating the offline index
 
 ReNameo contains an index of the most popular movies and series, which recognizes localized titles right away (*Il Trono di Spade* → *Game of Thrones*). **Settings → Update offline index** downloads it again from TheMovieDB, in English and in the language of your system, in about 20 seconds. The new index is used from the next start.
+
+## Library
+
+The **Library** page in the sidebar shows what the folder of your movies and series holds, without changing anything. **Choose folder…** picks it; next time it is read again on its own, and **Rescan** reads it whenever you like.
+
+- At the top, tiles with the number of **movies**, **series**, **episodes**, the **size** (extras included), **missing episodes**, **duplicates** and videos **without subtitles**.
+- **Resolution** counts the videos by quality (4K, 1080p, 720p, SD), read from the file name; hover over a bar for the size too.
+- The table lists every title with seasons, episodes, missing, size, main quality, videos without subtitles and duplicates. What needs fixing is orange. Filter by name, by type or with *Only with something to fix*; double-click a title to open its folder in the Finder.
+- **Check missing episodes** asks TheMovieDB for the aired episodes of every series and counts the ones that are missing; hover over the number in the *Missing* column to see them.
+
+Duplicates are the same episode, or the same movie, there more than once (e.g. in 720p and 1080p); CD1/CD2 parts of a movie don't count. Hidden folders, the trash and NAS system folders (`@eaDir`, `#recycle`) are skipped.
+
+## Updates
+
+Once a day, at start, ReNameo asks GitHub whether there is a new version. If there is, a window shows what's new with *Download* (opens the release page), *Later* and *Skip this version*; it also turns the automatic check off. Check any time with **Settings → Check for updates**, the **Help** menu or ⌘K. The command line and Docker never check.
 
 ## Plugins
 

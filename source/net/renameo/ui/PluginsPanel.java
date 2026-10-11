@@ -12,7 +12,6 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +47,7 @@ import net.renameo.util.ui.Glyph;
 import net.renameo.util.ui.Modern;
 import net.renameo.util.ui.NightTheme;
 import net.renameo.util.ui.SwingEventBus;
+import net.renameo.util.ui.ThinProgressBar;
 
 /**
  * The Plugins page: installed plugins with their settings and actions, the plugins that come with the app, and what the plugins write to the log.
@@ -300,7 +300,7 @@ public class PluginsPanel extends JPanel {
 		final JPanel panel = new JPanel(new MigLayout("insets 0, fillx, wrap 3, gap 8 6", "[grow, fill][][]"));
 		final JLabel task = Modern.label("", 12.5f, Font.BOLD, false);
 		final JLabel elapsed = Modern.label("", 12f, Font.PLAIN, true);
-		final ProgressBar bar = new ProgressBar();
+		final ThinProgressBar bar = new ThinProgressBar();
 		final JButton stop;
 		final JLabel lastRun = Modern.label("", 11.5f, Font.PLAIN, true);
 
@@ -358,36 +358,6 @@ public class PluginsPanel extends JPanel {
 			} else if (last != null && lastRun.isVisible() == (a != null)) {
 				lastRun.setVisible(a == null);
 			}
-		}
-	}
-
-	/**
-	 * Thin rounded bar: filled to the fraction, or a sliding segment while the plugin does not say how far it is.
-	 */
-	private static class ProgressBar extends JComponent {
-
-		private float fraction = -1;
-
-		void setFraction(float fraction) {
-			this.fraction = fraction;
-		}
-
-		@Override
-		protected void paintComponent(Graphics g) {
-			Graphics2D g2d = Modern.smooth(g);
-			int w = getWidth(), h = getHeight();
-			g2d.setColor(NightTheme.getBorder());
-			g2d.fill(new RoundRectangle2D.Float(0, 0, w, h, h, h));
-			g2d.setColor(NightTheme.getAccent());
-			if (fraction >= 0) {
-				g2d.fill(new RoundRectangle2D.Float(0, 0, Math.max(h, w * fraction), h, h, h));
-			} else {
-				float segment = w * 0.28f;
-				float t = (System.currentTimeMillis() % 1400) / 1400f;
-				g2d.clip(new RoundRectangle2D.Float(0, 0, w, h, h, h));
-				g2d.fill(new RoundRectangle2D.Float(-segment + (w + segment) * t, 0, segment, h, h, h));
-			}
-			g2d.dispose();
 		}
 	}
 

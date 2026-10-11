@@ -19,6 +19,7 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import net.renameo.HistorySpooler;
+import net.renameo.media.LibraryStats;
 import net.renameo.media.MediaDetection;
 
 public class ArgumentProcessor {
@@ -120,7 +121,14 @@ public class ArgumentProcessor {
 		}
 
 		if (args.rename) {
-			cli.rename(mediaOnly(files), args.getRenameAction(), args.getConflictAction(), args.getAbsoluteOutputFolder(), args.getExpressionFileFormat(), args.getDatasource(), args.getSearchQuery(), args.getSortOrder(), args.getExpressionFilter(), args.getLanguage().getLocale(), args.isStrict(), args.getExecCommand());
+			List<File> media = mediaOnly(files);
+
+			// a watch folder with nothing new (everything filtered out) is not an error
+			if (media.isEmpty() && fileFilter != null && !args.extract && !args.getSubtitles) {
+				log.fine("No new files to rename");
+				return 0;
+			}
+			cli.rename(media, args.getRenameAction(), args.getConflictAction(), args.getAbsoluteOutputFolder(), args.getExpressionFileFormat(), args.getDatasource(), args.getSearchQuery(), args.getSortOrder(), args.getExpressionFilter(), args.getLanguage().getLocale(), args.isStrict(), args.getExecCommand());
 		}
 
 		if (args.check) {
@@ -144,6 +152,13 @@ public class ArgumentProcessor {
 		List<File> media = files.stream().filter(f -> MEDIA_FILES.accept(f) || (f.isDirectory() && MediaDetection.isDiskFolder(f))).collect(Collectors.toList());
 		if (media.size() < files.size()) {
 			log.fine(String.format("Ignore %d files that are not video, audio or subtitles", files.size() - media.size()));
+		}
+
+		// sample clips would be matched as movies of their own
+		List<File> samples = media.stream().filter(f -> f.isFile() && VIDEO_FILES.accept(f) && LibraryStats.isSample(f)).collect(Collectors.toList());
+		if (samples.size() > 0) {
+			log.fine(String.format("Ignore %d sample files", samples.size()));
+			media.removeAll(samples);
 		}
 		return media;
 	}

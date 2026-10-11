@@ -56,10 +56,13 @@ Downloads/                                                      Downloads/
 - **Naming profiles** for Plex, Jellyfin, Emby and Kodi that tidy up in place, or your own **format** with a live editor.
 - Move, copy, hard link, symlink or clone. Subtitles follow their video, posters and fanart on request.
 - A **watch folder** that renames new downloads on its own, in the app or in Docker.
+- A **Folders** view in the preview: the folders before and after, side by side.
 
 **And also**
 - **Plugins**: refresh your media server, get a notification, clean up download leftovers, find missing episodes or duplicates. One click to install, or write your own.
+- **Library**: how many movies, series and episodes you have, size, quality, duplicates, videos without subtitles and missing episodes, on one page.
 - Episode lists, subtitle search and download, SFV / MD5 / SHA-1 checksums, a media file filter.
+- Tells you when a new version is out (once a day, can be turned off).
 - Dark and light themes, inspector with poster and technical badges, command palette (⌘K), built-in guide in English and Italian (F1).
 
 ## Install
@@ -98,7 +101,7 @@ Changed your mind? **⌘Z**, or undo an earlier rename from the history.
 - the folder of a series or movie gets its proper name, *Name (Year)*, where it is;
 - episodes go into their season folder, and an existing `Season 1` is reused;
 - the rest of the folder (`.nfo`, samples, other seasons) follows, and the old folder goes away;
-- a file loose in a general folder like `Downloads` only gets a new name.
+- a file loose in a general folder like `Downloads` goes into the folder of its series or movie if that is right next to it (a new episode joins `Neagley (2026)/Season 01`), otherwise it only gets a new name.
 
 | Profile | Episode | Movie |
 | --- | --- | --- |
@@ -252,12 +255,14 @@ You need JDK 21 and [Apache Ant](https://ant.apache.org) (`brew install ant`).
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ant resolve          # first time only: download the libraries
-ant fatjar           # dist/ReNameo_1.0.0.jar
+ant fatjar           # dist/ReNameo.jar
 tools/make-app.sh    # dist/ReNameo.app with its own Java runtime, plus .zip and .dmg
 open dist/ReNameo.app
 ```
 
-Other platforms: `tools/package.sh deb` on Linux (needs fakeroot), `tools/package.sh msi` on Windows (needs the WiX Toolset), `docker build -t renameo .` for the image. `tools/run-tests.sh` runs the tests; GitHub Actions builds and tests every push on Linux, macOS and Windows, and a tag like `v1.1.0` publishes packages and the Docker image.
+Other platforms: `tools/package.sh deb` on Linux (needs fakeroot), `tools/package.sh msi` on Windows (needs the WiX Toolset), `docker build -t renameo .` for the image. `tools/run-tests.sh` runs the tests; GitHub Actions builds and tests every push on Linux, macOS and Windows.
+
+To publish a version: set `application.version` in `app.properties` (the only place the version is written), add its section to [`CHANGELOG.md`](CHANGELOG.md) and push a tag like `v1.1.0`. The release workflow checks that the tag matches, builds the macOS app and publishes it with that section as release notes. Run the workflow by hand to build the Linux and Windows packages for testing (nothing is published) or to publish the Docker image.
 
 To build API keys into your own copy, copy `profile.properties.example` to `profile.properties` and fill it in (it is never committed). Without it, the app asks for the keys on first start.
 

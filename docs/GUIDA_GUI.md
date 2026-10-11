@@ -23,7 +23,7 @@ Al primo avvio, se manca la chiave, ReNameo apre da solo la finestra **API keys*
 | Zona | Cosa contiene |
 | --- | --- |
 | Barra superiore | Nome e versione, pulsante per compattare la barra laterale (⌘\\), **command palette** (⌘K), aiuto (F1) e indicatore di stato: verde *Ready*, blu *Matching…*, arancione *N to review*. |
-| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Plugins. In fondo, *Settings*. |
+| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Plugins. In fondo, *Settings*. |
 | Intestazione | Titolo della sezione e, in Rename, le azioni principali: **Match**, **Fetch Metadata**, **Format**, Preset, **Undo**, Cronologia e mostra/nascondi inspector (⌘I). |
 | Contenuto | In Rename: *Original Files* a sinistra, *Proposed Names* al centro, *Metadata* a destra. |
 | Barra di stato | File aggiunti, file abbinati, avvisi, avanzamento e pulsante **Rename** con il menu delle opzioni (⌄). |
@@ -93,6 +93,7 @@ Premi **Rename** (o ⌘↵): prima di toccare qualsiasi file si apre **Preview C
 
 - le righe **Needs review** (bassa confidenza) sono escluse finché non le spunti tu;
 - i **conflitti** (destinazione già esistente o due file con lo stesso nuovo nome) sono evidenziati prima di partire; scegli in basso cosa fare: *Skip*, *Overwrite* (il file esistente va nel Cestino) o *Auto-number* (`Nome (2).mkv`);
+- in alto a destra **List | Folders** cambia vista: *Folders* mostra le cartelle **prima** e **dopo**, affiancate. Le cartelle nuove sono in verde, quelle che spariscono barrate in rosso, i file rinominati in blu e quelli che seguono la loro cartella (`.nfo`, sample …) in grigio. La scelta viene ricordata;
 - **Dry Run** simula tutto (file ancora presenti, permessi di scrittura, conflitti) senza toccare nulla;
 - **Apply Changes** esegue.
 
@@ -114,9 +115,11 @@ Dal menu **⌄ → Naming Profile** scegli **Plex**, **Jellyfin**, **Emby** o **
 - la **cartella della serie o del film** viene rinominata sul posto in *Nome (Anno)*, per esempio `Neagley.S01.1080p.AMZN.WEB-DL.DDP5.1.ENG.Atmos.ITA.H265-TBK` → `Neagley (2026)`;
 - gli episodi vanno nella cartella della stagione (`Season 01`), creata se manca; se esiste già (anche come `Season 1`) viene riutilizzata;
 - il resto della cartella (`.nfo`, sample, altre stagioni) la segue, come se l'avessi rinominata a mano, e la vecchia cartella sparisce;
-- un file sciolto in una cartella generica (per esempio direttamente in `Downloads`) cambia solo nome: ReNameo tocca solo le cartelle il cui nome comincia con il titolo della serie o del film.
+- un file sciolto in una cartella generica (per esempio direttamente in `Downloads`) va nella cartella della sua serie o del suo film se è lì accanto (un episodio nuovo finisce in `Neagley (2026)/Season 01`), altrimenti cambia solo nome: ReNameo rinomina solo le cartelle il cui nome comincia con il titolo della serie o del film.
 
 Tutto si annulla con ⌘Z o dalla cronologia, cartelle comprese.
+
+Plex, Jellyfin ed Emby mettono l'ID del database nel nome dei file dei film (`Dune (2021) [tmdbid-438631].mkv`): li aiuta a riconoscere il film giusto. Se preferisci solo *Nome (Anno)*, togli la spunta a **Database ID in movie file names** nello stesso menu; la cartella resta comunque *Nome (Anno)*.
 
 ```
 Serie/01. The Haunting of Hill House (2018)/Season 1/The Haunting of Hill House (2018) - S01E01 - Steven Sees a Ghost.mkv
@@ -231,7 +234,7 @@ Nomi generici o offuscati come `movie.mkv`, `VTS_01_1.mkv` o `a3f9c2e1b7d4.mkv` 
 - **Night mode**: tema scuro (predefinito);
 - **Compact rows**: righe più basse per liste lunghe;
 - **Accent color**: il colore di pulsanti e selezioni;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index* e *Plugins* (apre la pagina Plugins), spiegati qui sotto;
+- **Tools**: *API keys*, *Watch folder*, *Update offline index*, *Plugins* (apre la pagina Plugins) e *Check for updates*, spiegati qui sotto;
 - il link alla guida e la versione dell'app.
 
 ## Cartella sorvegliata
@@ -247,6 +250,21 @@ Per un server o un NAS sempre acceso conviene la modalità *watch* dell'immagine
 ## Aggiornare l'indice offline
 
 ReNameo contiene un indice dei film e delle serie più popolari, che permette di riconoscere subito anche i titoli italiani (*Il Trono di Spade* → *Game of Thrones*). **Impostazioni → Update offline index** lo riscarica da TheMovieDB, in inglese e nella lingua del sistema, in circa 20 secondi. Il nuovo indice viene usato dal prossimo avvio.
+
+## Libreria
+
+La pagina **Library** nella barra laterale mostra cosa contiene la cartella dei tuoi film e serie, senza cambiare nulla. **Choose folder…** la sceglie; la volta dopo viene riletta da sola, e **Rescan** la rilegge quando vuoi.
+
+- In alto, i riquadri con il numero di **film**, **serie**, **episodi**, lo **spazio occupato** (extra compresi), gli **episodi mancanti**, i **duplicati** e i video **senza sottotitoli**.
+- **Resolution** conta i video per qualità (4K, 1080p, 720p, SD), letta dal nome del file; passando il mouse su una barra vedi anche lo spazio occupato.
+- La tabella elenca ogni titolo con stagioni, episodi, mancanti, dimensione, qualità prevalente, video senza sottotitoli e duplicati. In arancione quello che c'è da sistemare. Puoi filtrare per nome, per tipo o con *Only with something to fix*; doppio clic su un titolo apre la sua cartella nel Finder.
+- **Check missing episodes** chiede a TheMovieDB gli episodi già andati in onda di ogni serie e conta quelli che mancano; passa il mouse sul numero nella colonna *Missing* per vederli.
+
+Duplicati sono lo stesso episodio, o lo stesso film, presente più volte (per esempio in 720p e 1080p); le parti CD1/CD2 di un film non contano. Cartelle nascoste, il cestino e le cartelle di sistema dei NAS (`@eaDir`, `#recycle`) vengono saltate.
+
+## Aggiornamenti
+
+Una volta al giorno, all'avvio, ReNameo controlla su GitHub se c'è una versione nuova. Se c'è, una finestra mostra le novità con *Download* (apre la pagina della release), *Later* e *Skip this version*; lì puoi anche spegnere il controllo automatico. Puoi controllare quando vuoi da **Settings → Check for updates**, dal menu **Help** o con ⌘K. La riga di comando e Docker non controllano nulla.
 
 ## Plugin
 

@@ -16,7 +16,7 @@ Alternatively:
 ```bash
 dist/ReNameo.app/Contents/MacOS/ReNameo -help     # freshly built app
 ./renameo.sh -help                                # from source
-java -jar dist/ReNameo_1.0.0.jar -help            # command line only
+java -jar dist/ReNameo.jar -help            # command line only
 ```
 
 Without arguments the window opens; with arguments ReNameo works in the terminal and exits. Relative paths are resolved against the current folder.
@@ -76,7 +76,7 @@ Without `--db` ReNameo works out on its own, file by file, whether it is a movie
 renameo -rename -r ~/Downloads --format "{jellyfin.tidy}" -non-strict
 ```
 
-`Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv` becomes `Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Title.mkv`: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (`.nfo`, samples) follows. Loose files only get a new name. `{plex.tidy}`, `{emby.tidy}` and `{kodi.tidy}` work the same way; `{jellyfin.name}` renames only the file.
+`Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv` becomes `Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Title.mkv`: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (`.nfo`, samples) follows. A loose file goes into the folder of its series or movie if that is right next to it (a new episode joins `Neagley (2026)/Season 01`), otherwise it only gets a new name. `{plex.tidy}`, `{emby.tidy}` and `{kodi.tidy}` work the same way; `{jellyfin.name}` renames only the file.
 
 ### Organize a Plex or Jellyfin library
 

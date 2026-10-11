@@ -7,11 +7,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 APP_NAME="ReNameo"
-APP_VERSION="1.0.0"
+# the version lives in app.properties only
+APP_VERSION="$(sed -n 's/^application.version:[[:space:]]*//p' app.properties)"
 APP_BUNDLE="dist/${APP_NAME}.app"
 ICON="packaging/macos/AppIcon.png"
 
-JAR="dist/${APP_NAME}_${APP_VERSION}.jar"
+JAR="dist/${APP_NAME}.jar"
 
 # Java runtime bundled into the app, so it runs on Macs without Java installed
 JDK="${JAVA_HOME:-$(/usr/libexec/java_home -v 21 2>/dev/null || true)}"
@@ -46,6 +47,24 @@ echo "== bundle java runtime (jlink) =="
 
 echo "== bundle jar =="
 cp "$JAR" "$APP_BUNDLE/Contents/Java/${APP_NAME}.jar"
+
+echo "== bundle 7-Zip =="
+# the native 7-Zip library only exists for Intel Macs: the official 7zz program (universal, LGPL) extracts RAR, 7z, ZIP … on Apple Silicon too
+SEVENZIP_URL="https://www.7-zip.org/a/7z2604-mac.tar.xz"
+SEVENZIP_SHA256="bee04358cbcbc7106273cee0e8d72916db2696c48067a3538c34d8cd6fd16578"
+SEVENZIP_DIR="build/7zip-26.04"
+if [ ! -x "$SEVENZIP_DIR/7zz" ]; then
+  mkdir -p "$SEVENZIP_DIR"
+  if curl -fsSL -o "$SEVENZIP_DIR/7z-mac.tar.xz" "$SEVENZIP_URL" && echo "$SEVENZIP_SHA256  $SEVENZIP_DIR/7z-mac.tar.xz" | shasum -a 256 -c - >/dev/null; then
+    tar -xf "$SEVENZIP_DIR/7z-mac.tar.xz" -C "$SEVENZIP_DIR" 7zz License.txt
+  else
+    echo "WARNING: 7-Zip could not be downloaded, archives can only be extracted where 7-Zip is installed"
+  fi
+fi
+if [ -x "$SEVENZIP_DIR/7zz" ]; then
+  cp "$SEVENZIP_DIR/7zz" "$APP_BUNDLE/Contents/MacOS/7zz"
+  cp "$SEVENZIP_DIR/License.txt" "$APP_BUNDLE/Contents/Resources/7-Zip-License.txt"
+fi
 
 echo "== build .icns =="
 ICONSET="dist/AppIcon.iconset"
@@ -89,9 +108,9 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<'PLIST'
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>@VERSION@</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.0</string>
+	<string>@VERSION@</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key>
@@ -103,6 +122,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<'PLIST'
 </dict>
 </plist>
 PLIST
+sed -i '' "s/@VERSION@/${APP_VERSION}/g" "$APP_BUNDLE/Contents/Info.plist"
 
 echo "== launcher script =="
 cat > "$APP_BUNDLE/Contents/MacOS/ReNameo" <<'LAUNCHER'
@@ -146,6 +166,7 @@ exec "$JAVA_BIN" \
   -XX:+UseStringDeduplication \
   -Dnet.renameo.UserFiles.fileChooser=AWT \
   -Djna.library.path="$NATIVE_PATH" \
+  -Dnet.renameo.Archive.7z="$CONTENTS/MacOS/7zz" \
   -cp "$CONTENTS/Java/ReNameo.jar" \
   net.renameo.Main "$@"
 LAUNCHER
@@ -157,11 +178,28 @@ codesign --force --deep --sign - "$APP_BUNDLE"
 echo "== zip + dmg =="
 rm -f "dist/${APP_NAME}-mac-arm64.zip" "dist/${APP_NAME}-mac-arm64.dmg"
 ditto -c -k --keepParent "$APP_BUNDLE" "dist/${APP_NAME}-mac-arm64.zip"
-DMG_DIR="dist/dmg"
-rm -rf "$DMG_DIR" && mkdir -p "$DMG_DIR"
-cp -R "$APP_BUNDLE" "$DMG_DIR/"
-ln -s /Applications "$DMG_DIR/Applications"
-hdiutil create -quiet -volname "$APP_NAME" -srcfolder "$DMG_DIR" -ov -format UDZO "dist/${APP_NAME}-mac-arm64.dmg"
-rm -rf "$DMG_DIR"
+DMG="dist/${APP_NAME}-mac-arm64.dmg"
+
+# a designed window (background with instructions, icons in place, the app icon on the disk) needs dmgbuild,
+# installed once into build/; without it the disk image is plain
+DMGBUILD="build/dmgbuild-venv/bin/dmgbuild"
+if [ ! -x "$DMGBUILD" ]; then
+  python3 -m venv build/dmgbuild-venv >/dev/null 2>&1 && build/dmgbuild-venv/bin/pip install -q dmgbuild >/dev/null 2>&1 || true
+fi
+if [ -x "$DMGBUILD" ]; then
+  "$DMGBUILD" -s tools/dmg-settings.py \
+    -D app="$APP_BUNDLE" \
+    -D icon="$APP_BUNDLE/Contents/Resources/AppIcon.icns" \
+    -D background=packaging/macos/dmg-background.tiff \
+    "$APP_NAME" "$DMG" >/dev/null
+else
+  echo "dmgbuild not available, building a plain disk image"
+  DMG_DIR="dist/dmg"
+  rm -rf "$DMG_DIR" && mkdir -p "$DMG_DIR"
+  cp -R "$APP_BUNDLE" "$DMG_DIR/"
+  ln -s /Applications "$DMG_DIR/Applications"
+  hdiutil create -quiet -volname "$APP_NAME" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG"
+  rm -rf "$DMG_DIR"
+fi
 
 echo "done: $APP_BUNDLE"

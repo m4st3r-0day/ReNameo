@@ -10,9 +10,11 @@ import java.nio.channels.FileLock;
 import java.nio.file.StandardOpenOption;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -53,6 +55,26 @@ public final class HistorySpooler {
 				return history;
 			}
 		}
+	}
+
+	private Set<File> renamedFiles;
+	private long renamedFilesTime;
+
+	/**
+	 * Where files are now after ReNameo renamed them, so the watch folder doesn't look them up again on every run.
+	 */
+	public synchronized Set<File> getRenamedFiles() {
+		// read again after a while, other processes (app, command line) may have renamed files too
+		if (renamedFiles == null || System.currentTimeMillis() - renamedFilesTime > 10000) {
+			try {
+				renamedFiles = new HashSet<File>(getCompleteHistory().getRenameMap().values());
+			} catch (IOException e) {
+				debug.warning("Failed to read history: " + e);
+				renamedFiles = new HashSet<File>();
+			}
+			renamedFilesTime = System.currentTimeMillis();
+		}
+		return renamedFiles;
 	}
 
 	public synchronized void commit() {
@@ -111,6 +133,7 @@ public final class HistorySpooler {
 			synchronized (this) {
 				sessionHistory.add(sequence); // append to session history
 				sessionHistoryTotalSize += sequence.size();
+				renamedFiles = null;
 			}
 		}
 

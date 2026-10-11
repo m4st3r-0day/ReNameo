@@ -484,6 +484,13 @@ public class ExpressionFormatMethods {
 		return net.renameo.media.LibraryLayout.place(self, new File(folder));
 	}
 
+	/**
+	 * True if ReNameo renamed this file before (it is in the history), e.g. --file-filter "!f.isRenamed()" for a watch folder.
+	 */
+	public static boolean isRenamed(File self) {
+		return net.renameo.HistorySpooler.getInstance().getRenamedFiles().contains(self);
+	}
+
 	public static File getRoot(File self) {
 		return FileUtilities.listPath(self).get(0);
 	}

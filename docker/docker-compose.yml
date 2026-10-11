@@ -25,6 +25,7 @@ services:
       # RENAMEO_FORMAT: "{n} ({y})/{n} ({y})"   # instead of RENAMEO_NAMING
       # RENAMEO_LANG: it                        # language of the titles
       # RENAMEO_CONFLICT: skip                  # skip, override, auto, index
+      # RENAMEO_MOVIE_IDS: "false"              # movie files without the database ID: Dune (2021).mkv
     volumes:
       - ./config:/config
       - /path/to/media:/media

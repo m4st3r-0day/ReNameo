@@ -1270,6 +1270,21 @@ public class RenamePanel extends JComponent {
 		actionPopup.add(newAction("macOS-friendly (rename in place)", Glyph.of(Glyph.Shape.FILE, 16, NightTheme::getDimForeground), evt -> applyNamingProfile(NamingProfile.MACOS)));
 		actionPopup.add(newAction("Custom Format …", Glyph.of(Glyph.Shape.PENCIL, 16, NightTheme::getDimForeground), evt -> showFormatEditor(null)));
 
+		JCheckBox movieIds = new JCheckBox("Database ID in movie file names", Boolean.parseBoolean(MediaBindingBean.persistentMovieIds.getValue()));
+		movieIds.setOpaque(false);
+		movieIds.setForeground(NightTheme.getForeground());
+		movieIds.setToolTipText("Dune (2021) [tmdbid-438631].mkv helps Plex, Jellyfin and Emby find the right movie; without it the file is just Dune (2021).mkv");
+		movieIds.addActionListener(evt -> {
+			MediaBindingBean.persistentMovieIds.setValue(String.valueOf(movieIds.isSelected()));
+			try {
+				// the proposed names change right away
+				renameModel.useFormatter(Movie.class, new ExpressionFormatter(persistentMovieFormat.getValue(), MovieFormat.NameYear, Movie.class));
+			} catch (Exception e) {
+				debug.log(Level.WARNING, e, e::getMessage);
+			}
+		});
+		actionPopup.addAction(movieIds);
+
 		return actionPopup;
 	}
 

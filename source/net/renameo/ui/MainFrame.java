@@ -106,6 +106,7 @@ public class MainFrame extends JFrame {
 		PAGES.put("SFV", new String[] { "Checksums", "Create and verify SFV, MD5 and SHA checksum files." });
 		PAGES.put("Filter", new String[] { "Filter & Inspect", "Inspect media attributes, extract archives and organize files." });
 		PAGES.put("List", new String[] { "List Generator", "Generate lists of names from a pattern." });
+		PAGES.put("Library", new String[] { "Library", "What your movies and series folder holds: size, quality, duplicates and missing episodes." });
 		PAGES.put("Plugins", new String[] { "Plugins", "Tell your media server about new files, get notified, clean up folders and more." });
 	}
 
@@ -301,6 +302,7 @@ public class MainFrame extends JFrame {
 		commands.add(newAction("API keys", evt -> ApiKeysDialog.show(this, false)));
 		commands.add(newAction("Watch folder", evt -> WatchFolderDialog.show(this)));
 		commands.add(newAction("Update offline index", evt -> OfflineIndexAction.run(this)));
+		commands.add(newAction("Check for updates", evt -> UpdateDialog.check(this, true)));
 		return commands;
 	}
 

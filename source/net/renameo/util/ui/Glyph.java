@@ -117,6 +117,13 @@ public class Glyph implements Icon {
 			p.line(10.3, 9, 20.3, 7);
 		}),
 
+		CHART(p -> {
+			p.line(3, 21, 21, 21);
+			p.rrect(5, 12, 3.5, 9, 1);
+			p.rrect(10.25, 5, 3.5, 16, 1);
+			p.rrect(15.5, 9, 3.5, 12, 1);
+		}),
+
 		FILE(p -> {
 			p.path(true, 6, 3, 14, 3, 19, 8, 19, 21, 6, 21);
 			p.path(false, 14, 3, 14, 8, 19, 8);

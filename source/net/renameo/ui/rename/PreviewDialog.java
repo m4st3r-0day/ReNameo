@@ -4,6 +4,7 @@ import static javax.swing.BorderFactory.*;
 import static net.renameo.util.FileUtilities.*;
 import static net.renameo.util.ui.SwingUI.*;
 
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -30,6 +31,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 
+import net.renameo.Settings;
+import net.renameo.util.PreferencesMap.PreferencesEntry;
 import net.renameo.util.ui.Glyph;
 import net.renameo.util.ui.Modern;
 import net.renameo.util.ui.NightTheme;
@@ -107,6 +110,10 @@ class PreviewDialog extends JDialog {
 
 	private Plan result;
 
+	private final FolderTreeView folders = new FolderTreeView();
+
+	private static final PreferencesEntry<String> persistentView = Settings.forPackage(PreviewDialog.class).entry("preview.view").defaultValue("list");
+
 	private ArtworkStrip artworkStrip;
 
 	PreviewDialog(Window owner, List<Row> rows, String actionName, boolean artwork) {
@@ -152,8 +159,48 @@ class PreviewDialog extends JDialog {
 		scroll.setBorder(createEmptyBorder());
 		Modern.slim(scroll);
 
+		// the list of changes, or the folders before and after
+		CardLayout views = new CardLayout();
+		JPanel stack = new JPanel(views);
+		stack.setOpaque(false);
+		stack.add(scroll, "list");
+		stack.add(folders, "folders");
+
 		Modern.Card card = new Modern.Card(new MigLayout("insets 8, fill", "[fill, grow]", "[fill, grow]"));
-		card.add(scroll, "grow");
+		card.add(stack, "grow");
+
+		Runnable[] select = new Runnable[1];
+		JButton listView = Modern.button(newAction("List", evt -> {
+			persistentView.setValue("list");
+			select[0].run();
+		}), null, Modern.Style.SECONDARY);
+		JButton folderView = Modern.button(newAction("Folders", evt -> {
+			persistentView.setValue("folders");
+			select[0].run();
+		}), Glyph.of(Glyph.Shape.FOLDER, 15, NightTheme::getForeground), Modern.Style.SECONDARY);
+		folderView.setToolTipText("The folders before and after: new folders, renamed files, what follows its folder");
+		select[0] = () -> {
+			boolean tree = "folders".equals(persistentView.getValue());
+			Modern.style(listView, tree ? Modern.Style.GHOST : Modern.Style.SECONDARY);
+			Modern.style(folderView, tree ? Modern.Style.SECONDARY : Modern.Style.GHOST);
+			if (tree) {
+				folders.update(includedRenames());
+			}
+			views.show(stack, tree ? "folders" : "list");
+		};
+		// ticking files in the list changes the folders too
+		model.addTableModelListener(evt -> {
+			if ("folders".equals(persistentView.getValue())) {
+				folders.update(includedRenames());
+			}
+		});
+		select[0].run();
+
+		JPanel top = new JPanel(new MigLayout("insets 0, fillx", "[grow, fill][][]", "[center]"));
+		top.setOpaque(false);
+		top.add(summary, "wmin 0");
+		top.add(listView, "h 28!");
+		top.add(folderView, "h 28!");
 
 		Modern.onThemeChange(table, () -> {
 			table.setBackground(NightTheme.getCardBackground());
@@ -182,7 +229,7 @@ class PreviewDialog extends JDialog {
 		JPanel content = new JPanel(new MigLayout("insets 20, fill", "[fill, grow]", "[]4[]14[fill, grow]12[]"));
 		content.setBackground(NightTheme.getBackground());
 		content.add(Modern.label("Preview Changes", 20f, Font.BOLD, false), "wrap");
-		content.add(summary, "wrap");
+		content.add(top, "growx, wrap");
 		content.add(card, "grow, wrap");
 
 		if (artwork) {
@@ -219,6 +266,16 @@ class PreviewDialog extends JDialog {
 	Plan showDialog() {
 		setVisible(true);
 		return result;
+	}
+
+	private Map<File, File> includedRenames() {
+		Map<File, File> renames = new LinkedHashMap<File, File>();
+		for (Row row : rows) {
+			if (row.include) {
+				renames.put(row.source, row.destination);
+			}
+		}
+		return renames;
 	}
 
 	private ConflictPolicy getPolicy() {

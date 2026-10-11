@@ -26,6 +26,18 @@ public class SevenZipLoader {
 		}
 	}
 
+	/**
+	 * The native library exists for Windows, Linux x86 and Intel Macs, not for Apple Silicon.
+	 */
+	public static boolean isNativeAvailable() {
+		try {
+			requireNativeLibraries();
+			return true;
+		} catch (Throwable e) {
+			return false;
+		}
+	}
+
 	public static String getNativeVersion() throws SevenZipNativeInitializationException {
 		requireNativeLibraries();
 

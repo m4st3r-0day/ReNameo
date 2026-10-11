@@ -346,7 +346,9 @@ class PluginLogView extends JPanel {
 
 			// the same plugin always gets the same color
 			Font chipFont = Modern.font(11f, Font.BOLD);
-			Color tint = Color.getHSBColor((entry.plugin.hashCode() & 0xFFFF) / (float) 0xFFFF, 0.55f, 0.95f);
+			// bright on the dark theme, darker on the light one, so the name stays readable
+			float hue = (entry.plugin.hashCode() & 0xFFFF) / (float) 0xFFFF;
+			Color tint = NightTheme.isNightMode() ? Color.getHSBColor(hue, 0.55f, 0.95f) : Color.getHSBColor(hue, 0.85f, 0.50f);
 			int chip = Modern.paintChip(g2d, entry.plugin, x, 3, h - 6, chipFont, Modern.alpha(tint, 45), tint);
 			x += Math.max(chip, 110) + 8;
 

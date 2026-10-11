@@ -1,6 +1,7 @@
 package net.renameo.archive;
 
 import static java.util.Arrays.*;
+import static net.renameo.Logging.*;
 import static net.renameo.MediaTypes.*;
 import static net.renameo.util.StringUtilities.*;
 
@@ -24,7 +25,27 @@ import net.sf.sevenzipjbinding.ArchiveFormat;
 public class Archive implements Closeable {
 
 	public static Extractor getExtractor() {
-		return SystemProperty.of("net.renameo.Archive.extractor", Extractor::valueOf, Extractor.SevenZipNativeBindings).get();
+		Extractor chosen = SystemProperty.of("net.renameo.Archive.extractor", Extractor::valueOf).get();
+		return chosen != null ? chosen : detectExtractor();
+	}
+
+	private static Extractor detected;
+
+	/**
+	 * The native 7-Zip library where there is one, else the 7-Zip program (bundled with the macOS app, installed in Docker), else Java only (ZIP and the like).
+	 */
+	private static synchronized Extractor detectExtractor() {
+		if (detected == null) {
+			if (SevenZipLoader.isNativeAvailable()) {
+				detected = Extractor.SevenZipNativeBindings;
+			} else if (SevenZipExecutable.findCommand() != null) {
+				detected = Extractor.SevenZipExecutable;
+			} else {
+				detected = Extractor.ApacheVFS;
+			}
+			debug.fine("Archive extractor: " + detected);
+		}
+		return detected;
 	}
 
 	public static enum Extractor {

@@ -28,6 +28,7 @@ import net.renameo.ui.ApiKeysDialog;
 import net.renameo.ui.AppEvents;
 import net.renameo.plugins.Plugins;
 import net.renameo.ui.MainFrame;
+import net.renameo.ui.UpdateDialog;
 import net.renameo.ui.WatchFolder;
 import net.renameo.ui.NotificationHandler;
 import net.renameo.ui.PanelBuilder;
@@ -243,6 +244,9 @@ public class Main {
 			} else if (firstRun) {
 				// point new users to the built-in guide
 				SwingEventBus.getInstance().post(new AppEvents.Toast("Welcome to " + getApplicationName(), "Press F1 to open the user guide.", AppEvents.Status.Kind.READY));
+			} else if (Updates.isDue()) {
+				// a few seconds after start, so it doesn't slow down opening the window
+				invokeLater(5000, () -> UpdateDialog.check(FocusManager.getCurrentManager().getActiveWindow(), false));
 			}
 		});
 	}

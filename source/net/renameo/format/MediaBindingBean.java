@@ -71,6 +71,7 @@ import net.renameo.mediainfo.MediaInfoException;
 import net.renameo.similarity.Normalization;
 import net.renameo.similarity.SimilarityComparator;
 import net.renameo.util.FileUtilities;
+import net.renameo.util.PreferencesMap.PreferencesEntry;
 import net.renameo.util.WeakValueHashMap;
 import net.renameo.web.AudioTrack;
 import net.renameo.web.Episode;
@@ -1105,12 +1106,30 @@ public class MediaBindingBean {
 		}
 
 		path = standard.getPath(infoObject);
+		if (infoObject instanceof Movie && !isMovieIds()) {
+			// the folder keeps the ID (it is what the media server matches), the file is just "Name (Year)"
+			int slash = path.lastIndexOf('/');
+			path = path.substring(0, slash + 1) + path.substring(slash + 1).replaceAll(ID_TAG, "");
+		}
 		try {
 			path = path.concat(getSubtitleTags()); // NPE if {subt} is undefined
 		} catch (Exception e) {
 			// ignore => no language tags
 		}
 		return new MediaServerPath(path, mediaFile, getFolderTitles());
+	}
+
+	/**
+	 * Plex, Jellyfin and Emby put the database ID into movie file names ({tmdb-1}, [tmdbid-1]), which helps them match; it can be turned off in the app, or with
+	 * RENAMEO_MOVIE_IDS=false on the command line and in Docker.
+	 */
+	public static final PreferencesEntry<String> persistentMovieIds = Settings.forPackage(MediaBindingBean.class).entry("naming.movie.ids").defaultValue("true");
+
+	private static final String ID_TAG = "\\s*[\\[{](?:tmdbid|tmdb|imdbid|imdb|tvdbid|tvdb)[-=][^\\]}]*[\\]}]";
+
+	public static boolean isMovieIds() {
+		String env = System.getenv("RENAMEO_MOVIE_IDS");
+		return env != null && !env.trim().isEmpty() ? Boolean.parseBoolean(env.trim()) : Boolean.parseBoolean(persistentMovieIds.getValue());
 	}
 
 	/**

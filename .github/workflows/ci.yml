@@ -18,11 +18,11 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -40,4 +40,4 @@ jobs:
         run: tools/run-tests.sh
 
       - name: Command line smoke test
-        run: java -jar dist/ReNameo_1.0.0.jar -version
+        run: java -jar dist/ReNameo.jar -version

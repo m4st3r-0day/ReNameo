@@ -10,7 +10,7 @@ JAVAC="${JAVA_HOME:+$JAVA_HOME/bin/}javac"
 SEP=":"
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) SEP=";" ;; esac
 
-CP="dist/ReNameo_1.0.0.jar${SEP}lib/ivy/jar/junit.jar${SEP}lib/ivy/jar/hamcrest-core.jar${SEP}lib/ivy/jar/hamcrest-library.jar"
+CP="dist/ReNameo.jar${SEP}lib/ivy/jar/junit.jar${SEP}lib/ivy/jar/hamcrest-core.jar${SEP}lib/ivy/jar/hamcrest-library.jar"
 OUT="build/test-classes"
 
 rm -rf "$OUT"
@@ -24,6 +24,10 @@ SUITES=(
   net.renameo.media.ReleaseInfoTest
   net.renameo.media.VideoFormatTest
   net.renameo.media.MediaDetectionTest
+  net.renameo.media.LibraryLayoutTest
+  net.renameo.media.LibraryStatsTest
+  net.renameo.UpdatesTest
+  net.renameo.ui.UpdateDialogTest
   net.renameo.format.ExpressionFormatTest
   net.renameo.ui.rename.MatchModelTest
   net.renameo.subtitle.SubtitleReaderTestSuite

@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 import javax.swing.Action;
+import javax.swing.FocusManager;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
@@ -97,6 +98,7 @@ public class ReNameoMenuBar {
 	public static JMenuBar createHelp() {
 		JMenu help = new JMenu("Help");
 		help.add(newAction("User Guide", null, evt -> openURI(getEmbeddedHelpURL())));
+		help.add(newAction("Check for Updates…", null, evt -> UpdateDialog.check(FocusManager.getCurrentManager().getActiveWindow(), true)));
 
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(help);

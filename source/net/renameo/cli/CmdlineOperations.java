@@ -552,6 +552,12 @@ public class CmdlineOperations implements CmdlineInterface {
 					File source = it.getKey();
 					File destination = it.getValue();
 
+					// moved together with its folder earlier in this run (a series or movie folder that got its proper name)
+					if (!source.exists() && renameAction.canRevert()) {
+						log.info(format("Skipped [%s] because it was moved with its folder", source));
+						continue;
+					}
+
 					// resolve destination
 					if (!destination.isAbsolute()) {
 						// same folder, different name
@@ -594,6 +600,8 @@ public class CmdlineOperations implements CmdlineInterface {
 
 						// remember successfully renamed matches for history entry and possible revert
 						renameLog.put(source, destination);
+					} else if (destination.equals(source)) {
+						log.fine(format("Skipped [%s] because it already has the right name", source));
 					} else {
 						log.info(format("Skipped [%s] because [%s] already exists", source, destination));
 					}

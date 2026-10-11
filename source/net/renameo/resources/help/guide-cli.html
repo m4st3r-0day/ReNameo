@@ -27,7 +27,7 @@ renameo -version</code></pre>
 <p>Alternatively:</p>
 <pre><code>dist/ReNameo.app/Contents/MacOS/ReNameo -help     # freshly built app
 ./renameo.sh -help                                # from source
-java -jar dist/ReNameo_1.0.0.jar -help            # command line only</code></pre>
+java -jar dist/ReNameo.jar -help            # command line only</code></pre>
 <p>Without arguments the window opens; with arguments ReNameo works in the terminal and exits. Relative paths are resolved against the current folder.</p>
 <p>Tab completion for bash/zsh is in <code>tools/bash_completion.d/renameo</code>:</p>
 <pre><code>source tools/bash_completion.d/renameo                                          # bash
@@ -50,7 +50,7 @@ Processed 1 files</code></pre>
 <p>Without <code>--db</code> ReNameo works out on its own, file by file, whether it is a movie, an episode or music. <code>-non-strict</code> lets it pick the best result automatically; without it, only certain matches are accepted.</p>
 <h3>Tidy up release folders in place</h3>
 <pre><code>renameo -rename -r ~/Downloads --format &quot;{jellyfin.tidy}&quot; -non-strict</code></pre>
-<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> becomes <code>Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Title.mkv</code>: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (<code>.nfo</code>, samples) follows. Loose files only get a new name. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> and <code>{kodi.tidy}</code> work the same way; <code>{jellyfin.name}</code> renames only the file.</p>
+<p><code>Downloads/Neagley.S01.1080p.AMZN.WEB-DL-TBK/Neagley.S01E01….mkv</code> becomes <code>Downloads/Neagley (2026)/Season 01/Neagley (2026) - S01E01 - Title.mkv</code>: the folder is renamed in place, the episodes go into the season folder and the rest of the folder (<code>.nfo</code>, samples) follows. A loose file goes into the folder of its series or movie if that is right next to it (a new episode joins <code>Neagley (2026)/Season 01</code>), otherwise it only gets a new name. <code>{plex.tidy}</code>, <code>{emby.tidy}</code> and <code>{kodi.tidy}</code> work the same way; <code>{jellyfin.name}</code> renames only the file.</p>
 <h3>Organize a Plex or Jellyfin library</h3>
 <pre><code>renameo -rename -r ~/Downloads --naming plex     --output /Volumes/Media -non-strict
 renameo -rename -r ~/Downloads --naming jellyfin --output /Volumes/Media -non-strict</code></pre>

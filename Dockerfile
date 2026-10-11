@@ -34,11 +34,11 @@ RUN jlink \
 FROM debian:bookworm-slim
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libmediainfo0v5 ca-certificates tzdata gosu fontconfig \
+ && apt-get install -y --no-install-recommends libmediainfo0v5 7zip ca-certificates tzdata gosu fontconfig \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /opt/runtime /opt/java
-COPY --from=build /src/dist/ReNameo_1.0.0.jar /opt/renameo/renameo.jar
+COPY --from=build /src/dist/ReNameo.jar /opt/renameo/renameo.jar
 COPY docker/renameo /usr/local/bin/renameo
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/renameo /usr/local/bin/entrypoint.sh

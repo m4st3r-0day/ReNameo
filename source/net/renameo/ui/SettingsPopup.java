@@ -63,6 +63,7 @@ class SettingsPopup extends JPopupMenu {
 		add(tool("Watch folder", Glyph.Shape.FOLDER, WatchFolderDialog::show));
 		add(tool("Update offline index", Glyph.Shape.DOWNLOAD, OfflineIndexAction::run));
 		add(tool("Plugins", Glyph.Shape.SLIDERS, owner -> SwingEventBus.getInstance().post(new PluginsPanelBuilder())));
+		add(tool("Check for updates", Glyph.Shape.ARROW_DOWN, owner -> UpdateDialog.check(owner, true)));
 
 		JPanel footer = new JPanel(new MigLayout("insets 0, fillx", "[]push[]"));
 		footer.setOpaque(false);

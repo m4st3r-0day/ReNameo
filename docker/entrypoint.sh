@@ -44,7 +44,7 @@ CONFLICT="${RENAMEO_CONFLICT:-skip}"
 LANGUAGE="${RENAMEO_LANG:-en}"
 
 set -- -rename -r "$WATCH_DIR" --action "$ACTION" --conflict "$CONFLICT" --lang "$LANGUAGE" -non-strict \
-  --file-filter "f.lastModified() < new Date().time - $SETTLE * 1000" \
+  --file-filter "f.lastModified() < new Date().time - $SETTLE * 1000 && !f.isRenamed()" \
   --log-file "$CONFIG/logs/watch.log"
 
 if [ -n "$RENAMEO_FORMAT" ]; then

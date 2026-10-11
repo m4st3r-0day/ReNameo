@@ -10,14 +10,14 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 TYPE="${1:?usage: tools/package.sh deb|msi}"
-VERSION="1.0.0"
+VERSION="$(sed -n 's/^application.version:[[:space:]]*//p' app.properties)"
 JPACKAGE="${JAVA_HOME:+$JAVA_HOME/bin/}jpackage"
 MODULES="java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.management.rmi,java.naming,java.net.http,java.prefs,java.scripting,java.sql,java.xml,jdk.accessibility,jdk.charsets,jdk.crypto.ec,jdk.localedata,jdk.unsupported,jdk.zipfs"
 
 INPUT="build/package-input"
 rm -rf "$INPUT"
 mkdir -p "$INPUT" dist/packages
-cp "dist/ReNameo_${VERSION}.jar" "$INPUT/ReNameo.jar"
+cp dist/ReNameo.jar "$INPUT/ReNameo.jar"
 
 COMMON=(
   --name ReNameo

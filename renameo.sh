@@ -1,6 +1,6 @@
 #!/bin/bash
 # -----------------------------------------------------------------------
-# renameo.sh – ReNameo 1.0.0 launcher for macOS (sw-dark-mode)
+# renameo.sh – ReNameo launcher for macOS (sw-dark-mode)
 # -----------------------------------------------------------------------
 set -euo pipefail
 
@@ -34,5 +34,5 @@ JVM_OPTS="$JVM_OPTS ${RENAMEO_OPTS:-}"
 exec "$JAVA_HOME/bin/java" \
   ${JAVA_OPTS:-} \
   $JVM_OPTS \
-  -cp "$SCRIPT_DIR/dist/ReNameo_1.0.0.jar" \
+  -cp "$SCRIPT_DIR/dist/ReNameo.jar" \
   net.renameo.Main "$@"
