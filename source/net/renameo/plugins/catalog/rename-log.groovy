@@ -1,6 +1,7 @@
 // Keep a plain text log of every rename.
 
 description "Write every rename to a text file"
+category "Tools"
 
 setting "file", "Log file", new File(System.getProperty("user.home"), "renameo-renames.log").path
 

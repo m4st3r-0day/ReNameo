@@ -96,6 +96,7 @@ public final class Plugins {
 		public final File file;
 		public boolean enabled;
 		public String description = "";
+		public String category = "Other";
 		public String error;
 
 		public final Map<String, Setting> settings = new LinkedHashMap<String, Setting>();
@@ -160,6 +161,13 @@ public final class Plugins {
 
 		public void description(String text) {
 			plugin.description = text;
+		}
+
+		/**
+		 * Group on the Plugins page, e.g. "Media server", "Notifications".
+		 */
+		public void category(String text) {
+			plugin.category = text;
 		}
 
 		public void setting(String key, String label) {
@@ -287,7 +295,7 @@ public final class Plugins {
 					// the plugin api methods are closures in the script binding, so a script simply calls description "…", onRename { … }
 					Api api = new Api(plugin);
 					Binding binding = new Binding();
-					for (String method : new String[] { "description", "setting", "secret", "onRename", "onRenameBatch", "binding", "action", "log", "trash", "progress", "cancelled" }) {
+					for (String method : new String[] { "description", "category", "setting", "secret", "onRename", "onRenameBatch", "binding", "action", "log", "trash", "progress", "cancelled" }) {
 						binding.setVariable(method, new MethodClosure(api, method));
 					}
 					binding.setVariable("settings", settingsView(plugin));
@@ -581,20 +589,35 @@ public final class Plugins {
 
 		public final String name;
 		public final String description;
+		public final String category;
 
-		CatalogEntry(String name, String description) {
+		CatalogEntry(String name, String description, String category) {
 			this.name = name;
 			this.description = description;
+			this.category = category;
 		}
 
 		public boolean isInstalled() {
 			return new File(getFolder(), name + ".groovy").exists();
+		}
+
+		/**
+		 * The app brings a different version than the installed one (or the installed one was changed by hand).
+		 */
+		public boolean hasUpdate() {
+			File file = new File(getFolder(), name + ".groovy");
+			try {
+				return file.exists() && !new String(Files.readAllBytes(file.toPath()), UTF_8).equals(readCatalog(name));
+			} catch (IOException e) {
+				return false;
+			}
 		}
 	}
 
 	private static final String CATALOG = "catalog/";
 
 	private static final Pattern DESCRIPTION = Pattern.compile("^description\\s+\"(.*)\"\\s*$", Pattern.MULTILINE);
+	private static final Pattern CATEGORY = Pattern.compile("^category\\s+\"(.*)\"\\s*$", Pattern.MULTILINE);
 
 	public static List<CatalogEntry> catalog() {
 		List<CatalogEntry> entries = new ArrayList<CatalogEntry>();
@@ -609,7 +632,8 @@ public final class Plugins {
 				}
 				String source = readCatalog(name);
 				Matcher m = DESCRIPTION.matcher(source);
-				entries.add(new CatalogEntry(name, m.find() ? m.group(1) : ""));
+				Matcher c = CATEGORY.matcher(source);
+				entries.add(new CatalogEntry(name, m.find() ? m.group(1) : "", c.find() ? c.group(1) : "Other"));
 			}
 		} catch (IOException e) {
 			debug.log(Level.WARNING, "Failed to read the plugin catalog", e);
@@ -662,6 +686,14 @@ public final class Plugins {
 	 */
 	public static synchronized void install(CatalogEntry entry) throws IOException {
 		copy(entry);
+		load();
+	}
+
+	/**
+	 * Replace the installed copy with the one the app brings. Its settings are kept.
+	 */
+	public static synchronized void update(CatalogEntry entry) throws IOException {
+		Files.write(new File(getFolder(), entry.name + ".groovy").toPath(), readCatalog(entry.name).getBytes(UTF_8));
 		load();
 	}
 

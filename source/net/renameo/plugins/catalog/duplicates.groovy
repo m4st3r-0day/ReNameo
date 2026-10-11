@@ -2,6 +2,7 @@
 // Nothing is deleted: the list shows the size of each copy so you can decide.
 
 description "Find episodes and movies you have more than once"
+category "Library"
 
 action("Find duplicates", "Pick a library folder, e.g. your TV shows or movies") { folder ->
     def groups = [:].withDefault { [] }

@@ -2,6 +2,7 @@
 // Token: see "Finding an authentication token" in the Plex support pages.
 
 description "Refresh Plex (only the folders that changed) after renaming"
+category "Media server"
 
 setting "server", "Server", "http://localhost:32400"
 secret "token", "Token"

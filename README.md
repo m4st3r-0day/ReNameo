@@ -25,7 +25,7 @@
 - [What it does](#what-it-does)
 - [Install](#install) · [API keys](#api-keys) · [Quick start](#quick-start)
 - [Naming profiles](#naming-profiles) · [Custom formats](#custom-formats) · [Subtitles](#subtitles)
-- [Watch folder](#watch-folder) · [Plugins and scripts](#plugins-and-scripts) · [Command line](#command-line) · [Docker and TrueNAS](#docker-and-truenas)
+- [Watch folder](#watch-folder) · [Guardian](#guardian) · [Plugins and scripts](#plugins-and-scripts) · [Command line](#command-line) · [Docker and TrueNAS](#docker-and-truenas)
 - [How it works](#how-it-works) · [Troubleshooting](#troubleshooting) · [Documentation](#documentation)
 - [Building from source](#building-from-source) · [Credits and license](#credits-and-license)
 
@@ -59,15 +59,17 @@ Downloads/                                                      Downloads/
 - A **Folders** view in the preview: the folders before and after, side by side.
 
 **And also**
+- **Guardian**: keeps a library in order. Every night it checks the names, suggests or makes corrections, and keeps a journal of every change with the reason, so any of them can be undone.
 - **Plugins**: refresh your media server, get a notification, clean up download leftovers, find missing episodes or duplicates. One click to install, or write your own.
 - **Library**: how many movies, series and episodes you have, size, quality, duplicates, videos without subtitles and missing episodes, on one page.
 - Episode lists, subtitle search and download, SFV / MD5 / SHA-1 checksums, a media file filter.
 - Tells you when a new version is out (once a day, can be turned off).
+- A **Settings** page with every option in one place: appearance, renaming, API keys, folders, guardian, updates.
 - Dark and light themes, inspector with poster and technical badges, command palette (⌘K), built-in guide in English and Italian (F1).
 
 ## Install
 
-**macOS (Apple Silicon, macOS 11+):** download **ReNameo-1.0.0-mac-arm64.dmg** from the [latest release](https://github.com/m4st3r-0day/ReNameo/releases/latest), open it and drag **ReNameo** to Applications. ReNameo isn't notarized by Apple, so the first time open **System Settings → Privacy & Security** and click **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/ReNameo.app`. For the command line: `sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo`.
+**macOS (Apple Silicon, macOS 11+):** download **ReNameo-1.1.0-mac-arm64.dmg** from the [latest release](https://github.com/m4st3r-0day/ReNameo/releases/latest), open it and drag **ReNameo** to Applications. ReNameo isn't notarized by Apple, so the first time open **System Settings → Privacy & Security** and click **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/ReNameo.app`. For the command line: `sudo ln -s /Applications/ReNameo.app/Contents/MacOS/ReNameo /usr/local/bin/renameo`.
 
 **Linux, Windows and Docker:** packages will follow in a later release. Until then, [build from source](#building-from-source):
 
@@ -140,7 +142,17 @@ The password stays in the macOS Keychain. Free accounts have a daily download qu
 
 ## Watch folder
 
-**Settings → Watch folder** picks a folder (e.g. Downloads), the naming profile and the action. While ReNameo is open, new video, audio and subtitle files there are renamed every few minutes; files changed in the last 2 minutes are left alone so downloads can finish. Everything goes into the history. For a server that runs around the clock, use the [Docker watch mode](docker/README.md).
+**Settings → Folders → Watch folder** picks a folder (e.g. Downloads), the naming profile and the action. While ReNameo is open, new video, audio and subtitle files there are renamed every few minutes; files changed in the last 2 minutes are left alone so downloads can finish. Everything goes into the history. For a server that runs around the clock, use the [Docker watch mode](docker/README.md).
+
+## Guardian
+
+The **Guardian** page keeps a library folder in order (**Settings → Guardian** picks the folder, profile and mode). Every night at 3 (while the app is open), or with **Check now**, it looks for names that don't follow the profile: a release name instead of *Name (Year)*, an episode outside its season folder, a file next to the folder of its title.
+
+- **Only suggest** (default): every correction waits on **To review**, with the reason; **Apply** or **Ignore** it.
+- **Correct when certain**: corrects what two independent lookups agree on, suggests the rest.
+- **Correct everything**: corrects whatever it finds.
+
+The first check of a library only suggests, and a check never changes more than the limit you set. Every change goes into the **Journal** with its date, reason and the files that followed it: **Undo** puts it back, **Wrong title…** undoes it and redoes it with the title you give. Undone and ignored files are left alone afterwards. The journal can be exported as CSV. On a server: `renameo -guard` or the [Docker guard mode](docker/README.md).
 
 ## Plugins and scripts
 

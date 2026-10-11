@@ -16,14 +16,14 @@ ReNameo cerca film e serie su **TheMovieDB**, che richiede una chiave personale 
 1. crea un account su [themoviedb.org](https://www.themoviedb.org/signup);
 2. apri *Settings → API* ([link diretto](https://www.themoviedb.org/settings/api)), richiedi una chiave per uso personale e copia la **API Key** (quella corta, non l'*API Read Access Token*).
 
-Al primo avvio, se manca la chiave, ReNameo apre da solo la finestra **API keys**: incolla la chiave e premi **Save**. La chiave viene verificata subito con TheMovieDB e salvata nel Portachiavi di macOS. Nella stessa finestra puoi aggiungere, se vuoi, le chiavi di OMDb, Fanart.tv e AcoustID. Per cambiarle più tardi: **Impostazioni → API keys**, oppure *API keys* nella command palette (⌘K).
+Al primo avvio, se manca la chiave, ReNameo apre da solo la finestra **API keys**: incolla la chiave e premi **Save**. La chiave viene verificata subito con TheMovieDB e salvata nel Portachiavi di macOS. Nella stessa finestra puoi aggiungere, se vuoi, le chiavi di OMDb, Fanart.tv e AcoustID. Per cambiarle più tardi: **Settings → API keys**, oppure *API keys* nella command palette (⌘K).
 
 ## La finestra
 
 | Zona | Cosa contiene |
 | --- | --- |
 | Barra superiore | Nome e versione, pulsante per compattare la barra laterale (⌘\\), **command palette** (⌘K), aiuto (F1) e indicatore di stato: verde *Ready*, blu *Matching…*, arancione *N to review*. |
-| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Plugins. In fondo, *Settings*. |
+| Barra laterale | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Guardian, Plugins. In fondo, *Settings*. |
 | Intestazione | Titolo della sezione e, in Rename, le azioni principali: **Match**, **Fetch Metadata**, **Format**, Preset, **Undo**, Cronologia e mostra/nascondi inspector (⌘I). |
 | Contenuto | In Rename: *Original Files* a sinistra, *Proposed Names* al centro, *Metadata* a destra. |
 | Barra di stato | File aggiunti, file abbinati, avvisi, avanzamento e pulsante **Rename** con il menu delle opzioni (⌄). |
@@ -229,17 +229,22 @@ Nomi generici o offuscati come `movie.mkv`, `VTS_01_1.mkv` o `a3f9c2e1b7d4.mkv` 
 
 ## Impostazioni
 
-**Settings** in fondo alla barra laterale (oppure ⌘K → "settings") apre un pannello con:
+**Settings** in fondo alla barra laterale (oppure ⌘K → "settings") apre la pagina delle impostazioni: le sezioni a sinistra, le opzioni a destra. Le opzioni valgono subito.
 
-- **Night mode**: tema scuro (predefinito);
-- **Compact rows**: righe più basse per liste lunghe;
-- **Accent color**: il colore di pulsanti e selezioni;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index*, *Plugins* (apre la pagina Plugins) e *Check for updates*, spiegati qui sotto;
-- il link alla guida e la versione dell'app.
+| Sezione | Cosa contiene |
+| --- | --- |
+| **Appearance** | tema scuro o chiaro, righe compatte, colore di accento |
+| **Renaming** | profilo dei nomi (Plex, Jellyfin, Emby, Kodi, Windows, macOS), ID del database nei nomi dei film, lingua dei titoli, poster e fanart (le stesse opzioni del menu ⌄ di Rename) |
+| **API keys** | le chiavi di TheMovieDB, OMDb, Fanart.tv e AcoustID; *Save* verifica subito la chiave di TheMovieDB |
+| **Folders** | la **cartella della libreria** (usata da Library e Guardian) e la **cartella sorvegliata** |
+| **Guardian** | cosa può fare il guardiano, ogni quanto controlla, quanti cambiamenti al massimo |
+| **Updates** | controllo automatico degli aggiornamenti, *Check now*, le novità di ogni versione |
+| **Advanced** | cartella dei dati, log degli errori, cartella dei plugin, indice offline, svuota la cache |
+| **About** | versione, guida, GitHub, crediti |
 
 ## Cartella sorvegliata
 
-**Impostazioni → Watch folder** sceglie una cartella (per esempio Downloads), i nomi (Plex, Jellyfin, Emby, Kodi o i nomi predefiniti) e l'azione (sposta, copia, hard link, link simbolico). Mentre ReNameo è aperto, i nuovi file video, audio e sottotitoli che arrivano lì vengono rinominati ogni pochi minuti.
+**Settings → Folders → Watch folder** sceglie una cartella (per esempio Downloads), i nomi (Plex, Jellyfin, Emby, Kodi o i nomi predefiniti) e l'azione (sposta, copia, hard link, link simbolico). Mentre ReNameo è aperto, i nuovi file video, audio e sottotitoli che arrivano lì vengono rinominati ogni pochi minuti.
 
 - I file modificati negli ultimi 2 minuti vengono lasciati stare, così i download possono finire.
 - I file che non si riescono a riconoscere non vengono ritentati finché non cambiano.
@@ -249,11 +254,11 @@ Per un server o un NAS sempre acceso conviene la modalità *watch* dell'immagine
 
 ## Aggiornare l'indice offline
 
-ReNameo contiene un indice dei film e delle serie più popolari, che permette di riconoscere subito anche i titoli italiani (*Il Trono di Spade* → *Game of Thrones*). **Impostazioni → Update offline index** lo riscarica da TheMovieDB, in inglese e nella lingua del sistema, in circa 20 secondi. Il nuovo indice viene usato dal prossimo avvio.
+ReNameo contiene un indice dei film e delle serie più popolari, che permette di riconoscere subito anche i titoli italiani (*Il Trono di Spade* → *Game of Thrones*). **Settings → Advanced → Offline index** lo riscarica da TheMovieDB, in inglese e nella lingua del sistema, in circa 20 secondi. Il nuovo indice viene usato dal prossimo avvio.
 
 ## Libreria
 
-La pagina **Library** nella barra laterale mostra cosa contiene la cartella dei tuoi film e serie, senza cambiare nulla. **Choose folder…** la sceglie; la volta dopo viene riletta da sola, e **Rescan** la rilegge quando vuoi.
+La pagina **Library** nella barra laterale mostra cosa contiene la cartella dei tuoi film e serie, senza cambiare nulla. **Choose folder…** la sceglie (è la stessa cartella della libreria di *Settings → Folders* e del Guardiano); la volta dopo viene riletta da sola, e **Rescan** la rilegge quando vuoi.
 
 - In alto, i riquadri con il numero di **film**, **serie**, **episodi**, lo **spazio occupato** (extra compresi), gli **episodi mancanti**, i **duplicati** e i video **senza sottotitoli**.
 - **Resolution** conta i video per qualità (4K, 1080p, 720p, SD), letta dal nome del file; passando il mouse su una barra vedi anche lo spazio occupato.
@@ -262,19 +267,42 @@ La pagina **Library** nella barra laterale mostra cosa contiene la cartella dei 
 
 Duplicati sono lo stesso episodio, o lo stesso film, presente più volte (per esempio in 720p e 1080p); le parti CD1/CD2 di un film non contano. Cartelle nascoste, il cestino e le cartelle di sistema dei NAS (`@eaDir`, `#recycle`) vengono saltate.
 
+## Guardiano
+
+Il **Guardian** tiene in ordine la libreria: trova i file il cui nome non segue il profilo scelto, li corregge (o te lo chiede prima) e **scrive ogni cambiamento nel suo registro**, perché può anche sbagliare.
+
+**Cosa controlla**: nome del file diverso dal profilo, cartella della serie o del film senza *Nome (Anno)*, episodi fuori dalla cartella della stagione, file sciolti accanto alla cartella del loro titolo. I titoli che hanno già l'aspetto giusto (`Nome (Anno)/Season 01/Nome (Anno) - S01E01 - …`) non vengono chiesti a TheMovieDB, così il controllo di una libreria grande è veloce; i contenuti extra non vengono mai toccati.
+
+**Cosa può fare** (*Settings → Guardian*):
+
+| Modalità | |
+| --- | --- |
+| *Only suggest* (predefinita) | non cambia nulla: le correzioni aspettano in *To review* |
+| *Correct when certain* | corregge quello su cui due ricerche (una normale e una rigorosa) sono d'accordo, il resto aspetta |
+| *Correct everything* | corregge tutto quello che trova |
+
+Per prudenza il **primo controllo di una libreria propone soltanto**, e un controllo che trova più cambiamenti del massimo impostato (50) non cambia nulla e lascia tutto da rivedere.
+
+**La pagina Guardian** ha tre schede:
+
+- **To review**: le correzioni proposte, con il motivo e se è *certain* o *likely*. Selezionale e premi **Apply** o **Ignore** (il file viene lasciato com'è, ora e dopo).
+- **Journal**: tutto quello che il guardiano ha fatto, con data, prima → dopo, motivo e i file che hanno seguito la cartella. **Undo** rimette i file com'erano (e da quel momento li lascia stare); **Wrong title…** annulla e ti chiede il titolo giusto, che il guardiano usa da lì in poi per quella cartella; **Export CSV…** salva il registro in una tabella.
+- **Ignored**: i file che il guardiano lascia stare; **Check again** li rimette sotto controllo.
+
+**Check now** controlla subito; con *Check every day* acceso controlla ogni giorno all'ora scelta, mentre ReNameo è aperto. Il registro è in `guardian.json` nella cartella dei dati e non si cancella mai da solo. Doppio clic su una riga mostra il file nel Finder.
+
 ## Aggiornamenti
 
-Una volta al giorno, all'avvio, ReNameo controlla su GitHub se c'è una versione nuova. Se c'è, una finestra mostra le novità con *Download* (apre la pagina della release), *Later* e *Skip this version*; lì puoi anche spegnere il controllo automatico. Puoi controllare quando vuoi da **Settings → Check for updates**, dal menu **Help** o con ⌘K. La riga di comando e Docker non controllano nulla.
+Una volta al giorno, all'avvio, ReNameo controlla su GitHub se c'è una versione nuova. Se c'è, una finestra mostra le novità con *Download* (apre la pagina della release), *Later* e *Skip this version*; lì puoi anche spegnere il controllo automatico. Puoi controllare quando vuoi da **Settings → Updates → Check now**, dal menu **Help** o con ⌘K. La riga di comando e Docker non controllano nulla.
 
 ## Plugin
 
 La pagina **Plugins** nella barra laterale raccoglie i plugin: script Groovy che reagiscono alle rinomine (app, cartella sorvegliata, riga di comando, Docker), aggiungono valori ai formati o azioni da eseguire su una cartella.
 
-- **Available**: i plugin pronti inclusi nell'app; *Install* li copia nella cartella `plugins` (`~/.renameo/plugins` su macOS).
-- **Installed**: per ogni plugin l'interruttore *On*, il cestino per rimuoverlo, i campi delle impostazioni (salvati appena lasci il campo) e i pulsanti delle azioni, che chiedono una cartella.
-- Mentre un plugin lavora, la sua scheda mostra cosa sta facendo, una barra di avanzamento, il tempo trascorso e **Stop**; dopo, *Last run* dice com'è andata.
-- **Plugin log** (trascina il divisore per ingrandirlo): ora, plugin e un segno per inizio ▶, fine ✓, fermato ■ ed errore ✕. Filtra per plugin o *Errors only*, seleziona e copia con ⌘C o clic destro, *Save…* salva in un file, *Clear* svuota.
-- In alto, *Open folder* apre la cartella dei plugin e *Reload* li ricarica dopo averli modificati.
+- **Installed**: a sinistra i plugin installati, con un pallino verde (acceso), grigio (spento), blu (al lavoro) o rosso (errore) e l'ultimo avvio; a destra il plugin scelto: interruttore, cestino per rimuoverlo, impostazioni (salvate appena lasci il campo), azioni con barra di avanzamento e **Stop**, e la sua attività recente.
+- **Catalog**: i plugin pronti inclusi nell'app, divisi per categoria (Media server, Notifiche, Pulizia, Sottotitoli, Libreria). *Install* li installa; *Update* compare quando l'app ne porta una versione diversa da quella installata (le impostazioni restano).
+- **Log**: ora, plugin e un segno per inizio ▶, fine ✓, fermato ■ ed errore ✕. Filtra per plugin o *Errors only*, seleziona e copia con ⌘C o clic destro, *Save…* salva in un file, *Clear* svuota.
+- La ricerca in alto filtra installati e catalogo. *Write your own* apre la guida per scrivere plugin, *Open folder* la cartella dei plugin, *Reload* li ricarica dopo averli modificati.
 
 | Plugin | Cosa fa |
 | --- | --- |
@@ -301,7 +329,7 @@ binding("risoluzione") { m -> m.height >= 2000 ? "4K" : "HD" }   // {plugin.riso
 action("Conta i video", "…") { folder -> /* pulsante nella pagina Plugins */ }
 ```
 
-La guida [Creare plugin e script](GUIDA_PLUGIN.md) spiega tutto passo passo, con esempi completi; si apre anche dal pulsante in fondo alla pagina Plugins. I plugin girano con i tuoi permessi: installa solo quelli di cui ti fidi. I formati invece restano protetti e non possono eseguire programmi né modificare file.
+La guida [Creare plugin e script](GUIDA_PLUGIN.md) spiega tutto passo passo, con esempi completi; si apre anche con *Write your own* nella pagina Plugins. I plugin girano con i tuoi permessi: installa solo quelli di cui ti fidi. I formati invece restano protetti e non possono eseguire programmi né modificare file.
 
 ## Anteprima dei poster
 

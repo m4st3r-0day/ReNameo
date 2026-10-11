@@ -48,6 +48,7 @@ import net.miginfocom.swing.MigLayout;
 import net.renameo.ApiKeys;
 import net.renameo.Settings;
 import net.renameo.UserFiles;
+import net.renameo.guardian.Guardian;
 import net.renameo.media.LibraryStats;
 import net.renameo.media.LibraryStats.Kind;
 import net.renameo.media.LibraryStats.Result;
@@ -64,7 +65,16 @@ import net.renameo.util.ui.ThinProgressBar;
  */
 public class LibraryPanel extends JPanel {
 
-	private static final PreferencesEntry<String> persistentFolder = Settings.forPackage(LibraryPanel.class).entry("library.folder").defaultValue("");
+	// one library folder for the Library page and the guardian (Settings → Folders)
+	private static final PreferencesEntry<String> persistentFolder = Guardian.folder;
+
+	static {
+		// the folder chosen before the guardian existed
+		PreferencesEntry<String> earlier = Settings.forPackage(LibraryPanel.class).entry("library.folder").defaultValue("");
+		if (persistentFolder.getValue().isEmpty() && !earlier.getValue().isEmpty()) {
+			persistentFolder.setValue(earlier.getValue());
+		}
+	}
 
 	private Result result;
 

@@ -26,6 +26,7 @@ SUITES=(
   net.renameo.media.MediaDetectionTest
   net.renameo.media.LibraryLayoutTest
   net.renameo.media.LibraryStatsTest
+  net.renameo.guardian.GuardianTest
   net.renameo.UpdatesTest
   net.renameo.ui.UpdateDialogTest
   net.renameo.format.ExpressionFormatTest

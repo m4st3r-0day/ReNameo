@@ -2,6 +2,7 @@
 // Kodi: Settings > Services > Control > "Allow remote control via HTTP".
 
 description "Update the Kodi video library after renaming"
+category "Media server"
 
 setting "server", "Server", "http://localhost:8080"
 setting "user", "User", "kodi"

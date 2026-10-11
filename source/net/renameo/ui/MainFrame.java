@@ -107,6 +107,8 @@ public class MainFrame extends JFrame {
 		PAGES.put("Filter", new String[] { "Filter & Inspect", "Inspect media attributes, extract archives and organize files." });
 		PAGES.put("List", new String[] { "List Generator", "Generate lists of names from a pattern." });
 		PAGES.put("Library", new String[] { "Library", "What your movies and series folder holds: size, quality, duplicates and missing episodes." });
+		PAGES.put("Guardian", new String[] { "Guardian", "Keeps your library in order and writes down every change it makes, so you can check and undo it." });
+		PAGES.put("Settings", new String[] { "Settings", "Appearance, renaming, API keys, folders, the guardian and updates." });
 		PAGES.put("Plugins", new String[] { "Plugins", "Tell your media server about new files, get notified, clean up folders and more." });
 	}
 
@@ -223,7 +225,13 @@ public class MainFrame extends JFrame {
 
 	@Subscribe
 	public void selectPanel(PanelBuilder panel) {
-		selectionList.setSelectedValue(panel, false);
+		if (asList(builders).contains(panel)) {
+			selectionList.setSelectedValue(panel, false);
+			return;
+		}
+		// a page that is not in the sidebar list (Settings): nothing in the list is selected while it is shown
+		selectionList.clearAll();
+		showPanel(panel);
 	}
 
 	@Subscribe
@@ -238,7 +246,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private JComponent createSidebar() {
-		JButton settings = Modern.button(newAction("Settings", evt -> showSettingsPopup((JComponent) evt.getSource())), Glyph.of(Glyph.Shape.SETTINGS, 18, NightTheme::getDimForeground), Modern.Style.GHOST);
+		JButton settings = Modern.button(newAction("Settings", evt -> selectPanel(new SettingsPanelBuilder())), Glyph.of(Glyph.Shape.SETTINGS, 18, NightTheme::getDimForeground), Modern.Style.GHOST);
 		settings.setHorizontalAlignment(SwingConstants.LEFT);
 		settings.setIconTextGap(12);
 		sidebarSettings = settings;
@@ -297,19 +305,18 @@ public class MainFrame extends JFrame {
 		}
 		commands.add(newAction("Toggle sidebar", evt -> setSidebarCollapsed(!Boolean.parseBoolean(persistentSidebarCollapsed.getValue()))));
 		commands.add(newAction("Toggle night mode", evt -> NightTheme.setNightMode(!NightTheme.isNightMode())));
-		commands.add(newAction("Open settings", evt -> showSettingsPopup(sidebarSettings)));
+		commands.add(newAction("Open settings", evt -> selectPanel(new SettingsPanelBuilder())));
 		commands.add(newAction("Open user guide", evt -> openURI(getEmbeddedHelpURL())));
-		commands.add(newAction("API keys", evt -> ApiKeysDialog.show(this, false)));
-		commands.add(newAction("Watch folder", evt -> WatchFolderDialog.show(this)));
+		commands.add(newAction("API keys", evt -> SettingsPanel.open(SettingsPanel.Section.API_KEYS)));
+		commands.add(newAction("Watch folder", evt -> SettingsPanel.open(SettingsPanel.Section.FOLDERS)));
+		commands.add(newAction("Guardian settings", evt -> SettingsPanel.open(SettingsPanel.Section.GUARDIAN)));
+		commands.add(newAction("Check the library now (Guardian)", evt -> {
+			GuardianRunner.runNow();
+			selectPanel(new GuardianPanelBuilder());
+		}));
 		commands.add(newAction("Update offline index", evt -> OfflineIndexAction.run(this)));
 		commands.add(newAction("Check for updates", evt -> UpdateDialog.check(this, true)));
 		return commands;
-	}
-
-	private static void showSettingsPopup(JComponent source) {
-		SettingsPopup popup = new SettingsPopup();
-		// the sidebar button sits at the bottom of the window, so the popover opens above it
-		popup.show(source, 0, -popup.getPreferredSize().height - 6);
 	}
 
 	private void showPanel(PanelBuilder selectedBuilder) {
@@ -682,6 +689,16 @@ public class MainFrame extends JFrame {
 			if (selectionListener != null) {
 				selectionListener.run();
 			}
+		}
+
+		/**
+		 * Nothing selected, e.g. while the Settings page is shown.
+		 */
+		void clearAll() {
+			updating = true;
+			toolsList.clearSelection();
+			utilitiesList.clearSelection();
+			updating = false;
 		}
 
 		public void addSelectionListener(Runnable listener) {

@@ -24,6 +24,25 @@ docker run --rm \
 
 Everything after the image name is a normal `renameo` command, see the [command line guide](../docs/USER_GUIDE_CLI.md). Start with `--action test`, which only prints what would happen.
 
+## Keep a library in order (guardian)
+
+With `guard` as the command, the container checks the library in `GUARD_DIR` at regular intervals: names that don't follow `RENAMEO_NAMING` are corrected, or only suggested, and every change is written to the journal `/config/guardian.json`. The first check of a library only suggests. The log is in `/config/logs/guard.log`.
+
+```bash
+docker run -d --name renameo-guard -e TMDB_API_KEY=your-key -e PUID=1000 -e PGID=1000 \
+  -e GUARD_DIR=/media/library -e GUARD_MODE=exact -e RENAMEO_NAMING=jellyfin \
+  -v ./config:/config -v /path/to/media:/media ghcr.io/m4st3r-0day/renameo:latest guard
+```
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `GUARD_DIR` | (required) | the library to keep in order, e.g. `/media/library` |
+| `GUARD_MODE` | `suggest` | `suggest` changes nothing, `exact` corrects what two lookups agree on, `all` corrects everything |
+| `GUARD_INTERVAL` | `86400` | seconds between checks (a day) |
+| `RENAMEO_NAMING` | `jellyfin` | `plex`, `jellyfin`, `emby`, `kodi` |
+
+Files already named like `Name (Year)/Season 01/Name (Year) - S01E01 - Title` are not looked up again, so a daily check of a big library is quick. Every suggestion and change is printed to the log with its reason, and stays in the journal; files you want left alone can be listed under `ignored` in `guardian.json`. Reviewing and undoing with buttons is done on the Guardian page of the desktop app.
+
 ## Watch a folder
 
 With `watch` as the command, the container renames what arrives in `WATCH_DIR` at regular intervals. Files changed in the last `WATCH_SETTLE` seconds are skipped, so downloads in progress are left alone. Files ReNameo already renamed (they are in the history in `/config`) and sample clips are skipped too, so a run with nothing new only logs `No new files to rename` and asks TheMovieDB nothing.

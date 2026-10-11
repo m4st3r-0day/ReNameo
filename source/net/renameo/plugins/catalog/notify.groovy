@@ -5,6 +5,7 @@
 //   Pushover: your user key and an application token
 
 description "Get a message on your phone (ntfy, Discord, Gotify, Pushover) after renaming"
+category "Notifications"
 
 setting "ntfy", "ntfy topic URL"
 setting "discord", "Discord webhook"

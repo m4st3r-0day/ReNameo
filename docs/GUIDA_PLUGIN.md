@@ -48,6 +48,7 @@ Un plugin è una lista di istruzioni. Ognuna è facoltativa: usa solo quelle che
 | Istruzione | A cosa serve |
 | --- | --- |
 | `description "testo"` | La descrizione mostrata nella pagina Plugins |
+| `category "Notifiche"` | Il gruppo in cui compare nella pagina Plugins (facoltativo) |
 | `setting "chiave", "Etichetta", "valore predefinito"` | Un campo nella pagina Plugins, per esempio l'indirizzo di un server |
 | `secret "chiave", "Etichetta"` | Come `setting`, ma il testo è nascosto (password, token, API key) |
 | `settings.chiave` | Legge quello che l'utente ha scritto in un campo |

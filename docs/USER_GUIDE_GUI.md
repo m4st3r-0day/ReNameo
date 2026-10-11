@@ -23,7 +23,7 @@ On first start, if the key is missing, ReNameo opens the **API keys** window by 
 | Area | What it contains |
 | --- | --- |
 | Top bar | Name and version, button to collapse the sidebar (⌘\\), **command palette** (⌘K), help (F1) and status indicator: green *Ready*, blue *Matching…*, orange *N to review*. |
-| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Plugins. At the bottom, *Settings*. |
+| Sidebar | **Media Tools**: Rename, Episodes, Subtitles. **Utilities**: SFV, Filter, List, Library, Guardian, Plugins. At the bottom, *Settings*. |
 | Header | Section title and, in Rename, the main actions: **Match**, **Fetch Metadata**, **Format**, Presets, **Undo**, History and show/hide inspector (⌘I). |
 | Content | In Rename: *Original Files* on the left, *Proposed Names* in the middle, *Metadata* on the right. |
 | Status bar | Files added, files matched, warnings, progress and the **Rename** button with its options menu (⌄). |
@@ -229,17 +229,22 @@ Generic or obfuscated names such as `movie.mkv`, `VTS_01_1.mkv` or `a3f9c2e1b7d4
 
 ## Settings
 
-**Settings** at the bottom of the sidebar (or ⌘K → "settings") opens a panel with:
+**Settings** at the bottom of the sidebar (or ⌘K → "settings") opens the settings page: sections on the left, options on the right. Options apply right away.
 
-- **Night mode**: dark theme (default);
-- **Compact rows**: shorter rows for long lists;
-- **Accent color**: the color of buttons and selections;
-- **Tools**: *API keys*, *Watch folder*, *Update offline index*, *Plugins* (opens the Plugins page) and *Check for updates*, explained below;
-- the link to this guide and the app version.
+| Section | What's in it |
+| --- | --- |
+| **Appearance** | dark or light theme, compact rows, accent color |
+| **Renaming** | naming profile (Plex, Jellyfin, Emby, Kodi, Windows, macOS), database ID in movie file names, language of the titles, poster and fanart (the same options as the ⌄ menu of Rename) |
+| **API keys** | the keys of TheMovieDB, OMDb, Fanart.tv and AcoustID; *Save* checks the TheMovieDB key right away |
+| **Folders** | the **library folder** (used by Library and Guardian) and the **watch folder** |
+| **Guardian** | what the guardian may do, how often it checks, the most changes per check |
+| **Updates** | automatic update check, *Check now*, what's new in each version |
+| **Advanced** | data folder, error log, plugins folder, offline index, clear the cache |
+| **About** | version, guide, GitHub, credits |
 
 ## Watch folder
 
-**Settings → Watch folder** picks a folder (e.g. Downloads), the names (Plex, Jellyfin, Emby, Kodi or the default names) and the action (move, copy, hard link, symlink). While ReNameo is open, new video, audio and subtitle files that arrive there are renamed every few minutes.
+**Settings → Folders → Watch folder** picks a folder (e.g. Downloads), the names (Plex, Jellyfin, Emby, Kodi or the default names) and the action (move, copy, hard link, symlink). While ReNameo is open, new video, audio and subtitle files that arrive there are renamed every few minutes.
 
 - Files changed in the last 2 minutes are left alone, so downloads can finish.
 - Files that can't be matched are not retried until they change.
@@ -249,11 +254,11 @@ For a server or NAS that runs around the clock, use the Docker *watch* mode inst
 
 ## Updating the offline index
 
-ReNameo contains an index of the most popular movies and series, which recognizes localized titles right away (*Il Trono di Spade* → *Game of Thrones*). **Settings → Update offline index** downloads it again from TheMovieDB, in English and in the language of your system, in about 20 seconds. The new index is used from the next start.
+ReNameo contains an index of the most popular movies and series, which recognizes localized titles right away (*Il Trono di Spade* → *Game of Thrones*). **Settings → Advanced → Offline index** downloads it again from TheMovieDB, in English and in the language of your system, in about 20 seconds. The new index is used from the next start.
 
 ## Library
 
-The **Library** page in the sidebar shows what the folder of your movies and series holds, without changing anything. **Choose folder…** picks it; next time it is read again on its own, and **Rescan** reads it whenever you like.
+The **Library** page in the sidebar shows what the folder of your movies and series holds, without changing anything. **Choose folder…** picks it (the same library folder as in *Settings → Folders* and for the guardian); next time it is read again on its own, and **Rescan** reads it whenever you like.
 
 - At the top, tiles with the number of **movies**, **series**, **episodes**, the **size** (extras included), **missing episodes**, **duplicates** and videos **without subtitles**.
 - **Resolution** counts the videos by quality (4K, 1080p, 720p, SD), read from the file name; hover over a bar for the size too.
@@ -262,19 +267,42 @@ The **Library** page in the sidebar shows what the folder of your movies and ser
 
 Duplicates are the same episode, or the same movie, there more than once (e.g. in 720p and 1080p); CD1/CD2 parts of a movie don't count. Hidden folders, the trash and NAS system folders (`@eaDir`, `#recycle`) are skipped.
 
+## Guardian
+
+The **Guardian** keeps your library in order: it finds files whose names don't follow the chosen profile, corrects them (or asks first) and **writes every change down in its journal**, because it can be wrong too.
+
+**What it checks**: file names that differ from the profile, series or movie folders without *Name (Year)*, episodes outside their season folder, loose files next to the folder of their title. Titles that already look right (`Name (Year)/Season 01/Name (Year) - S01E01 - …`) are not looked up on TheMovieDB, so checking a big library is quick; extras are never touched.
+
+**What it may do** (*Settings → Guardian*):
+
+| Mode | |
+| --- | --- |
+| *Only suggest* (default) | changes nothing: corrections wait under *To review* |
+| *Correct when certain* | corrects what two lookups (a normal and a strict one) agree on, the rest waits |
+| *Correct everything* | corrects all it finds |
+
+To be safe, **the first check of a library only suggests**, and a check that finds more changes than the maximum (50) changes nothing and leaves everything to review.
+
+**The Guardian page** has three tabs:
+
+- **To review**: the suggested corrections, with the reason and whether it is *certain* or *likely*. Select them and press **Apply**, or **Ignore** (the file is left as it is, now and later).
+- **Journal**: everything the guardian did, with date, before → after, reason and the files that followed their folder. **Undo** puts the files back (and leaves them alone from then on); **Wrong title…** undoes and asks for the right title, which the guardian uses for that folder from then on; **Export CSV…** saves the journal as a table.
+- **Ignored**: the files the guardian leaves alone; **Check again** puts them back under watch.
+
+**Check now** checks right away; with *Check every day* on, it checks every day at the chosen hour while ReNameo is open. The journal is `guardian.json` in the data folder and is never cleaned up on its own. Double-click a row to show the file in the Finder.
+
 ## Updates
 
-Once a day, at start, ReNameo asks GitHub whether there is a new version. If there is, a window shows what's new with *Download* (opens the release page), *Later* and *Skip this version*; it also turns the automatic check off. Check any time with **Settings → Check for updates**, the **Help** menu or ⌘K. The command line and Docker never check.
+Once a day, at start, ReNameo asks GitHub whether there is a new version. If there is, a window shows what's new with *Download* (opens the release page), *Later* and *Skip this version*; it also turns the automatic check off. Check any time with **Settings → Updates → Check now**, the **Help** menu or ⌘K. The command line and Docker never check.
 
 ## Plugins
 
 The **Plugins** page in the sidebar holds the plugins: Groovy scripts that react to renames (app, watch folder, command line, Docker), add values to formats or add actions to run on a folder.
 
-- **Available**: the ready-made plugins that come with the app; *Install* copies them into the `plugins` folder (`~/.renameo/plugins` on macOS).
-- **Installed**: for each plugin the *On* switch, the trash button to remove it, its settings (saved as soon as you leave a field) and its action buttons, which ask for a folder.
-- While a plugin works, its card shows what it's doing, a progress bar, the elapsed time and **Stop**; afterwards, *Last run* tells how it went.
-- **Plugin log** (drag the divider to make it bigger): time, plugin and a mark for started ▶, done ✓, stopped ■ and error ✕. Filter by plugin or *Errors only*, select and copy with ⌘C or right-click, *Save…* writes a file, *Clear* empties it.
-- At the top, *Open folder* opens the plugins folder and *Reload* loads them again after you changed them.
+- **Installed**: on the left the installed plugins, with a green (on), gray (off), blue (working) or red (error) dot and the last run; on the right the chosen plugin: switch, trash button to remove it, settings (saved as soon as you leave a field), actions with a progress bar and **Stop**, and its recent activity.
+- **Catalog**: the ready-made plugins that come with the app, by category (Media server, Notifications, Cleanup, Subtitles, Library). *Install* installs them; *Update* shows up when the app brings a different version than the installed one (the settings are kept).
+- **Log**: time, plugin and a mark for started ▶, done ✓, stopped ■ and error ✕. Filter by plugin or *Errors only*, select and copy with ⌘C or right-click, *Save…* writes a file, *Clear* empties it.
+- The search at the top filters installed plugins and the catalog. *Write your own* opens the guide to writing plugins, *Open folder* the plugins folder, *Reload* loads them again after you changed them.
 
 | Plugin | What it does |
 | --- | --- |
@@ -301,7 +329,7 @@ binding("resolution") { m -> m.height >= 2000 ? "4K" : "HD" }   // {plugin.resol
 action("Count videos", "…") { folder -> /* a button on the Plugins page */ }
 ```
 
-The guide [Writing plugins and scripts](USER_GUIDE_PLUGINS.md) explains everything step by step, with complete examples; the button at the bottom of the Plugins page opens it too. Plugins run with your rights: only install plugins you trust. Formats themselves stay sandboxed and can't run programs or change files.
+The guide [Writing plugins and scripts](USER_GUIDE_PLUGINS.md) explains everything step by step, with complete examples; *Write your own* on the Plugins page opens it too. Plugins run with your rights: only install plugins you trust. Formats themselves stay sandboxed and can't run programs or change files.
 
 ## Poster preview
 

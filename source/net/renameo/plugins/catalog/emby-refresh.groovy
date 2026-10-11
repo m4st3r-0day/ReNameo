@@ -2,6 +2,7 @@
 // API key: Emby Settings > Advanced > API Keys
 
 description "Refresh the Emby library after renaming"
+category "Media server"
 
 setting "server", "Server", "http://localhost:8096"
 secret "apiKey", "API key"

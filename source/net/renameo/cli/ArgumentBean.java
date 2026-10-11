@@ -109,6 +109,12 @@ public class ArgumentBean {
 	@Option(name = "-revert", usage = "Revert files")
 	public boolean revert = false;
 
+	@Option(name = "-guard", usage = "Keep a library in order: correct names that don't follow --naming, and write every change to the guardian journal")
+	public boolean guard = false;
+
+	@Option(name = "--guard-mode", usage = "What the guardian may do on its own", metaVar = "[suggest, exact, all]")
+	public String guardMode = "suggest";
+
 	@Option(name = "-extract", usage = "Extract archives")
 	public boolean extract = false;
 
@@ -164,7 +170,7 @@ public class ArgumentBean {
 	public List<String> arguments = new ArrayList<String>();
 
 	public boolean runCLI() {
-		return rename || getSubtitles || check || list || mediaInfo || revert || extract || script != null || apply != null;
+		return rename || getSubtitles || check || list || mediaInfo || revert || guard || extract || script != null || apply != null;
 	}
 
 	public boolean isInteractive() {

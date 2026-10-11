@@ -120,10 +120,30 @@ public final class LibraryLayout {
 			return null;
 		}
 		File grand = parent.getParentFile();
+		// folders the user said belong to a title (e.g. the guardian after "wrong title")
+		if (claimed.contains(grand) && grand.getParentFile() != null) {
+			return grand;
+		}
+		if (claimed.contains(parent)) {
+			return parent;
+		}
 		if (grand.getParentFile() != null && isTitleFolder(grand.getName(), titles)) {
 			return grand;
 		}
 		return isTitleFolder(parent.getName(), titles) ? parent : null;
+	}
+
+	private static final Set<File> claimed = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * The folder belongs to the series or movie that is being renamed, whatever its name: it gets the proper name like a folder named after the title.
+	 */
+	public static void claimFolder(File folder) {
+		claimed.add(folder);
+	}
+
+	public static void releaseFolder(File folder) {
+		claimed.remove(folder);
 	}
 
 	/**

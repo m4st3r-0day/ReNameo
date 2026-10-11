@@ -2,6 +2,7 @@
 // Needs an OpenSubtitles API key and login (Subtitles page, user button).
 
 description "Download missing subtitles for a folder, or automatically after renaming"
+category "Subtitles"
 
 setting "languages", "Languages", "en"
 setting "auto", "After renaming (yes/no)", "no"

@@ -48,6 +48,7 @@ A plugin is a list of instructions. Each one is optional: use only the ones you 
 | Instruction | What it's for |
 | --- | --- |
 | `description "text"` | The description shown on the Plugins page |
+| `category "Notifications"` | The group it is shown in on the Plugins page (optional) |
 | `setting "key", "Label", "default value"` | A field on the Plugins page, e.g. the address of a server |
 | `secret "key", "Label"` | Like `setting`, but the text is masked (password, token, API key) |
 | `settings.key` | Reads what the user entered in a field |

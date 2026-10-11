@@ -3,6 +3,8 @@
 #
 #   <any renameo arguments>   run the command once, e.g. -rename /media/downloads --action test -non-strict
 #   watch                     rename what arrives in $WATCH_DIR every $WATCH_INTERVAL seconds
+#   guard                     keep the library in $GUARD_DIR in order every $GUARD_INTERVAL seconds,
+#                             every change goes to the journal $RENAMEO_CONFIG/guardian.json
 set -e
 
 CONFIG="${RENAMEO_CONFIG:-/config}"
@@ -19,6 +21,23 @@ else
   getent passwd "$PUID" >/dev/null 2>&1 || useradd -o -u "$PUID" -g "$PGID" -d "$CONFIG" -s /usr/sbin/nologin renameo
   chown -R "$PUID:$PGID" "$CONFIG" 2>/dev/null || true
   RUN="gosu $PUID:$PGID"
+fi
+
+if [ "$1" = "guard" ]; then
+  # -------------------------------------------------------------------------
+  # guard mode: the first check of a library only suggests, then GUARD_MODE decides
+  # -------------------------------------------------------------------------
+  if [ -z "$GUARD_DIR" ] || [ -z "$TMDB_API_KEY" ]; then
+    echo "guard mode needs GUARD_DIR (your library, e.g. /media/library) and TMDB_API_KEY" >&2
+    exit 1
+  fi
+  GUARD_INTERVAL="${GUARD_INTERVAL:-86400}"
+  echo "ReNameo guard mode: $GUARD_DIR every ${GUARD_INTERVAL}s, mode ${GUARD_MODE:-suggest}, naming ${RENAMEO_NAMING:-jellyfin}"
+  while true; do
+    $RUN renameo -guard "$GUARD_DIR" --naming "${RENAMEO_NAMING:-jellyfin}" --guard-mode "${GUARD_MODE:-suggest}" --lang "${RENAMEO_LANG:-en}" \
+      --log-file "$CONFIG/logs/guard.log" || true
+    sleep "$GUARD_INTERVAL"
+  done
 fi
 
 if [ "$1" != "watch" ]; then

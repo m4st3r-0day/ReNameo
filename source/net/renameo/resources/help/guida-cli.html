@@ -75,6 +75,9 @@ renameo -rename ~/Musica --db ID3 --format &quot;{artist}/{album}/{pi.pad(2)} - 
 <h3>Poster, fanart e metadati da TheMovieDB</h3>
 <pre><code>renameo /Volumes/Media/Movies --apply artwork,metadata -r</code></pre>
 <p><code>artwork</code> scarica poster e fanart da TheMovieDB accanto ai file; <code>metadata</code> salva le informazioni negli attributi estesi del file. <code>nfo</code> e <code>url</code> creano file <code>.nfo</code>/<code>.url</code> per Kodi e sono facoltativi. <code>--apply</code> si esegue come passaggio separato, dopo la rinomina.</p>
+<h3>Tenere in ordine una libreria (guardiano)</h3>
+<pre><code>renameo -guard /Volumes/Media --naming jellyfin --guard-mode exact</code></pre>
+<p>Controlla la libreria e corregge i nomi che non seguono il profilo: <code>--guard-mode suggest</code> (predefinito) propone soltanto, <code>exact</code> corregge quello su cui due ricerche sono d'accordo, <code>all</code> corregge tutto. Il primo controllo di una libreria propone soltanto. Ogni proposta e ogni cambiamento vengono stampati con il motivo e scritti nel registro <code>guardian.json</code> della cartella dei dati; si rivedono e si annullano nella pagina <strong>Guardian</strong> dell'app. In Docker c'è la modalità <code>guard</code> (vedi <code>docker/README.md</code>).</p>
 <h3>Altro</h3>
 <pre><code>renameo -list --q &quot;Silo&quot; --format &quot;{s00e00} - {t}&quot;          # elenco episodi
 renameo -mediainfo ~/Film --format &quot;{fn} {vf} {vc} {ac}&quot;      # info tecniche

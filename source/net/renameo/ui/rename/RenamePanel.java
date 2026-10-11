@@ -157,7 +157,87 @@ public class RenamePanel extends JComponent {
 		Settings.forPackage(RenamePanel.class).put(PREF_HIDE_UNAVAILABLE, String.valueOf(hide));
 	}
 
+	// the open page, so Settings can change its formats right away
+	private static java.lang.ref.WeakReference<RenamePanel> instance = new java.lang.ref.WeakReference<RenamePanel>(null);
+
+	/**
+	 * "plex", "jellyfin", "emby", "kodi", "windows", "macos" or "custom".
+	 */
+	public static String getNamingProfile() {
+		String episode = String.valueOf(persistentEpisodeFormat.getValue());
+		Matcher tidy = Pattern.compile("^\\{(plex|jellyfin|emby|kodi)\\.(tidy|name)\\}$").matcher(episode);
+		if (tidy.matches()) {
+			return tidy.group(1);
+		}
+		for (NamingProfile p : NamingProfile.values()) {
+			if (p.episode().equals(episode)) {
+				return p.name().toLowerCase();
+			}
+		}
+		return "custom";
+	}
+
+	public static void setNamingProfile(String profile) {
+		RenamePanel panel = instance.get();
+		switch (profile) {
+		case "windows":
+		case "macos":
+			NamingProfile p = NamingProfile.valueOf(profile.toUpperCase());
+			if (panel != null) {
+				panel.applyNamingProfile(p);
+			} else {
+				persistentEpisodeFormat.setValue(p.episode());
+				persistentMovieFormat.setValue(p.movie());
+			}
+			break;
+		case "plex":
+		case "jellyfin":
+		case "emby":
+		case "kodi":
+			if (panel != null) {
+				panel.applyLibraryLayout(profile, Character.toUpperCase(profile.charAt(0)) + profile.substring(1), null);
+			} else {
+				persistentEpisodeFormat.setValue(tidyExpression(profile));
+				persistentMovieFormat.setValue(tidyExpression(profile));
+				persistentMusicFormat.setValue(inPlaceExpression(profile));
+			}
+			break;
+		default:
+			// a custom format is made in the format editor
+		}
+	}
+
+	/**
+	 * After an option that changes movie names (e.g. the database ID), so the proposed names follow.
+	 */
+	public static void refreshMovieNames() {
+		RenamePanel panel = instance.get();
+		if (panel != null) {
+			try {
+				panel.renameModel.useFormatter(Movie.class, new ExpressionFormatter(persistentMovieFormat.getValue(), MovieFormat.NameYear, Movie.class));
+			} catch (Exception e) {
+				debug.log(Level.WARNING, e, e::getMessage);
+			}
+		}
+	}
+
+	/**
+	 * Download poster and fanart after renaming.
+	 */
+	public static PreferencesEntry<String> getArtworkOption() {
+		return RenameAction.persistentFetchArtwork;
+	}
+
+	public static String getTitleLanguage() {
+		return persistentPreferredLanguage.getValue();
+	}
+
+	public static void setTitleLanguage(String code) {
+		persistentPreferredLanguage.setValue(code);
+	}
+
 	public RenamePanel() {
+		instance = new java.lang.ref.WeakReference<RenamePanel>(this);
 		namesList.setTitle("New Names");
 		namesList.setTransferablePolicy(new NamesListTransferablePolicy(renameModel.values()));
 
@@ -1276,12 +1356,7 @@ public class RenamePanel extends JComponent {
 		movieIds.setToolTipText("Dune (2021) [tmdbid-438631].mkv helps Plex, Jellyfin and Emby find the right movie; without it the file is just Dune (2021).mkv");
 		movieIds.addActionListener(evt -> {
 			MediaBindingBean.persistentMovieIds.setValue(String.valueOf(movieIds.isSelected()));
-			try {
-				// the proposed names change right away
-				renameModel.useFormatter(Movie.class, new ExpressionFormatter(persistentMovieFormat.getValue(), MovieFormat.NameYear, Movie.class));
-			} catch (Exception e) {
-				debug.log(Level.WARNING, e, e::getMessage);
-			}
+			refreshMovieNames(); // the proposed names change right away
 		});
 		actionPopup.addAction(movieIds);
 

@@ -254,7 +254,7 @@ public final class LibraryStats {
 	/**
 	 * The folder of the series: the parent, or the one above a season folder. Null if the episode lies directly in the scanned folder (the name then comes from the file).
 	 */
-	static File getSeriesFolder(File episode, File root) {
+	public static File getSeriesFolder(File episode, File root) {
 		File parent = episode.getParentFile();
 		if (parent.equals(root)) {
 			return null;
@@ -269,7 +269,7 @@ public final class LibraryStats {
 	/**
 	 * "Neagley.S01.1080p.AMZN.WEB-DL-TBK" => "Neagley", "Neagley (2026)" stays.
 	 */
-	static String cleanName(String folder) {
+	public static String cleanName(String folder) {
 		String name = RELEASE_TAIL.matcher(folder).replaceAll("");
 		Matcher year = Pattern.compile("[ ._(\\[]+((?:19|20)\\d{2})[)\\]]?$").matcher(name);
 		String y = null;
@@ -281,7 +281,7 @@ public final class LibraryStats {
 		return y == null ? name : name + " (" + y + ")";
 	}
 
-	static String seriesNameFromFile(String file) {
+	public static String seriesNameFromFile(String file) {
 		Matcher m = SERIES_FROM_FILE.matcher(file);
 		return m.find() ? cleanName(m.group(1)) : cleanName(file.replaceFirst("\\.[^.]+$", ""));
 	}

@@ -2,9 +2,12 @@
 
 What changed in each version of ReNameo. The section of a version is also the text of its GitHub release and of the update notice in the app.
 
-## [1.1.0]
+## [1.1.0] - 2026-10-11
 
 ### New
+- **Guardian**: keeps a library in order. It finds names that don't follow the naming profile and corrects them, or only suggests (the default), and writes every change to a journal with the reason, so each one can be reviewed, undone, ignored or corrected with the right title. Checks every day or on demand, in the app and in Docker (`guard` mode, `renameo -guard`).
+- **Settings page** instead of the small popup: appearance, renaming, API keys, folders, guardian, updates and advanced options in one place.
+- **Plugins page** redesigned: installed plugins as a list with their details and activity, a catalog by category with updates, and the log on its own tab.
 - **Library** page: how many movies, series and episodes a folder holds, its size and quality, duplicates, videos without subtitles and, on request, the aired episodes that are missing (TheMovieDB).
 - **Folders** view in the preview: the folders before and after renaming, side by side, with new folders, folders that go away and files that follow their folder.
 - **Update notice**: once a day ReNameo checks for a new version and shows what's new; it can be turned off, and checked by hand under Settings or Help.

@@ -2,6 +2,7 @@
 // API key: Jellyfin Dashboard > API Keys > +
 
 description "Refresh the Jellyfin library after renaming"
+category "Media server"
 
 setting "server", "Server", "http://localhost:8096"
 secret "apiKey", "API key"

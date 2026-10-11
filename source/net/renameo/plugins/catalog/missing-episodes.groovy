@@ -2,6 +2,7 @@
 // Pick the folder of one series (e.g. "Breaking Bad" with its season folders).
 
 description "Find the aired episodes that are missing from a series folder (TheMovieDB)"
+category "Library"
 
 setting "specials", "Include specials (yes/no)", "no"
 

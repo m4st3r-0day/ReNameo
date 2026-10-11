@@ -57,7 +57,7 @@ class RenameAction extends AbstractAction {
 	/**
 	 * Download poster and fanart from TheMovieDB next to the renamed files.
 	 */
-	static final PreferencesEntry<String> persistentFetchArtwork = Settings.forPackage(RenameAction.class).entry("rename.artwork").defaultValue("false");
+	public static final PreferencesEntry<String> persistentFetchArtwork = Settings.forPackage(RenameAction.class).entry("rename.artwork").defaultValue("false");
 
 	private final RenameModel model;
 

@@ -19,6 +19,7 @@ import javax.script.Bindings;
 import javax.script.SimpleBindings;
 
 import net.renameo.HistorySpooler;
+import net.renameo.guardian.Guardian;
 import net.renameo.media.LibraryStats;
 import net.renameo.media.MediaDetection;
 
@@ -98,6 +99,10 @@ public class ArgumentProcessor {
 			return cli.revert(args.getFiles(false), args.getFileFilter(), args.getRenameAction()).isEmpty() ? 1 : 0;
 		}
 
+		if (args.guard) {
+			return guard(args);
+		}
+
 		// file operations
 		Set<File> files = new LinkedHashSet<File>(args.getFiles(true));
 
@@ -142,6 +147,38 @@ public class ArgumentProcessor {
 			}
 		}
 
+		return 0;
+	}
+
+	/**
+	 * Check each library folder; suggestions and changes go to the guardian journal (guardian.json in the data folder).
+	 */
+	private int guard(ArgumentBean args) throws Exception {
+		Guardian.Mode mode;
+		switch (args.guardMode.trim().toLowerCase()) {
+		case "exact":
+			mode = Guardian.Mode.EXACT;
+			break;
+		case "all":
+			mode = Guardian.Mode.ALL;
+			break;
+		default:
+			mode = Guardian.Mode.SUGGEST;
+		}
+		String profile = args.naming != null ? args.naming.trim().toLowerCase() : "jellyfin";
+		for (File folder : args.getFiles(false)) {
+			if (!folder.isDirectory()) {
+				continue;
+			}
+			Guardian.Report report = Guardian.scan(folder, mode, profile, false, args.getLanguage().getLocale(), () -> false, (n, title) -> {
+			});
+			log.info(String.format("Guardian [%s]: %s", folder, report));
+			for (Guardian.Entry e : Guardian.getEntries()) {
+				if (report.run.equals(e.run)) {
+					log.info(String.format("  %-8s %s%n           -> %s  (%s%s)", e.status, e.from, e.to, e.reason, e.exact ? ", exact" : ""));
+				}
+			}
+		}
 		return 0;
 	}
 

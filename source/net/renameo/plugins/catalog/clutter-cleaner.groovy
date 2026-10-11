@@ -4,6 +4,7 @@
 // (without a desktop, e.g. in Docker, to the "trash" folder in the ReNameo data folder).
 
 description "Clean up leftovers (samples, .nfo, .txt …) and empty folders after files were moved"
+category "Cleanup"
 
 setting "extensions", "Leftover types", "txt,nfo,url,lnk,exe,sfv,md5,nzb,srr,srs,par2,jpg,jpeg,png,db,ini"
 

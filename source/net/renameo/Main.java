@@ -27,6 +27,7 @@ import net.renameo.ui.ReNameoMenuBar;
 import net.renameo.ui.ApiKeysDialog;
 import net.renameo.ui.AppEvents;
 import net.renameo.plugins.Plugins;
+import net.renameo.ui.GuardianRunner;
 import net.renameo.ui.MainFrame;
 import net.renameo.ui.UpdateDialog;
 import net.renameo.ui.WatchFolder;
@@ -236,6 +237,7 @@ public class Main {
 		}
 
 		WatchFolder.restart();
+		GuardianRunner.start();
 
 		SwingUtilities.invokeLater(() -> {
 			// nothing can be matched without a TheMovieDB key, so ask for it right away

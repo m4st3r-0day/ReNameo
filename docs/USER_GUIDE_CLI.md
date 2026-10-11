@@ -134,6 +134,14 @@ renameo /Volumes/Media/Movies --apply artwork,metadata -r
 
 `artwork` downloads posters and fanart from TheMovieDB next to the files; `metadata` stores the information in the file's extended attributes. `nfo` and `url` create `.nfo`/`.url` files for Kodi and are optional. `--apply` runs as a separate step, after renaming.
 
+### Keep a library in order (guardian)
+
+```bash
+renameo -guard /Volumes/Media --naming jellyfin --guard-mode exact
+```
+
+Checks the library and corrects names that don't follow the profile: `--guard-mode suggest` (default) only suggests, `exact` corrects what two lookups agree on, `all` corrects everything. The first check of a library only suggests. Every suggestion and change is printed with its reason and written to the journal `guardian.json` in the data folder; review and undo them on the **Guardian** page of the app. Docker has a `guard` mode (see `docker/README.md`).
+
 ### More
 
 ```bash
